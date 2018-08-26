@@ -1,0 +1,124 @@
+body {
+    color: #444;
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+.header .logo-wrapper .logo {
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    margin-top: 5px;
+}
+
+.header .logo-wrapper .logo-tagline{
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #00347C;
+    border-top: 1px solid #bbbdc1;
+    margin-top: 5px;
+    padding-top: 5px;
+    margin-bottom: 2px;
+}
+
+.logo-tagline a{
+    color: #00347C;
+}
+
+.header .site-navbar .menu .menu-item-link {
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    font-size: 0.8em;
+    text-transform: lowercase;
+}
+
+.post-content {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 0.8em;
+}
+
+.post .post-header .post-link:before{
+   background: #0047AB;
+}
+
+.post .post-content .read-more .read-more-link{
+    color: #4f576d;
+}
+
+.post .post-header {
+    text-align: left;
+}
+
+.post .post-content a {
+	word-break: normal;
+}
+
+.post .post-content code{
+    color: #174688;
+}
+
+.post .post-content>table th{
+    background-color: #174688;
+}
+
+.post .post-content>table td{
+    background-color: #D1DAE7;
+}
+
+
+.bg-llight {
+    background-color: #bbbdc1;
+}
+
+h1, h2{
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+.archive .collection-title .archive-year{
+    font-size: 22px;
+}
+
+.archive .archive-post {
+    font-size: 1em;
+    border-bottom: 1px solid  #bbbdc1;
+}
+
+.archive .archive-post .archive-post-time{
+    color: #444;
+}
+
+.tag-cloud{
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+::selection {
+    background: #0047AB;
+    color: #fff;
+}
+
+.footer{
+    margin-top: 1em;
+}
+
+.footer .social-links .iconfont{
+    font-size: 1.2em;
+}
+
+.footer .copyright{
+    color: #444;
+}
+
+.mobile-navbar .mobile-header-logo .logo {
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+.mobile-navbar .mobile-header-logo .logo-tagline {
+    color: #00347C;
+}
+
+.mobile-menu .mobile-menu-list a {
+    font-family: "Open Sans", Helvetica, Arial, sans-serif;
+    text-transform: lowercase;
+    font-size: 14px;
+}
+
