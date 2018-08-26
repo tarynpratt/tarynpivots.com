@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/projects/</link>
+    <description>Recent content in Projects on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 12 Apr 2015 18:30:08 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/projects/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Using powershell to fix server space issues</title>
+      <link>https://tarynpivots.com/post/using-powershell-to-fix-server-space-issues/</link>
+      <pubDate>Sun, 12 Apr 2015 18:30:08 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/using-powershell-to-fix-server-space-issues/</guid>
+      <description>A few weeks ago, we were running into severe disk space and memory issues on our development servers at work. Our set-up is a bit odd, we have 3 servers - one for the transactions, one for the web interface, and the final one for reporting. Using transactional replication we have databases that can exist on all 3 servers. Yes, it&amp;rsquo;s can be a real nightmare to maintain, but anyone who works with replication already knows this.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,173 @@
+baseURL = "https://tarynpivots.com/"
+title = "Taryn Pratt"
+enableRobotsTXT = true
+enableEmoji = true
+theme = "hugo-theme-jane"
+
+hasCJKLanguage = true     # has chinese/japanese/korean ? 
+paginate = 5                                              
+rssLimit = 20             # Limit Entry Count to Rss file 
+disqusShortname = "tarynpivots-com"      # disqus_shortname
+googleAnalytics = ""      # UA-XXXXXXXX-X
+copyright = ""            # default: author.name ↓       
+# uglyURLs = true         # more info: https://gohugo.io/content-management/urls/#ugly-urls
+
+# Highlight options. See https://gohugo.io/content-management/syntax-highlighting/
+PygmentsCodeFences = true # Enable syntax highlighting with GitHub flavoured code fences
+PygmentsUseClasses = true # Use CSS classes to format highlighted code
+PygmentsCodefencesGuessSyntax = true
+PygmentsOptions = "linenos=table"
+
+# language support # en / zh-cn / other... translations present in i18n/
+defaultContentLanguage = "en"           # Default language to use
+[languages.en]
+  languageCode = "en"
+
+[author]                  # essential                     # 必需
+  name = "Taryn"
+
+[sitemap]                 # essential                     # 必需
+  changefreq = "weekly"
+  priority = 0.5
+  filename = "sitemap.xml"
+
+[[menu.main]]             # config your menu              # 配置目录
+  name = "Home"
+  weight = 10
+  identifier = "home"
+  url = "/"
+[[menu.main]]
+  name = "Archives"
+  weight = 20
+  identifier = "archives"
+  url = "/post/"
+[[menu.main]]
+  name = "Tags"
+  weight = 30
+  identifier = "tags"
+  url = "/tags/"
+[[menu.main]]
+  name = "About"
+  weight = 40
+  url = "/post/about/"
+#[[menu.main]]
+#  name = "external-link"
+#  weight = 50
+#  url = "https://gohugo.io"
+
+
+[params]
+  debug = false             # If true, load `eruda.min.js`. See https://github.com/liriliri/eruda
+  since = "2013"            # Site creation time         
+  homeFullContent = false   # if false, show post summaries on home page. Othewise show full content.
+  rssFullContent = true     # if false, Rss feed instead of the summary
+
+  # site info (optional)                                  
+  logoTitle = "Taryn Pratt"        # default: the title value    
+  keywords = ["blog", "sql","sql server", "dba", "database administrator", "taryn", "pivots", "bluefeet", "onlybluefeet", "stack overflow", "stackoverflow", "code", "stack", "overflow", "github", "twitter", "pivot"]
+  description = "Pivots and other SQL fun"
+
+  # paginate of archives, tags and categories            
+  archive-paginate = 10
+
+  # paginate style, default use numbered pagination links
+  # if true, use original "Previous" and "Next" links.
+  # paginateOriginalStyle = true
+
+  # The date format to use; for a list of valid formats, see https://gohugo.io/functions/format/
+  dateFormatToUse = "2006-01-02"
+
+  # show word count and read time ?                      
+  moreMeta = true
+
+  # show language chooser in menu
+  showMenuLanguageChooser = true
+
+  # Some global options, you can also close or open something in front matter for a single post, see more information from `archetypes/default.md`.
+  toc = true                                                                            # 是否开启目录
+  photoswipe = true         # see https://github.com/dimsemenov/PhotoSwipe            # 是否启用PhotoSwipe（图片可点击）
+  bootcdn = false           # In china. @Deprecated: use [params.publicCDN]             # 是否使用bootcdn(@Deprecated: 请使用[params.publicCDN])
+  mathjax = false           # see https://www.mathjax.org/                              # 是否使用mathjax（数学公式）
+  #contentCopyright = '<a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a>'
+
+  changyanAppid = ""        # Changyan app id             # 畅言
+  changyanAppkey = ""       # Changyan app key
+  tencent_analytics = ""    # Tencent Analytics
+  baidu_push = false        # baidu push                  # 百度
+  baidu_analytics = ""      # Baidu Analytics
+  baidu_verification = ""   # Baidu Verification
+  google_verification = ""  # Google_Verification         # 谷歌
+
+  # Link custom CSS and JS assets
+  #   (relative to /static/css and /static/js respectively)
+  customCSS = ['custom.css']            # if ['custom.css'], load '/static/css/custom.css' file
+  customJS = []             # if ['custom.js'], load '/static/js/custom.js' file
+
+  # enable 'fork me on github', see https://blog.github.com/2008-12-19-github-ribbons/
+  # forkMeOnGithub = "https://github.com/xianmin/hugo-theme-jane"
+
+  [params.publicCDN]        # load these files from public cdn                          # 启用公共CDN，需自行定义
+    enable = false
+    jquery = '<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>'
+    slideout = '<script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>'
+    gitmentJS = '<script src="https://cdn.jsdelivr.net/npm/gitment@0.0.3/dist/gitment.browser.min.js" crossorigin="anonymous"></script>'
+    gitmentCSS = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitment@0.0.3/style/default.min.css" crossorigin="anonymous">'
+
+  [params.utteranc]         # utteranc is a comment system based on GitHub issues. see https://utteranc.es
+    enable = false
+    repo = "xianmin/comments-for-hugo-theme-jane"    # The repo to store comments
+    issueTerm = "pathname"
+
+  [params.gitment]          # Gitment is a comment system based on GitHub issues. see https://github.com/imsun/gitment
+    owner = ""              # Your GitHub ID
+    repo = ""               # The repo to store comments
+    clientId = ""           # Your client ID
+    clientSecret = ""       # Your client secret
+
+  [params.reward]                                         
+    enable = false
+    wechat = "/path/to/your/wechat-qr-code.png"           
+    alipay = "/path/to/your/alipay-qr-code.png"          
+
+  [params.counter.busuanzi]  # a Chinese visitor counter  
+    enable = false
+
+  [params.social]                                         
+    #a-email = "mailto:your@email.com"
+    b-stack-overflow = "https://stackoverflow.com/users/426671/taryn"
+    c-twitter = "https://twitter.com/onlybluefeet"
+    #d-facebook = "http://localhost:1313"
+    #e-linkedin = "http://localhost:1313"
+    #f-google = "http://localhost:1313"
+    g-github = "https://github.com/tarynpratt"
+    #h-weibo = "http://localhost:1313"
+    #i-zhihu = "http://localhost:1313"
+    #j-douban = "http://localhost:1313"
+    #k-pocket = "http://localhost:1313"
+    #l-tumblr = "http://localhost:1313"
+    #m-instagram = "http://localhost:1313"
+    #n-gitlab = "http://en.xianmin.org/hugo-theme-jane/"
+    #o-goodreads = "http://en.xianmin.org/hugo-theme-jane/"
+
+# jsonfeed support
+# more information: https://github.com/xianmin/hugo-theme-jane/issues/23
+# to have json output it's necessary to uncomment this block of code and create a index.jsonfeed.json template, using hugo template specs
+# [outputs]
+#   home = ["html", "jsonfeed","rss"]
+#   page = ["html"]
+#
+# [outputFormats]
+# [outputFormats.jsonfeed]
+#   mediaType = "application/json"
+#   baseName = "feed"
+#   isPlainText = true
+
+
+# multilingual support example
+# [langusges]
+# [languages.en]
+#   title = "Jane - A simple theme for Hugo"
+#   weight = 1
+# [languages.zh-cn]
+#   title = "Jane —— 一个简洁的 Hugo 主题"
+#   weight = 2
