@@ -90,13 +90,13 @@ defaultContentLanguage = "en"           # Default language to use
   mathjax = false           # see https://www.mathjax.org/                              # 是否使用mathjax（数学公式）
   #contentCopyright = '<a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a>'
 
-  changyanAppid = ""        # Changyan app id             # 畅言
+  changyanAppid = ""        # Changyan app id             
   changyanAppkey = ""       # Changyan app key
   tencent_analytics = ""    # Tencent Analytics
-  baidu_push = false        # baidu push                  # 百度
+  baidu_push = false        # baidu push                  
   baidu_analytics = ""      # Baidu Analytics
   baidu_verification = ""   # Baidu Verification
-  google_verification = ""  # Google_Verification         # 谷歌
+  google_verification = ""  # Google_Verification        
 
   # Link custom CSS and JS assets
   #   (relative to /static/css and /static/js respectively)
@@ -106,7 +106,7 @@ defaultContentLanguage = "en"           # Default language to use
   # enable 'fork me on github', see https://blog.github.com/2008-12-19-github-ribbons/
   # forkMeOnGithub = "https://github.com/xianmin/hugo-theme-jane"
 
-  [params.publicCDN]        # load these files from public cdn                          # 启用公共CDN，需自行定义
+  [params.publicCDN]        # load these files from public cdn                          
     enable = false
     jquery = '<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>'
     slideout = '<script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>'
