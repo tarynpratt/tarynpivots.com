@@ -348,7 +348,7 @@ if (!doNotTrack) {
 
 <p>Lastly, using the name of the log above I&rsquo;d run <a href="https://msdn.microsoft.com/en-us/library/ms189493(v=sql.110).aspx"><code>DBCC SHRINKFILE</code></a> to drop the size of the logs and restore a bit of memory on our box.</p>
 
-<p>Doing this first thing in the morning for multiple databases on multiple servers for multiple days in a row was terrible. So, I decided I needed to automate this. Considering I learned a bit about <a href="http://onlybluefeet.com/2015/04/12/sql-saturday-adventures/">Powershell from Mike Fal at SQL Saturday Phoenix</a>, I thought &ldquo;hey, let me take a stab at writing my first Powershell script to do this for me!!&rdquo;</p>
+<p>Doing this first thing in the morning for multiple databases on multiple servers for multiple days in a row was terrible. So, I decided I needed to automate this. Considering I learned a bit about <a href="https://www.tarynpivots.com/post/sql-saturday-adventures/">Powershell from Mike Fal at SQL Saturday Phoenix</a>, I thought &ldquo;hey, let me take a stab at writing my first Powershell script to do this for me!!&rdquo;</p>
 
 <p>To be honest, I wasn&rsquo;t exactly sure where to start so I asked Mike for a bit of help on looping through all databases on a server. He was nice enough to give me a <a href="http://pastebin.com/xNRZMGDm">starting script</a>. Using this, I attempted to incorporate my code above into it with the purpose of shrinking all log files on the server. I&rsquo;m sure there are much better ways to do this but here is my first Powershell script.</p>
 
@@ -381,7 +381,7 @@ if (!doNotTrack) {
 
 <p>This does exactly what I need it to do. I can set it up on our environments to run nightly to shrink the logs so I no longer need to manually &ldquo;fix&rdquo; stuff every day. I&rsquo;ve passed it along to our engineering services group to set this up in all of the development environments when they create them with new production copies.</p>
 
-<p>The script is available on <a href="https://github.com/onlybluefeet/posh_stuff/blob/master/Shrink_Logs.ps1">GitHub</a> if anyone is interested in using it, or tweaking it, or criticizing it, etc.</p>
+<p>The script is available on <a href="https://github.com/tarynpratt/posh_stuff/tree/master/Shrinking%20DBs">GitHub</a> if anyone is interested in using it, or tweaking it, or criticizing it, etc.</p>
 
     </div>
 
