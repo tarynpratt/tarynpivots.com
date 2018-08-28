@@ -25,7 +25,7 @@ WHERE database_id = db_id()
 
 Lastly, using the name of the log above I'd run [`DBCC SHRINKFILE`](https://msdn.microsoft.com/en-us/library/ms189493(v=sql.110).aspx) to drop the size of the logs and restore a bit of memory on our box.
 
-Doing this first thing in the morning for multiple databases on multiple servers for multiple days in a row was terrible. So, I decided I needed to automate this. Considering I learned a bit about [Powershell from Mike Fal at SQL Saturday Phoenix](http://onlybluefeet.com/2015/04/12/sql-saturday-adventures/), I thought "hey, let me take a stab at writing my first Powershell script to do this for me!!"
+Doing this first thing in the morning for multiple databases on multiple servers for multiple days in a row was terrible. So, I decided I needed to automate this. Considering I learned a bit about [Powershell from Mike Fal at SQL Saturday Phoenix](https://www.tarynpivots.com/post/sql-saturday-adventures/), I thought "hey, let me take a stab at writing my first Powershell script to do this for me!!"
 
 To be honest, I wasn't exactly sure where to start so I asked Mike for a bit of help on looping through all databases on a server. He was nice enough to give me a [starting script](http://pastebin.com/xNRZMGDm). Using this, I attempted to incorporate my code above into it with the purpose of shrinking all log files on the server. I'm sure there are much better ways to do this but here is my first Powershell script.
 
@@ -44,4 +44,4 @@ foreach($db in $dbs){
 
 This does exactly what I need it to do. I can set it up on our environments to run nightly to shrink the logs so I no longer need to manually "fix" stuff every day. I've passed it along to our engineering services group to set this up in all of the development environments when they create them with new production copies.
 
-The script is available on [GitHub](https://github.com/onlybluefeet/posh_stuff/blob/master/Shrink_Logs.ps1) if anyone is interested in using it, or tweaking it, or criticizing it, etc.
+The script is available on [GitHub](https://github.com/tarynpratt/posh_stuff/tree/master/Shrinking%20DBs) if anyone is interested in using it, or tweaking it, or criticizing it, etc.

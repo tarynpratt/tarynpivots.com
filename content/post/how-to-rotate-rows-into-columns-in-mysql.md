@@ -101,7 +101,7 @@ inner join products p
 group by r.rep_name;
 {{< / highlight >}}
 
-The conditional logic of the `CASE` expression works hand in hand with the aggregate function to only get a total of the `prod_name` that you want in each column. Since we have 3 products, then you'd write 3 `sum(case...` expressions for each column. [Here is a demo on SQL Fiddle.](http://sqlfiddle.com/#!2/40aea/4/0) This query will give a result of:
+The conditional logic of the `CASE` expression works hand in hand with the aggregate function to only get a total of the `prod_name` that you want in each column. Since we have 3 products, then you'd write 3 `sum(case...` expressions for each column. [Here is a demo on SQL Fiddle.](http://sqlfiddle.com/#!9/cbad7/12/0) This query will give a result of:
 
 | REP_NAME | SHOES | PANTS | SHIRT |
 |----------|-------|-------|-------|
@@ -126,7 +126,7 @@ inner join reps r
 group by p.prod_name;
 {{< / highlight >}}
 
-And now the data is [reversed](http://sqlfiddle.com/#!2/40aea/5):
+And now the data is [reversed](http://sqlfiddle.com/#!9/cbad7/16/0):
 
 | PROD_NAME | JOHN | SALLY | JOE | BOB |
 |-----------|------|-------|-----|-----|
@@ -156,7 +156,7 @@ inner join products p
 group by r.rep_name;
 {{< / highlight >}}
 
-You'd get the [result](http://sqlfiddle.com/#!2/40aea/6/0):
+You'd get the [result](http://sqlfiddle.com/#!9/cbad7/20/0):
 
 | REP_NAME | 2013-JANUARY | 2013-FEBRUARY | 2013-MARCH | 2013-APRIL | 2013-MAY |
 |----------|--------------|---------------|------------|------------|----------|
