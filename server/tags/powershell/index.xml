@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Powershell on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/powershell/</link>
+    <description>Recent content in Powershell on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 12 Apr 2015 18:30:08 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/powershell/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Using powershell to fix server space issues</title>
+      <link>https://tarynpivots.com/post/using-powershell-to-fix-server-space-issues/</link>
+      <pubDate>Sun, 12 Apr 2015 18:30:08 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/using-powershell-to-fix-server-space-issues/</guid>
+      <description>A few weeks ago, we were running into severe disk space and memory issues on our development servers at work. Our set-up is a bit odd, we have 3 servers - one for the transactions, one for the web interface, and the final one for reporting. Using transactional replication we have databases that can exist on all 3 servers. Yes, it&amp;rsquo;s can be a real nightmare to maintain, but anyone who works with replication already knows this.</description>
+    </item>
+    
+    <item>
+      <title>SQL Saturday Adventures</title>
+      <link>https://tarynpivots.com/post/sql-saturday-adventures/</link>
+      <pubDate>Sun, 12 Apr 2015 16:50:33 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/sql-saturday-adventures/</guid>
+      <description>A few weeks bit over a month ago, I took the plunge and attended my very first SQL Saturday, SQL Saturday #370 in Phoenix. I&amp;rsquo;ve never had a chance to go to any of the local user group events or another SQL Saturday due to scheduling issues, etc. but this year I reshuffled things so I could take part. I&amp;rsquo;m really glad that I did, I truly learned a lot of stuff and I also realized I know more than I probably give myself credit for.</description>
+    </item>
+    
+  </channel>
+</rss>

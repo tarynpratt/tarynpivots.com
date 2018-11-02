@@ -9,6 +9,7 @@
     </a>
   </div>
 
+  {{ if .Site.Params.Description}}
   <div class="logo-tagline">
     <a href="{{ "/" | relLangURL }}" >
       {{ if .Site.Params.Description }}
@@ -18,6 +19,7 @@
       {{ end }}
     </a>
   </div>
+  {{end}}
 </div>
 
 <nav class="site-navbar">

@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml-stylesheet type="text/xsl" href="https://tarynpivots.com/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://tarynpivots.com/post/pivoting-yet-again/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/ch-ch-ch-changes-are-afoot/</loc>
+    <lastmod>2015-05-22T22:49:01+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/using-powershell-to-fix-server-space-issues/</loc>
+    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/sql-saturday-adventures/</loc>
+    <lastmod>2015-04-12T16:50:33+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/how-to-rotate-rows-into-columns-in-mysql/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/did-somebody-say-pivot/</loc>
+    <lastmod>2013-08-09T00:56:29+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/late-to-the-party/</loc>
+    <lastmod>2013-04-20T02:00:44+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/about/</loc>
+    <lastmod>2013-04-20T01:36:28+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/career/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/categories/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/crosstab/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/data/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/development/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/journey/</loc>
+    <lastmod>2015-05-22T22:49:01+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/mysql/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/pivot/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/powershell/</loc>
+    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/projects/</loc>
+    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/rows-to-columns/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/sql/</loc>
+    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/sql-queries/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/sql-saturday/</loc>
+    <lastmod>2015-04-12T16:50:33+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/sql-server/</loc>
+    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/thoughts/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/transform/</loc>
+    <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/wit-panel/</loc>
+    <lastmod>2015-04-12T16:50:33+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/work-adventures/</loc>
+    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+</urlset>

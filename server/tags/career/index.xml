@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Career on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/career/</link>
+    <description>Recent content in Career on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 27 Aug 2018 15:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/career/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Pivoting yet again - New blog and domain</title>
+      <link>https://tarynpivots.com/post/pivoting-yet-again/</link>
+      <pubDate>Mon, 27 Aug 2018 15:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/pivoting-yet-again/</guid>
+      <description>Almost a year ago, in November 2017, I moved back into a more technical role at Stack Overflow and became a Database Administrator. During this time, I have wanted to relaunch my blog, as it&amp;rsquo;s been over three years since I really wrote anything (yes, I&amp;rsquo;m terrible).
+Well, that time has finally come.
+After spending a few weeks, looking at various options to replace Wordpress, I finally decided on using Hugo and Netlify.</description>
+    </item>
+    
+    <item>
+      <title>Ch Ch Ch Changes are afoot</title>
+      <link>https://tarynpivots.com/post/ch-ch-ch-changes-are-afoot/</link>
+      <pubDate>Fri, 22 May 2015 22:49:01 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/ch-ch-ch-changes-are-afoot/</guid>
+      <description>Well it&amp;rsquo;s been an interesting couple months and there are quite a few changes going on in my life, but before I get into what&amp;rsquo;s coming up, I feel that I need to give a bit of an overview of my journey thus far.
+I never thought about becoming a developer. When I was growing up, I loved school (yeah, I&amp;rsquo;m weird), I loved math and science (even weirder), I was going to be a doctor, work on genetics, or something similar.</description>
+    </item>
+    
+    <item>
+      <title>Late to the party</title>
+      <link>https://tarynpivots.com/post/late-to-the-party/</link>
+      <pubDate>Sat, 20 Apr 2013 02:00:44 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/late-to-the-party/</guid>
+      <description>Boy, I am sure behind the times with having a tech type of blog, but being late is better than never. I am going to try to use this platform to discuss some of my tech journeys while I delve into my new job as a DBA developer. I have worked on SQL Server in the past, but I will be venturing into Oracle development as well as more in depth SQL Server stuff.</description>
+    </item>
+    
+  </channel>
+</rss>
