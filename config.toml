@@ -50,10 +50,7 @@ defaultContentLanguage = "en"           # Default language to use
   name = "About"
   weight = 40
   url = "/post/about/"
-#[[menu.main]]
-#  name = "external-link"
-#  weight = 50
-#  url = "https://gohugo.io"
+
 
 
 [params]
@@ -135,7 +132,7 @@ defaultContentLanguage = "en"           # Default language to use
   [params.social]                                         
     #a-email = "mailto:your@email.com"
     b-stack-overflow = "https://stackoverflow.com/users/426671/taryn"
-    c-twitter = "https://twitter.com/onlybluefeet"
+    c-twitter = "https://twitter.com/tarynpivots"
     #d-facebook = "http://localhost:1313"
     #e-linkedin = "http://localhost:1313"
     #f-google = "http://localhost:1313"
