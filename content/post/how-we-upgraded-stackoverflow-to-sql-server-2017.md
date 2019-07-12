@@ -22,7 +22,7 @@ We have various <a href="https://docs.microsoft.com/en-us/sql/database-engine/av
 
 ![A very basic overview of our SQL Server layout](/image/2018/so-sql-server-layout.png)
 
-<h2>The Initial Plan</h2>
+## The Initial Plan
 
 With so many servers to upgrade, I needed to figure out the best path to get them done in the least amount of time, with the least amount of downtime. I started out by basically creating a spreadsheet of metadata. This spreadsheet included all the server names, the current software version (including CU/SP), the date of the last Windows Update, the team to notify before starting the maintenance, and the date the upgrade was completed. I also added a rudimentary risk level from low to high, and chose the levels based on whether the server was public, internal, dev, etc. Using this risk level, I prioritized the order in which to upgrade each server. Since all the servers hadn't been patched in months, the patching plan for the day of the upgrade was:
 
@@ -34,7 +34,7 @@ With so many servers to upgrade, I needed to figure out the best path to get the
 
 My goal was to complete all servers over the course of a month. That may sound like a long timeframe, but with only me touching them, it gave me wiggle room in the event there were issues. I started on the servers with the least amount of risk, this meant the Lab, Dev, and some of the miscellaneous servers. These aren't customer facing, and are used internally, so if something went wrong we wouldn't have public downtime. After patching ~15 servers I felt pretty confident that the upgrade of the rest would go fine...this was a mistake. 
 
-<h2>But I Followed The Plan</h2>
+## But I Followed The Plan
 
 Moving to the servers in the AGs/DAGs, I knew I would follow this order for each cluster:
 
@@ -63,7 +63,7 @@ All this left me in a state of confusion. How the heck am I going to upgrade the
 
 My plan blew up &mdash; I couldn't do the upgrade in the original order and timeframe that I wanted.
 
-<h2>Back to the Drawing Board</h2>
+## Back to the Drawing Board
 
 Since we couldn't be without both reporting servers for days, that meant I needed to come up with a new plan/timeframe to get this done. It would also need buy-in, because at some point we'd have more downtime than initially expected. 
 
