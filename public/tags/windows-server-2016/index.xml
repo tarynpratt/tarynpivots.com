@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Windows Server 2016 on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/windows-server-2016/</link>
+    <description>Recent content in Windows Server 2016 on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/windows-server-2016/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>How Stack Overflow upgraded from Windows Server 2012</title>
+      <link>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</guid>
+      <description>Warning: This post is long. While working through this massive server upgrade/migration process, tears were shed, many cuss words were said, along with a general feeling of frustration, which ultimately culminated into extreme happiness once the migration was completed. The scale and complexity of the implementation factor into the length of this post, and I’ll share my thought process on how this was executed, so here goes.
+Last year, when we upgraded to SQL Server 2017 we didn&amp;rsquo;t make any changes to the operating system on our main production servers.</description>
+    </item>
+    
+  </channel>
+</rss>

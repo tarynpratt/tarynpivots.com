@@ -6,10 +6,19 @@
     <description>Recent content in Tags on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 27 Aug 2018 15:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Availibility Group</title>
+      <link>https://tarynpivots.com/tags/availibility-group/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/availibility-group/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Career</title>
@@ -48,6 +57,24 @@
     </item>
     
     <item>
+      <title>Distributed Availability Group</title>
+      <link>https://tarynpivots.com/tags/distributed-availability-group/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/distributed-availability-group/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Failover</title>
+      <link>https://tarynpivots.com/tags/failover/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/failover/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Journey</title>
       <link>https://tarynpivots.com/tags/journey/</link>
       <pubDate>Fri, 22 May 2015 22:49:01 +0000</pubDate>
@@ -57,11 +84,29 @@
     </item>
     
     <item>
+      <title>Maintenance</title>
+      <link>https://tarynpivots.com/tags/maintenance/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/maintenance/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Mysql</title>
       <link>https://tarynpivots.com/tags/mysql/</link>
       <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/mysql/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Patching</title>
+      <link>https://tarynpivots.com/tags/patching/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/patching/</guid>
       <description></description>
     </item>
     
@@ -86,7 +131,7 @@
     <item>
       <title>Projects</title>
       <link>https://tarynpivots.com/tags/projects/</link>
-      <pubDate>Sun, 12 Apr 2015 18:30:08 +0000</pubDate>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/projects/</guid>
       <description></description>
@@ -104,7 +149,7 @@
     <item>
       <title>Sql</title>
       <link>https://tarynpivots.com/tags/sql/</link>
-      <pubDate>Sun, 12 Apr 2015 18:30:08 +0000</pubDate>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/sql/</guid>
       <description></description>
@@ -131,45 +176,18 @@
     <item>
       <title>Sql Server</title>
       <link>https://tarynpivots.com/tags/sql-server/</link>
-      <pubDate>Sun, 12 Apr 2015 18:30:08 +0000</pubDate>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/sql-server/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>Thoughts</title>
-      <link>https://tarynpivots.com/tags/thoughts/</link>
-      <pubDate>Mon, 27 Aug 2018 15:00:00 +0000</pubDate>
+      <title>Stack Overflow</title>
+      <link>https://tarynpivots.com/tags/stack-overflow/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
       
-      <guid>https://tarynpivots.com/tags/thoughts/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Transform</title>
-      <link>https://tarynpivots.com/tags/transform/</link>
-      <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/transform/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Wit Panel</title>
-      <link>https://tarynpivots.com/tags/wit-panel/</link>
-      <pubDate>Sun, 12 Apr 2015 16:50:33 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/wit-panel/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Work Adventures</title>
-      <link>https://tarynpivots.com/tags/work-adventures/</link>
-      <pubDate>Mon, 27 Aug 2018 15:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/work-adventures/</guid>
+      <guid>https://tarynpivots.com/tags/stack-overflow/</guid>
       <description></description>
     </item>
     

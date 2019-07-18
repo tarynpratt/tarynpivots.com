@@ -6,10 +6,883 @@
     <description>Recent content on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 27 Aug 2018 15:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>How Stack Overflow upgraded from Windows Server 2012</title>
+      <link>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</guid>
+      
+        <description>
+
+&lt;p&gt;&lt;strong&gt;Warning:&lt;/strong&gt; This post is long. While working through this massive server upgrade/migration process, tears were shed, many cuss words were said, along with a general feeling of frustration, which ultimately culminated into extreme happiness once the migration was completed. The scale and complexity of the implementation factor into the length of this post, and I’ll share my thought process on how this was executed, so here goes.&lt;/p&gt;
+
+&lt;p&gt;Last year, when we upgraded to &lt;a href=&#34;https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/&#34;&gt;SQL Server 2017&lt;/a&gt; we didn&amp;rsquo;t make any changes to the operating system on our main production servers. They were Windows Server 2012 (not R2), and we knew that moving to another operating system would be painful because it would involve tearing down each of the clusters, rebuilding them, and potentially having extended downtime - which we really can&amp;rsquo;t have. It sounded too difficult at the time, so it was punted&amp;hellip;again.&lt;/p&gt;
+
+&lt;p&gt;When I was mapping out  projects for 2019, at the top of my list was to move from  Windows Server 2012 and move to Windows Server 2019, because &amp;lsquo;hey, it&amp;rsquo;s 2019 let&amp;rsquo;s move away from 7 year old OS&amp;rsquo;. From the start, it was obvious this would be extremely complicated, but why not start the new year off with a crazy project that gets us in a position to move to SQL Server 2019. I had never done anything like this before, but in January, I started working out how we were going to upgrade our existing production SQL Servers from Windows 2012. And in this very long post I explain all my planning, testing, unexpected issues, and implementation of this move.&lt;/p&gt;
+
+&lt;h2 id=&#34;reasoning&#34;&gt;Reasoning&lt;/h2&gt;
+
+&lt;p&gt;My first step was to identify the benefits of migrating. I would be spending a considerable amount of time on the project, so it was important to know what we would gain from the upgrade. There were two obvious wins 1) moving away from a 7 year old operating system, and 2) it also would allow us to move to SQL Server 2019 (yay&amp;hellip; more upgrades). However, the biggest benefit we were hoping for, was an improvement with our availability group log transport throughput. Our current production clusters each have 3 nodes - 2 (primary and local secondary) in New York (actually New Jersey) and 1 (remote secondary) in Colorado - and we tend to see significant delays and non-synchronizing databases in Colorado. Upgrading from 2012 to Windows 2016+ would get us gains in performance, and hopefully reduce some of our syncing issues. For me, that would be a huge plus, as I wanted to avoid seeing stuff like this repeatedly during the week:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/notsyncing.jpg&#34; alt=&#34;Not Synchronizing databases&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;phase-1-lab-testing-all-the-things&#34;&gt;Phase 1: Lab Testing&amp;hellip;All The Things&lt;/h2&gt;
+
+&lt;p&gt;I&amp;rsquo;m incredibly lucky to have a lab environment to play with. At the start of this project, I had two lab Windows Server Failover Clusters (&lt;a href=&#34;https://docs.microsoft.com/en-us/windows-server/failover-clustering/failover-clustering-overview&#34;&gt;WSFC&lt;/a&gt;) - each with 2 nodes that were running Windows Server 2016, SQL Server 2017, and each cluster had availability groups (AG), as well as a distributed availability group (DAG) between the two clusters. Since I didn&amp;rsquo;t want to destroy these clusters for the test, I needed to create new servers for testing.&lt;/p&gt;
+
+&lt;p&gt;My goal was to replicate our production set-up on a much smaller scale. From there, I’d  work through different scenarios to get to the final desired result. The 2012 production clusters looked like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/2012cluster.jpg&#34; alt=&#34;Stack Overflow Windows 2012 Clusters&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Production had two WSFCs running Windows Server 2012, each with 3 nodes. Both clusters have at least one availability group, as well as one distributed availability group going to a reporting cluster. Once this project was complete, the new clusters would look the same, however, these would have a new OS, new cluster names, and when finished, the primary SQL Server in each availability group would be the current NY Secondary.&lt;/p&gt;
+
+&lt;p&gt;In order to properly test, I needed 3 servers running Windows Server 2012. Well, guess what? We didn&amp;rsquo;t even have a way to install Windows Server 2012, and no longer had an image of the software. This left me hunting for a copy of it. Eventually I got one, but then our deployment process needed to be setup to work with 7 year old software. Once all those bits were in place, I was able to &lt;a href=&#34;https://twitter.com/tarynpivots/status/1083158959937093632&#34;&gt;spin up my 3 servers to test with&lt;/a&gt;. At this point, I had a new 2012 cluster with 3 nodes (2 in NY, 1 in CO). All were running SQL Server 2017 with 2 availability groups, one AG that was limited to this cluster, and a second AG that was modeled after one in a distributed availability group.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-will-this-even-work-test&#34;&gt;The &amp;lsquo;Will This Even Work&amp;rsquo; Test&lt;/h3&gt;
+
+&lt;p&gt;Before I started breaking this new test cluster, we had the idea of creating another server with Windows Server 2019 to see if it would work with the new lab cluster - basically, a test to see if the data would sync. I spun up another new server; this time it was on a fancy new operating system, Windows Server 2019, with SQL Server 2017 and was all ready to start testing. The goal was to insert the 2019 server into the mix with 2012, so it would receive data from the old server cluster. I wanted it to look like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/Lab2012Cluster_2019.png&#34; alt=&#34;Lab Cluster - single 2019 server&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Considering I had no idea what I was doing, I tried many things to get this to work. I even tried things I knew wouldn&amp;rsquo;t work just to cross it off the list of things tested. Here&amp;rsquo;s a brief list of some of the things I tried:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Putting the 2019 server into the existing 2012 cluster - as expected, this fails due to the operating systems being different&lt;/li&gt;
+&lt;li&gt;Attempted to just add it to the existing AGs when not being in a cluster - this fails because it&amp;rsquo;s not in a cluster&lt;/li&gt;
+&lt;li&gt;Created a separate single node cluster for the 2019 server and attempted to add as a replica to the AGs - this fails as well&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://twitter.com/tarynpivots/status/1088158572486090752&#34;&gt;None of these things worked.&lt;/a&gt; I was beginning to wonder how we were going to do this. My next test was to create a new distributed availability group for each existing availability group, using that as a way to insert the 2019 server into the mix. I finally hit on something that worked for the single server. After creating a new DAG between the 2012 and 2019 cluster, I had data syncing between two clusters on different operating systems. I was ecstatic to get this to work with one server, but how would I do this with the 3 servers in a single cluster, with all the AGs and distributed AGs already in play?&lt;/p&gt;
+
+&lt;h3 id=&#34;the-mock-up-production-test&#34;&gt;The Mock-up Production Test&lt;/h3&gt;
+
+&lt;p&gt;Once I knew I could have clusters with different operating systems, synchronizing data via distributed AGs, I needed to attempt this with the new 2012 lab cluster. Since it was already working as a stand-alone cluster with SQL Server running, I wanted to set up a test that was as close as possible to what we have in production. I needed a replica of our reporting cluster. A bell went off in my head, ‘Ding! Ding!’ I had an existing 2016 cluster in my original lab environment - that would be perfect to use for this.&lt;/p&gt;
+
+&lt;p&gt;My plan of attack for this test was to first setup a DAG between the 2012 cluster and the original lab cluster running on 2016. This would be similar to what we had in production at the time. Basically we&amp;rsquo;d have the following:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/Lab2012_2016Cluster.png&#34; alt=&#34;Lab Cluster - 2012 to 2016&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;When that was setup and synchronizing, I had a decent, albeit, small version of our production setup. It was now time to start breaking things. My thinking was to start with the NY secondary server and perform the following steps:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Evict it from the existing 2012 cluster&lt;/li&gt;
+&lt;li&gt;Rebuild it with the Windows Server 2019&lt;/li&gt;
+&lt;li&gt;Create a new WSFC with one node&lt;/li&gt;
+&lt;li&gt;Install SQL Server 2017&lt;/li&gt;
+&lt;li&gt;Finally, create new distributed AGs from the old cluster to the new one to sync the databases with that AG&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;My next step was to do the same thing with the CO secondary in the 2012 cluster. The difference being, it could just be added as a node to the new WSFC, and as a replica to the AGs in the new cluster. At this point in the process, I&amp;rsquo;d have the old 2012 cluster with a single server sending data to two clusters - the mocked up 2016 reporting cluster and the new 2019 cluster. Visually it&amp;rsquo;d look like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/Lab2012_2016_2019cluster.png&#34; alt=&#34;Lab Cluster - 2012 to 2016 and 2019&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Before upgrading the last 2012 server, I would need to perform a failover of the distributed AGs from the 2012 cluster to the new 2019 cluster. In looking at this, there was one glaring problem&amp;hellip;the reporting cluster. If I performed a failover of the distributed AGs to the new 2019 cluster, the reporting cluster would stop getting data. I saw there were two options:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Perform the failover and let the reporting cluster fall out of sync until I could get it everything back in place&lt;/li&gt;
+&lt;li&gt;Move the reporting cluster and it&amp;rsquo;s distributed AGs to the receive data before I failed over to the new 2019 cluster and &amp;ldquo;hope&amp;rdquo; things just starting syncing again.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Either way, the databases on the reporting cluster were going to fall out of sync, so I chose the first option for the lab.&lt;/p&gt;
+
+&lt;p&gt;Now that the decision was made, it was easy peasy to finish the move in the lab. There was only one server left in the old cluster, so my steps were to failover the distributed AGs to the new 2019 cluster (yes, I tested failing back just in case), destroy the 2012 cluster, rebuild the server with Windows 2019, add it to the 2019 WSFC, install SQL Server, and add it as a replica to all the AGs. Yay, everything was done! What’s left was just a bit of clean-up of the reporting cluster distributed AGs, and then I was ready to move to production with the plan.&lt;/p&gt;
+
+&lt;p&gt;I spent the next week writing up all the steps to move to production. There were a lot of moving pieces for production. I had to move the following:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;2 WSFC&lt;/li&gt;
+&lt;li&gt;6 servers with new OS, fresh SQL Server installs&lt;/li&gt;
+&lt;li&gt;5 availability groups with a total of about 385 databases&lt;/li&gt;
+&lt;li&gt;5 AGs means 5 temporary distributed AGs to help with the move&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This also meant we needed new IP addresses for the clusters, AG listeners, as well as new names for the clusters, AGs, distributed AGs, and listeners. During my testing I discovered that you can&amp;rsquo;t use the same names for these objects, even when they’re on different servers, which resulted in a lot of legwork to get prepped for the move to production, but I was ready&amp;hellip;or so I thought.&lt;/p&gt;
+
+&lt;h2 id=&#34;phase-2-the-part-where-i-broke-dev&#34;&gt;Phase 2: The Part Where I Broke Dev&lt;/h2&gt;
+
+&lt;p&gt;Pretty much the entire month of January, I tested and worked through how this would  be done in production. I originally targeted February to start the production servers. I was wrong.&lt;/p&gt;
+
+&lt;p&gt;During the final stages of review, a suggestion was made to test an upgrade to Windows Server 2019 on a few development servers, to ensure we wouldn’t hit any hiccups with the OS when it went to production. Our main development servers for Core Q&amp;amp;A have the same hardware and set-up as production, but don&amp;rsquo;t run any AGs - the servers only have copies of the databases for development. In testing the OS against these servers, we’d be able to perform some load testing, and I could make sure our deployment process of the OS would work.&lt;/p&gt;
+
+&lt;p&gt;I picked three servers to test against - two VMs and one physical server. We use &lt;a href=&#34;https://theforeman.org/&#34;&gt;Foreman&lt;/a&gt; to automatically (re)build servers, which made the process relatively painless to deploy and rebuild servers. Since Windows Server 2019 had never been deployed, it wasn&amp;rsquo;t setup in Foreman. This meant I had to upgrade the servers by hand, as an in-place upgrade - this was done on the two VMs. Aside from some minor issues, everything went according to plan. The OS deployed just fine, and I easily reinstalled SQL Server across the board. The servers were back up and running within a few hours.&lt;/p&gt;
+
+&lt;p&gt;Next, it was time to deploy Windows Server 2019 to a physical server. That&amp;rsquo;s when everything went off the rails.&lt;/p&gt;
+
+&lt;p&gt;As I mentioned, our main dev servers have similar hardware to our production servers, which means we have a drive for the OS, a data drive for SQL with NVMe/PCIe, and possibly a third drive with spinny disks. The physical server I tested the upgrade against had all three drives. I kicked off the rebuild, and about two hours into the process the dreaded blue screen of death hit:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/BSOD.jpg&#34; alt=&#34;BSOD&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Very quickly, we spotted the issue. The NVMe drivers didn&amp;rsquo;t work for Windows Server 2019. Oh crap. Thankfully, I have awesome teammates who jumped into a hangout and helped debug. After discussing, we attempted to upgrade the driver to the new one, and, of course, that bombed. Then one of the NVMe drives looked like it failed. After some poking, the &amp;ldquo;failed&amp;rdquo; drive came back online and we were able to get the server back to its 2016 state pre-upgrade attempt.&lt;/p&gt;
+
+&lt;p&gt;Now what?&lt;/p&gt;
+
+&lt;p&gt;We still wanted to move to 2019, but the new driver wasn&amp;rsquo;t working with our NVMe RAID, which meant time to contact both Dell and Intel. With their help, we might be able to get the correct drivers and software to work with our drives and the NVMe RAID. Eventually, we got the necessary bits and had the new drivers in place with software that recognized our RAID. Next, it was time to test another 2019 deployment. After two hours into rebuild #2, I was staring at a 45% completion:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/2hUpdates.jpg&#34; alt=&#34;Upgrade Progress&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I tried not to worry and went on to other tasks. At hour 6 of being stuck at 45%, I was concerned. Even though this deployment hadn&amp;rsquo;t finished, it was obviously stuck, so we decided to attempt another fresh rebuild&amp;hellip;#3.&lt;/p&gt;
+
+&lt;p&gt;When rebuild 3 began, everything seemed to be going ok.  Once up and rebooted, we  were back to a 2016 Windows Server. WTH?!?! This time we also had a freshly formatted 2TB NVMe partition&amp;hellip;meaning all of our SQL data on the NVMe drives was gone. We decided to try once more, this time disabling the PCIe slots in the BIOS and trying another fresh rebuild - this time #4.&lt;/p&gt;
+
+&lt;p&gt;Our confidence level in moving to Windows Server 2019 was quickly dropping, but we wanted to see if we could get it to work. Our 4th rebuild, finally got 2019 installed on the server, but we hit another issue. When the PCIe slots were re-enabled, we only had 2 disks show up in the RSTe manager and in disk management on the server, but everything was showing in the Device Manager.&lt;/p&gt;
+
+&lt;p&gt;Ugh, why are they not matching? There were so many weird problems with this server.&lt;/p&gt;
+
+&lt;p&gt;The next step was to send someone to the data center to physically unplug &amp;amp; drain the power from the box to see if the issues with the PCIe slots would sort itself out - we have done this in the past and it worked. Unfortunately, our trick of draining power didn&amp;rsquo;t work. We still only had two disks show up&amp;hellip;&lt;em&gt;sigh&lt;/em&gt;.  That means time for another rebuild.&lt;/p&gt;
+
+&lt;p&gt;This time we were going to try to rebuild the server to 2016 with the old drivers for the SSDs to see if we could at least get it back to the state it was before the upgrade to 2019. The hope was that if we rolled back the driver, the PCIe slots might come back to life and the drives would miraculously work again. Off to rebuild #5.&lt;/p&gt;
+
+&lt;p&gt;After fighting with the server to use the older drivers, I finally got them installed and kicked off another rebuild. Unfortunately, this time we had a failure because the deployment failed to join the server to the domain and we couldn&amp;rsquo;t login to the server&amp;hellip;seriously, the server was possessed.&lt;/p&gt;
+
+&lt;p&gt;Yay, another rebuild (#6) to try to get it on the domain, with Windows Server 2016, and old drivers so the SSDs work. Guess what? This failed again, due to issues joining the domain. Again, my teammates rescued me and got into a hangout to beat the server into submission and get it joined to the network. Once it was finally joined to the domain, there was another freaking issue.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/rebuild7.png&#34; alt=&#34;Rebuild 7 Failure&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It was getting ridiculous with this server. I found a way to &lt;a href=&#34;https://www.thewindowsclub.com/computer-restarted-unexpectedly-encountered-unexpected-error&#34;&gt;hack it back into submission&lt;/a&gt; because at this point anything was worth trying. The OS finally installed, but we had two very dead SSDs. They were showing up as 0GB. We tried upgrading firmware&amp;hellip;nothing worked. The drives were dead. It was time to open a ticket with Intel since the drives were still under warranty. It was now a waiting game, until Intel confirmed the drives were fried.&lt;/p&gt;
+
+&lt;p&gt;While we were waiting for new drives from Intel, my teammate, &lt;a href=&#34;https://twitter.com/thefarseeker&#34;&gt;Mark Henderson&lt;/a&gt;, spent time fixing up our Foreman deployment to work with 2019 and to bypass the NVMe drives when installing an OS. You know what that means&amp;hellip;more rebuilds. Actually 3 more - one to 2016, one to 2019, and then one back to 2016 for a total of 9 rebuilds of Windows (so far) on a single server.&lt;/p&gt;
+
+&lt;p&gt;You might be wondering why we went back to 2016 after we finally successfully installed 2019?&lt;/p&gt;
+
+&lt;p&gt;This was done because our confidence level in using 2019 with our SSDs was pretty much gone. Intel no longer makes the drivers public, and referred us to Dell, and then Dell sent us back to Intel - it was a back and forth game - which wasn’t a good position to be in for production. Combined with multiple failures and dead SSDs, we didn’t feel comfortable moving forward with Windows Server 2019 on our production servers. We couldn’t risk killing our SSDs due to the install. We knew that 2016 worked with them because Dev had been using it for years, and we&amp;rsquo;d get the benefits of moving off of Windows Server 2012, so we made the decision to skip Windows Server 2019 at this time.&lt;/p&gt;
+
+&lt;p&gt;About 2 weeks later, we finally had new SSDs. It was now time to get them installed and test the deployment process again. Here we go with rebuild #10. Time to hopefully get a clean install of Windows Server 2016 - I spoke too soon. The rebuild failed. No, I&amp;rsquo;m really not joking.&lt;/p&gt;
+
+&lt;p&gt;On top of using Foreman, we use &lt;a href=&#34;https://puppet.com/&#34;&gt;Puppet&lt;/a&gt; to get our servers in a desired state - the failure this time appeared to be due to a Puppet issue, but there was, of course, nothing in the error log that pointed to the issue. We had yet another failure, and we wanted one clean install on this server, meaning no issues whatsoever. That meant another rebuild to see if we could get an install with zero errors. This server wasn&amp;rsquo;t quite ready to be nice, we hit various issues with the install process and it took 4 more times before we had a clean build of the server for a total of 14 times!! After all the issues, we finally had a dev server almost back to its original state - Windows Server 2016, now it just needed SQL Server and that&amp;rsquo;s super easy to install, right?&lt;/p&gt;
+
+&lt;p&gt;I moved on to installing SQL Server 2017 again, and since this server was terrible on every level we ran into more issues. I have a couple of PowerShell scripts that I use to install SQL Server which work all the time, except on this server. There were errors installing the SqlServer module, then there were really odd issues with SPNs for the server not being tied to the proper account and the server was associated to me - it really was cursed. After a ton of more issues (you really don&amp;rsquo;t want details on everything), we finally had a dev server back in place. All databases were restored, and things were working again.&lt;/p&gt;
+
+&lt;p&gt;Now what? Well, we had another dev server to test this against, this time our NY dev server. We decided to try a clean install against that server, but first we spent about a week trying to fix all of the weird issues we were hitting with the CO dev server&amp;hellip;yes, that means more rebuilds. Once everything was working without issue, it was time to move to NY Dev. Our NY Dev server is critical path for pushes to production, so that rebuild involved a bit of juggling, but eventually I was able to rebuild it and yay, there were no issues with SSDs or really anything else that would be a blocker for moving to production.&lt;/p&gt;
+
+&lt;p&gt;By the time I finally got done with NY Dev, it was about 2 weeks into April, that means it was over two months of working through all the issues with the development deploys. I was totally ready to move this project along and touch production.&lt;/p&gt;
+
+&lt;h2 id=&#34;phase-3-it-s-time-for-production&#34;&gt;Phase 3: It&amp;rsquo;s Time For Production&lt;/h2&gt;
+
+&lt;p&gt;It was now into April, and I thought this was going to be finished in February, so you could say I was extremely anxious to finish this project and move on to other things. Since our development environment was finally done and it appeared that our deployment process was working, I revisited the plan I wrote in January for our production environment.&lt;/p&gt;
+
+&lt;p&gt;I opened the Google Doc that I initially wrote and started expanding it into a very detailed plan on the deployment process. I spent several days writing out each step for every server we would be moving around. I tried to include everything I could think of. The step for each server even had the code that would be executed on it. This was probably the most detailed plan I had ever written, I attempted to cover everything I would think of. &lt;a href=&#34;https://twitter.com/Nick_Craver&#34;&gt;Nick Craver&lt;/a&gt;, then added more details because the connection strings for each application would be changing due to moving to new listeners.&lt;/p&gt;
+
+&lt;p&gt;I was ready to go. We were ready to go. The runbook had about &lt;a href=&#34;https://twitter.com/tarynpivots/status/1116831409681756160&#34;&gt;35 pages of notes and code to execute&lt;/a&gt; in the entire plan.&lt;/p&gt;
+
+&lt;p&gt;Every server had a detailed list of steps including obvious things to more complicated pieces. Inside of the document, you could look up any server and find a list similar to this:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Server Name (Date)&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Stop Transaction Log backups on primary&lt;/li&gt;
+&lt;li&gt;Remove read-only routing from the AGs (this is done on the primary) - including code snippet to run on the primary&lt;/li&gt;
+&lt;li&gt;Flush connections in the app&lt;/li&gt;
+&lt;li&gt;Disable full backups on primary&lt;/li&gt;
+&lt;li&gt;Remove server from the existing AGs on primary&lt;/li&gt;
+&lt;li&gt;Evict server from current cluster&lt;/li&gt;
+&lt;li&gt;Setup server in Foreman for 2016 deployment, kick off the rebuild&lt;/li&gt;
+&lt;li&gt;Make sure puppet is up and running after the rebuild&lt;/li&gt;
+&lt;li&gt;Once done rebuilding, add Failover Cluster role to the server (this forces a reboot)&lt;/li&gt;
+&lt;li&gt;Create new WSFC (only on the first server in the cluster)&lt;/li&gt;
+&lt;li&gt;Once the Cluster Object is created in AD, then move it, if needed, to the proper Cluster Objects OU&lt;/li&gt;
+&lt;li&gt;After cluster creation, verify the IP addresses are correct and edit them, as needed&lt;/li&gt;
+&lt;li&gt;Make sure the WFSC cluster object has permissions to create/delete computer objects in AD&lt;/li&gt;
+&lt;li&gt;Install Dell NVMe tools&lt;/li&gt;
+&lt;li&gt;Install SQL Server &amp;ndash; if the tempdb is still located on D:\Data - delete all the files first&lt;/li&gt;
+&lt;li&gt;Turn on trace flags &amp;ndash; restart SQL service&lt;/li&gt;
+&lt;li&gt;Execute scripts to add logins / users / stored procs / linked server&lt;/li&gt;
+&lt;li&gt;Create New AGs&lt;/li&gt;
+&lt;li&gt;For each AG create new temporary distributed AG aka the TAG (our temporary distributed availability group for the migration) - created on the current primary and then the secondary&lt;/li&gt;
+&lt;li&gt;At this point everything should be syncing to the newly built server, and it’s a single server on its own cluster&lt;/li&gt;
+&lt;li&gt;Re-create sql jobs&lt;/li&gt;
+&lt;li&gt;Disable backup jobs for user databases&lt;/li&gt;
+&lt;li&gt;Re-enable backup jobs on primary server in old cluster&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;While the steps were different for each server, this was basically what I needed to do. By the end of Wednesday, April 17th, 2019, if we were lucky I&amp;rsquo;d have moved 3 servers to the new clusters, and would have SQL Server installed with everything syncing as I tested. The goal by the end of Day 3 was to have things looks a bit like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/Day3Goal.jpg&#34; alt=&#34;Goal by Day 3&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I &lt;a href=&#34;https://meta.stackexchange.com/revisions/326718/3&#34;&gt;announced&lt;/a&gt; we were going to start on &lt;a href=&#34;https://twitter.com/Nick_Craver/status/1116445650453966857&#34;&gt;Monday, April 15th&lt;/a&gt; and finish the following week. I felt pretty confident that we were ready for production. There was absolutely no way we&amp;rsquo;d have issues like we did on the development servers, right? Wrong. Oh did we ever hit unexpected issues.&lt;/p&gt;
+
+&lt;h3 id=&#34;day-1&#34;&gt;Day 1&lt;/h3&gt;
+
+&lt;p&gt;The very &lt;a href=&#34;https://twitter.com/tarynpivots/status/1117724066884931584&#34;&gt;early morning of April 15th rolled around&lt;/a&gt;, and I kicked off the plan for the very first server, NY-SQL03, the NY secondary in the SE cluster. Everything went according to plan, Windows installed, SQL Server installed, new cluster set-up - all 4 temporary distributed availability groups (aka our TAGs) were in place. We had all databases syncing and reporting green in Opserver at the end of the end. Day 1 done, so far, so good - one server down, 5 more to go.&lt;/p&gt;
+
+&lt;h3 id=&#34;day-2&#34;&gt;Day 2&lt;/h3&gt;
+
+&lt;p&gt;The day started just as early because if things went well, I was going to tackle two servers, NY-SQL01, the NY secondary in the SO cluster, as well as CO-SQL03, our Colorado remote secondary in the SE cluster. I kicked off the rebuild on both servers, and NY-SQL01 was back in working order within a few hours with everything syncing as we expected. The other server, CO-SQL03, was another story.&lt;/p&gt;
+
+&lt;p&gt;While CO-SQL03 was rebuilding, I started to notice some weirdness&amp;hellip;yes, weirdness (that&amp;rsquo;s a technical term, right?) with the server I rebuilt the day before - NY-SQL03. As a quick reminder, this server was currently the only node in the new 2016 cluster. It had about 375 databases which were in 4 availability groups, and 4 distributed availability groups - the distributed AGs were being used to keep the data in sync between the old 2012 cluster and the new cluster. The breakdown of number of databases per AG was:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AG-NYOnly&lt;/code&gt; - 6 databases syncing via distributed AG - &lt;code&gt;NYOnly_TAG&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AG-Misc&lt;/code&gt; - 10 databases syncing via distributed AG - &lt;code&gt;Misc_TAG&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AG-Chat&lt;/code&gt; - 3 databases syncing via distributed AG - &lt;code&gt;Chat_TAG&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AG-SENetwork&lt;/code&gt; - 354 databases syncing via distributed AG - &lt;code&gt;SENetwork_TAG&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now, that you&amp;rsquo;ve had a reminder of what we had on the server, let me explain what I meant by &amp;ldquo;weirdness&amp;rdquo;. One of the primary ways we monitor our servers is through &lt;a href=&#34;https://github.com/opserver/Opserver&#34;&gt;Opserver&lt;/a&gt;. After hours of what appeared to be databases syncing without any issues I started to notice that we were hitting blocking when trying to get the status of the availability groups and databases when querying the DMVs as Opserver does. And not just a little bit of blocking. This was significant blocking on everything. We couldn&amp;rsquo;t get any details in SSMS on the databases or availability groups. If you attempted to open any details in SSMS (AGs, databases), it would lock your session and you&amp;rsquo;d have to kill it in Task Manager.&lt;/p&gt;
+
+&lt;p&gt;Everything we tried to get the state of the AGs was locking up, even &lt;a href=&#34;https://twitter.com/Nick_Craver/status/1118316671721250816&#34;&gt;directly querying the DMVs in SSMS&lt;/a&gt;. We were seeing tons of &lt;a href=&#34;https://www.sqlskills.com/help/waits/hadr_ag_mutex/&#34;&gt;HADR_AG_MUTEX&lt;/a&gt; waits:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/HADR_blocking.png&#34; alt=&#34;Waits NY-SQL03&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In addition to the locking, we noticed a lot of inconsistencies in what was being returned via the queries. One minute it looked like the availability groups were fine, the next it was in a not-synchronizing state. We realized that we couldn&amp;rsquo;t trust the state of the AGs on the server. After hours of looking at this and trying to debug, I decided to drop our temporary distributed AGs, the TAGs, to see if rebuilding them would work because nothing else was working at this point.&lt;/p&gt;
+
+&lt;p&gt;I started recreating some of the TAGs to see if things would sync, as I created each one, they would start to sync, but we were still hitting significant waits and locking.&lt;/p&gt;
+
+&lt;p&gt;We tried restarting the SQL Server service. We tried stopping the availability groups in the WSFC. We were seeing errors in the logs that the AGs were in a failed state, we couldn&amp;rsquo;t query the DMVs, we didn&amp;rsquo;t have any idea what was happening. It looked like the 2 distributed AGs that were small were working, even though checking their health was very slow.&lt;/p&gt;
+
+&lt;p&gt;It was time to try to recreate the &lt;code&gt;SENetwork_TAG&lt;/code&gt;, the one with the 354 databases. Early on in this process, we stopped Transaction Log backups and Daily Backups, so we had a couple of options:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatic-seeding-secondary-replicas?view=sql-server-2017&#34;&gt;Autoseed the databases&lt;/a&gt; as you can with availability groups&lt;/li&gt;
+&lt;li&gt;Use the old backup of the SE Network databases (the one from before we started the migration process), and restore it to the NY-SQL03 server, letting it get caught up with the AG syncing&lt;/li&gt;
+&lt;li&gt;Take a new backup of the databases in the AG, restore it to NY-SQL03 again, and then join it to the AG to let things start syncing.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Considering the slow querying of the DMVs and the AG health, we went with number 3. I took a recent backup of the database from the primary server in the old cluster and restored it to the new server with &lt;code&gt;NORECOVERY&lt;/code&gt;. The thinking was that this would prevent overloading the server by automatically trying to seed 354 the databases all at once. Once all the databases were restored, we would execute the following on each one:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;DATABASE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;database_name&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;SET&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;HADR&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Availability&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;Group&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;AG&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;SENetwork&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;];&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Problem was, this was really slow. Doing this for each database was taking a &lt;a href=&#34;https://twitter.com/tarynpivots/status/1119303103466000385&#34;&gt;couple of minutes per database&lt;/a&gt; and we have 354 of them. The waits we were hitting were downright unbelievable:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/wait_stats.jpg&#34; alt=&#34;Wait stats&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The amount of time to execute the command against each database exponentially increased as we were adding more and more databases. It was going to take hours to get through them all. It was super late in the day, and Nick and I had been debugging and working in a hangout for many, many hours. Nick quickly wrote a script to loop through all of the databases in the &lt;code&gt;SENetwork_AG&lt;/code&gt; and execute the SQL above. This automated the process which allowed it to run overnight, and more importantly allowed us to step away from our desks after far too many hours.  We hoped everything would be in the AGs in the morning, so we could debug some of the issues we were seeing and potentially move forward with the upgrades.&lt;/p&gt;
+
+&lt;h3 id=&#34;days-3-7&#34;&gt;Days 3-7&lt;/h3&gt;
+
+&lt;p&gt;Yes, that really says Days.&lt;/p&gt;
+
+&lt;p&gt;The script eventually finished and we had all databases in the AG, however, we were still seeing tons of waits. I was chatting with some of the users on our &lt;a href=&#34;https://dba.stackexchange.com/&#34;&gt;Database Administrators Stack Exchange&lt;/a&gt; site, and there were suggestions to &lt;a href=&#34;https://www.sqlskills.com/help/waits/parallel_redo_flow_control/&#34;&gt;disable parallel redo&lt;/a&gt; on the server, as well as other things. We tried everything we could think of, and still didn&amp;rsquo;t know if things were syncing because we couldn&amp;rsquo;t get an accurate read from the DMVs or get passed the waits. Since nothing was working, it was time to open a ticket with Microsoft. Our ticket was opened, the server was creating plenty of mini-dumps that went sent along with memory dumps, and now it was time to wait for help.&lt;/p&gt;
+
+&lt;p&gt;A quick aside: while waiting for things to get moving with Microsoft, we attempted to get CO-SQL03 back in a good state. We take local &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/copy-only-backups-sql-server?view=sql-server-2017&#34;&gt;copy-only&lt;/a&gt; backups in Colorado, so we don&amp;rsquo;t have to deal with trying to move terabytes of datafiles from NY to CO in the event of an issue. All of that typically is fine, but due to the issues, we ended up being down for far longer than expected. This meant our backups in CO were very far behind the current state of things in production. In order to get CO-SQL03 in working order, we needed to copy all of the database backups from NY to CO, which was going to take a really, really long time. Good thing we weren&amp;rsquo;t in a hurry, huh? We kicked off a process to copy the current backups from NY and get them moved to CO. With &lt;a href=&#34;https://twitter.com/shanemadden&#34;&gt;Shane Madden&lt;/a&gt; and Nick Craver’s quick thinking, we copied all of the files in less than a day. Now that we had good backups, I restored all of the databases in &lt;code&gt;NORECOVERY&lt;/code&gt; so they would be ready whenever NY-SQL03 box was back up and running.&lt;/p&gt;
+
+&lt;p&gt;Our Microsoft ticket was forwarded and we began working with one of our DBA.SE users who happens to work for Microsoft, &lt;a href=&#34;https://dba.stackexchange.com/users/41723/sean-gallardy&#34;&gt;Sean Gallardy&lt;/a&gt;. At this point, it was time to go back to the regularly scheduled painful upgrade process. Based on the memory dumps, one of the first things Sean suggested was to make sure that auto-seeding of the databases in the &lt;code&gt;SENetwork_TAG&lt;/code&gt; was disabled, so we executed:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;SENetwork_TAG&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;MODIFY&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;REPLICA&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;NY-SQL03&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;While this prevented the databases from automatically being seeded, it didn’t resolve our issue. We were still failing to sync databases on the new cluster, and we were dropping mini-dumps like crazy on NY-SQL03. It was back to the drawing board with ideas to fix all the things. Nick and I got onto a really long hangout with Sean (thanks Sean), to debug and work through various ways to fix the problem. Eventually, Sean suggested that we try the following:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Destroy the temporary distributed availability group (TAG) for the &lt;code&gt;SENetwork&lt;/code&gt;, since that was our problem child&lt;/li&gt;
+&lt;li&gt;Destroy the availability group on the new cluster&lt;/li&gt;
+&lt;li&gt;Manually restore the databases to both NY-SQL03 and CO-SQL03 in a restoring state&lt;/li&gt;
+&lt;li&gt;Recreate the temporary distributed availability group for the &lt;code&gt;SENetwork&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Add each database to the availability groups on both NY-SQL03 and CO-SQL03 very slowly so they could sync&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;That&amp;rsquo;s what we did. Another really slow process, and when I say slow I mean &lt;a href=&#34;https://twitter.com/tarynpivots/status/1119407499453452288&#34;&gt;2-4 databases at a time&lt;/a&gt; - and we had 354 to add, so it was painfully slow, but it worked.&lt;/p&gt;
+
+&lt;p&gt;We were hitting a &lt;a href=&#34;https://support.microsoft.com/en-us/help/4501797/fix-data-movement-to-dag-forwarder-does-not-resume-automatically-after&#34;&gt;bug with SQL Server&lt;/a&gt;. The bug had to do with distributed availability groups that had more than 15 databases and, of course, we had that. Our &lt;a href=&#34;https://twitter.com/tarynpivots/status/1119576626272980997&#34;&gt;distributed availability group contained 354 databases&lt;/a&gt; and it couldn&amp;rsquo;t handle that many, resulting in it timing out. We got a workaround by following the steps above were able to move forward.&lt;/p&gt;
+
+&lt;p&gt;By the end of the week we had &lt;a href=&#34;https://twitter.com/tarynpivots/status/1119430961010135041&#34;&gt;two new clusters up and receiving data from the old 2012 clusters&lt;/a&gt;. It was now time to finish moving pieces around so we could perform the failover of the temporary distributed availability groups. Even though we lost several days working through bugs, we were in a better, more stable state and could plan the date of the failover - if everything else went according to plan, it would be in just a &lt;a href=&#34;https://twitter.com/tarynpivots/status/1120152909331566595&#34;&gt;few days&lt;/a&gt;. To help visualize where we were at the end of this week, our servers were in this state:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/EndofWeek1.jpg&#34; alt=&#34;Week 1 State of Servers&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After a pretty quiet weekend, only a few minor hiccups with data syncing, we were ready to pick up and go full steam ahead to wrap things up.&lt;/p&gt;
+
+&lt;h3 id=&#34;day-8&#34;&gt;Day 8&lt;/h3&gt;
+
+&lt;p&gt;Monday morning rolled around and there were &lt;a href=&#34;https://twitter.com/tarynpivots/status/1120335610307235841&#34;&gt;3 servers left and one huge failover&lt;/a&gt; to do. Surely, we had hit all of the bugs and it was going to be a clear path to the finish line, right?&lt;/p&gt;
+
+&lt;p&gt;I started the day by evicting CO-SQL01 from its old cluster and kicking off the rebuild process. Ugh, and I hit some issues. The automated process, Foreman, didn&amp;rsquo;t want to work without some poking and prodding to get it moving, then the server didn&amp;rsquo;t want to find the Windows Updates it needed, but eventually the rebuild finished. I was able to install SQL Server, restore backups in a &lt;code&gt;NORECOVERY&lt;/code&gt; state, apply all the transaction logs to bring it up to current state, and just like that, we had syncing data.&lt;/p&gt;
+
+&lt;p&gt;We finally had 4 servers in the new clusters, and they were reporting green everywhere.&lt;/p&gt;
+
+&lt;h3 id=&#34;day-9-failover-day&#34;&gt;Day 9 - Failover Day&lt;/h3&gt;
+
+&lt;p&gt;The big day was here. It was time to perform the failover of 5 temporary distributed availability groups, with hopefully very little downtime. I previously tested the whole process in the lab, but had never done this in production. And considering all the problems we hit up to now, I was feeling just a &lt;a href=&#34;https://twitter.com/tarynpivots/status/1120809488011780096&#34;&gt;wee bit stressed out&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The morning of the failover, we spent time going over the steps that would be executed that night. We wanted to make sure that we had accounted for all of the application side changes that were needed as well. The complexity of this whole thing wasn&amp;rsquo;t limited to just failing over the SQL Servers.  We also needed to rebuild and push out new versions of all of our applications and services due to changes to the connection strings.&lt;/p&gt;
+
+&lt;p&gt;You might be wondering why we needed to do that? All of our application connection strings point to global listeners and since we had new clusters with new AGs/distributed AGs - they all needed to be created with new listeners (IP Addresses) and new names. This means that prior to the failover, the applications were pointing to the old listeners. In order for them to work when we failed over, the apps needed to be rebuilt to production to point to the new listeners.&lt;/p&gt;
+
+&lt;p&gt;We also needed to be very deliberate about the order of things on the failover day.&lt;/p&gt;
+
+&lt;p&gt;The first thing we considered were exceptions. We have a database called &lt;code&gt;NY.Exceptions&lt;/code&gt; which we use to capture errors that occur throughout the network. We needed to be sure it would still capture errors, in the event the failover failed. To do this, we removed the &lt;code&gt;NY.Exceptions&lt;/code&gt; database from both the old and new AGs and made sure the database was writable on both the new and the old clusters. We also added both databases to our monitoring in Opserver to catch lingering applications pointing to the wrong place. This would let us collect errors, even if things went wrong with a failover.&lt;/p&gt;
+
+&lt;p&gt;Next, we had to think about how to push our application changes to production. We use &lt;a href=&#34;https://www.jetbrains.com/teamcity/&#34;&gt;Team City&lt;/a&gt; to deploy our applications, which has a database on SQL Server. We needed to be sure that Team City was available before we moved forward. As a result, the &lt;code&gt;NYOnly_AG&lt;/code&gt; was the very first one to failover. We pushed a change to the connection string from &lt;code&gt;SQL-NYOnly_AG&lt;/code&gt; to &lt;code&gt;SQLAG-NYOnly&lt;/code&gt; and built out the application. Once that was done, it was time to do the distributed availability group failover.&lt;/p&gt;
+
+&lt;p&gt;Based on my testing and the &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/configure-distributed-availability-groups?view=sql-server-2017#failover&#34;&gt;Microsoft Docs&lt;/a&gt; performing a failover of a distributed availability group is a manual process. The code needs to be executed on the current primary server, validated, then more code has to be executed, then validated, and repeat until it’s all done. In my huge planning document, I wrote all the code to perform the failover steps. Now it was time to execute them. Since we were going to be failing over the temporary distributed availability group called, &lt;code&gt;NYOnly_TAG&lt;/code&gt; we executed the following steps:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;On the current global primary server in the DAG (NY-SQL04) change the DAG to &lt;code&gt;SYNCHRONOUS_COMMIT&lt;/code&gt;&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;    &lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;NYOnly_TAG&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;MODIFY&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt;
+        &lt;span class=&#34;s1&#34;&gt;&amp;#39;NYOnly_AG&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;SYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+        &lt;span class=&#34;s1&#34;&gt;&amp;#39;AG-NYOnly&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;SYNCHRONOUS_COMMIT&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;
+    &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Verify the commit state is &lt;code&gt;SYNCHRONIZED&lt;/code&gt; on the global primary (NY-SQL04):&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;    &lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;
+        &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;database_id&lt;/span&gt;
+        &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt;
+        &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;replica_id&lt;/span&gt;
+        &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;synchronization_state_desc&lt;/span&gt;
+        &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;end_of_log_lsn&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;dm_hadr_database_replica_states&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;INNER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;JOIN&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;availability_groups&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;
+        &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt; 
+    &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Once we&amp;rsquo;re in a &lt;code&gt;SYNCHRONIZED&lt;/code&gt; state, set the global primary (NY-SQL04) to a &lt;code&gt;SECONDARY&lt;/code&gt; role&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;    &lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;NYOnly_TAG&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;SET&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;ROLE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;SECONDARY&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;
+    &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Now the AG is not available for write traffic. Test that we&amp;rsquo;re ready to failover by executing the following on both the former global primary (NY-SQL04) and the soon to be new global primary (NY-SQL03). This query verifies that the &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/recover-to-a-log-sequence-number-sql-server?view=sql-server-2017#LSNs&#34;&gt;LSN&lt;/a&gt; is the same on both servers.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;    &lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+        &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;database_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+        &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+        &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;replica_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+        &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;synchronization_state_desc&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+        &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;end_of_log_lsn&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;dm_hadr_database_replica_states&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;INNER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;JOIN&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;availability_groups&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;
+        &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+    &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Perform the failover to the new global primary (NY-SQL03)&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;    &lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;NYOnly_TAG&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;FORCE_FAILOVER_ALLOW_DATA_LOSS&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+    &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Change the state of the distributed availability group back to &lt;code&gt;ASYNCHRONOUS_COMMIT&lt;/code&gt; this is done on the new global primary (NY-SQL03)&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;    &lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;NYOnly_TAG&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;MODIFY&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt;
+        &lt;span class=&#34;s1&#34;&gt;&amp;#39;NYOnly_AG&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+        &lt;span class=&#34;s1&#34;&gt;&amp;#39;AG-NYOnly&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;
+    &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;At this point, our first distributed availability group had failed over and things were writable again. Only 4 more to go!&lt;/p&gt;
+
+&lt;p&gt;We could capture exceptions and with Team City up an running, it was time to tackle the next DAG, &lt;code&gt;Chat_TAG&lt;/code&gt;. We performed the same steps listed above, on that DAG. Chat was selected to be done next, because we use our chat platform internally, and having it accessible is very important. When I&amp;rsquo;m doing regular maintenance on the SQL Servers, the &lt;code&gt;Chat_AG&lt;/code&gt; is one of the first AGs we failover, and that the pattern held for the DAG failover. After executing all the steps above, we successfully &lt;a href=&#34;https://twitter.com/tarynpivots/status/1120838257200156672&#34;&gt;failed over Chat&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;2 down, 3 to go! Time for the more critical stuff to be tackled.&lt;/p&gt;
+
+&lt;p&gt;To minimize impact for users, we did the failover during the latter part of the day. Next up in the failover process was the DAG that contained the &lt;code&gt;Careers&lt;/code&gt; database. By doing this, it would mean the end of syncing to the reporting cluster. We knew it was going to happen eventually, and held off as long as we could. Our stakeholders knew this was part of this failover process. The goal was to be back online as soon as possible once the entire failover process was complete.&lt;/p&gt;
+
+&lt;p&gt;Before starting the failover, the old distributed availability group between the 2012 cluster and the reporting cluster was destroyed. This was done because we knew the syncing to the reporting cluster would stop when we failed over.  There was no need to  have this extra layer of complexity and strain on the NY-SQL04 server. After the &lt;code&gt;HighAvailability_DAG&lt;/code&gt; was destroyed, we set the Jobs area of the site to read-only, replaced all the connections strings in the applications, and then rebuilt them. It was then time failover the new DAG, &lt;code&gt;Misc_TAG&lt;/code&gt;. Again, everything failed over without any issues. The &lt;code&gt;Careers&lt;/code&gt; database was writable again, we moved Jobs out of read-only, and we were now more than half-way done with the failover.&lt;/p&gt;
+
+&lt;p&gt;The final two failovers were for the &lt;code&gt;StackOverflow_TAG&lt;/code&gt; and &lt;code&gt;SENetwork_TAG&lt;/code&gt; distributed AGs. These meant that we were going to have a bit of downtime. We were also planning on doing them in rapid succession. These two distributed AGs contain all the databases that handle the entire network of sites, and we wanted to fail them over as fast as possible to reduce the downtime. We pushed all new connection strings, the apps were rebuilt, and we were ready. All sites were set to read-only and it was go time.&lt;/p&gt;
+
+&lt;p&gt;First up, was the &lt;code&gt;StackOverflow_TAG&lt;/code&gt;, as this only had 5 databases, and we figured it&amp;rsquo;d be quicker than our problem DAG, &lt;code&gt;SENetwork_TAG&lt;/code&gt; - aka the one with 354 databases. I destroyed the old distributed availability group going to the reporting cluster, and we began the process to failover this DAG. Thankfully we hit no issues with it.&lt;/p&gt;
+
+&lt;p&gt;We were in the home stretch for the failovers with only one left&amp;hellip;the big one. We hit so many issues with this distributed availability group when trying to get it set up, we were  concerned about what would happen when we failed over. Unable to wait any longer, I kicked off the steps above to start the failover.  It moved to &lt;code&gt;SYNCHRONOUS_COMMIT&lt;/code&gt; without any problems, the databases on NY-SQL04 all reported to be in a &lt;code&gt;SYNCHRONIZED&lt;/code&gt; state, and I moved the server to be a &lt;code&gt;SECONDARY&lt;/code&gt; role in the DAG.&lt;/p&gt;
+
+&lt;p&gt;So far so good. Now it was time to verify the LSNs between the two servers using:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;9
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+   &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;database_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+   &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+   &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;replica_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+   &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;synchronization_state_desc&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+   &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;end_of_log_lsn&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;dm_hadr_database_replica_states&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;INNER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;JOIN&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;availability_groups&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;
+   &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;drs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ag&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Executing that query on both servers (NY-SQL04 and NY-SQL03) and trying to verify that the LSNs were the same on 354 databases was not what I’d call an enjoyable process. We would verify, then re-verify and something would change, so we&amp;rsquo;d verify again, and again. It took some time to figure out if we were in a good state to failover. Our goal was to not lose any data, but trying to make sure we had a match against all the databases was pretty tough. Once we were reasonably confident, we made the call that it was time to finish the failover of this DAG, so I executed the commands to failover the &lt;code&gt;SENetwork_TAG&lt;/code&gt;. Once the failover command was executed, the new primary (NY-SQL03) came up just fine, and was responsive for us to query it. We were done with all of the temporary distributed availability groups, and all of the sites went back to read/write. &lt;a href=&#34;https://twitter.com/tarynpivots/status/1120859302296637440&#34;&gt;Failover done!&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;We thought we were in the clear, but the former primary (NY-SQL04) was very, very angry. After the failover from NY-SQL04, the server was completely unresponsive to anything. All the databases locked, CPU spiked, we were hitting HADR waits, and we didn’t get any sort of response for more than 25 minutes. Thankfully, we weren&amp;rsquo;t overly concerned because we had a new primary that was working, and this would be completely rebuilt to Windows Server 2016. We made the decision to just stop the SQL Server service until I got around to the rebuild.&lt;/p&gt;
+
+&lt;p&gt;All of the failovers were complete and everything was running on the new Windows Server 2016 clusters. Our servers looked like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/PostFailoverServerState.jpg&#34; alt=&#34;Post Failover Night State of Servers&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We still had two servers in the old 2012 clusters. NY-SQL04 wasn&amp;rsquo;t functioning as a SQL Server because we shutdown the SQL service post failover, and NY-SQL02 was a member of the temporary distributed availability group we just failed over. Those servers were going to be rebuilt the next day, so our focus turned to the reporting cluster. That cluster is used internally for applications, and we needed to get it back up as soon as possible for use.&lt;/p&gt;
+
+&lt;p&gt;Initially, we thought that if we recreated the distributed availability groups with the reporting clusters as a member, things would just pick back up and sync. We executed the following to recreate the two distributed AGs with the new cluster and reporting cluster:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;20
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;21
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;22
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;23
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;24
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;25
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;26
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;27
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;28
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;29
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;30
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;31
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;32
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;33
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;34
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;35
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;36
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;37
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;38
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;39
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;40
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;41
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;42
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;43
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;44
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;45
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;46
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;47
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;48
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;49
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;50
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;51
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;52
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;53
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;54
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;55
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;56
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;57
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;58
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;59
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;60
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;61
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;62
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;63
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;64
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;65
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;66
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;67
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;68
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;69
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;70
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;71
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;72
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;73
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;74
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;75
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;76
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;77
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;78
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;79
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;c1&#34;&gt;-- run this on NY-SQL03
+&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;CREATE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;Misc_DAG&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; 
+   &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;DISTRIBUTED&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;  
+   &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; 
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;AG-Misc&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;   
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;  
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;HighAvailability_RAG&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;   
+&lt;span class=&#34;k&#34;&gt;GO&lt;/span&gt; 
+
+&lt;span class=&#34;c1&#34;&gt;-- run this on NY-RPTSQL01
+&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;Misc_DAG&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; 
+   &lt;span class=&#34;k&#34;&gt;JOIN&lt;/span&gt;  
+   &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; 
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;AG-Misc&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;   
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;  
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;HighAvailability_RAG&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;   
+&lt;span class=&#34;k&#34;&gt;GO&lt;/span&gt; 
+
+&lt;span class=&#34;c1&#34;&gt;-- run this on NY-SQL01
+&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;CREATE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;StackOverflow_DAG&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; 
+   &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;DISTRIBUTED&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;  
+   &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; 
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;AG-StackOverflow&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;   
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;  
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;StackOverflow_RAG&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;   
+&lt;span class=&#34;k&#34;&gt;GO&lt;/span&gt;
+
+&lt;span class=&#34;c1&#34;&gt;-- run this on NY-RPTSQL01
+&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;StackOverflow_DAG&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; 
+   &lt;span class=&#34;k&#34;&gt;JOIN&lt;/span&gt;  
+   &lt;span class=&#34;n&#34;&gt;AVAILABILITY&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; 
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;AG-StackOverflow&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;   
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;  
+       &lt;span class=&#34;s1&#34;&gt;&amp;#39;StackOverflow_RAG&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt;   
+       &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;LISTENER_URL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;listener&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;AVAILABILITY_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ASYNCHRONOUS_COMMIT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;FAILOVER_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;MANUAL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  
+           &lt;span class=&#34;n&#34;&gt;SEEDING_MODE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;AUTOMATIC&lt;/span&gt;  
+       &lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;   
+&lt;span class=&#34;k&#34;&gt;GO&lt;/span&gt; &lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;After executing this and recreating the distributed AGs, we realized very quickly we were wrong about them starting to sync again. The reporting cluster wouldn&amp;rsquo;t sync.  We tried kicking the databases with various commands, and even tried failing the reporting cluster over to the secondary server in Colorado and then failing back. Nothing was working. After checking the logs on the reporting cluster primary, NY-RPTSQL01, we found lots of errors:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Msg 3456, Level 21, State 1, Line 22&lt;/p&gt;
+
+&lt;p&gt;Could not redo log record (8278:53574:4), for transaction ID (0:8787310), on page (1:10082), allocation unit 72057594040811520, database &amp;lsquo;CareersAuth&amp;rsquo; (database ID 23). Page: LSN = (8277:108566:2), allocation unit = 72057594040811520, type = 1. Log: OpCode = 6, context 1, PrevPageLSN: (8278:53568:2). Restore from a backup of the database, or repair the database.&lt;/p&gt;
+
+&lt;p&gt;Msg 3313, Level 21, State 1, Line 22&lt;/p&gt;
+
+&lt;p&gt;During redoing of a logged operation in database &amp;lsquo;CareersAuth&amp;rsquo;, an error occurred at log record ID (8278:53574:4). Typically, the specific failure is previously logged as an error in the operating system error log. Restore the database from a full backup, or repair the database.&lt;/p&gt;
+
+&lt;p&gt;Msg 3414, Level 21, State 4, Line 22&lt;/p&gt;
+
+&lt;p&gt;An error occurred during recovery, preventing the database &amp;lsquo;CareersAuth&amp;rsquo; (23:0) from restarting. Diagnose the recovery errors and fix them, or restore from a known good backup. If errors are not corrected or expected, contact Technical Support.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Well, that stinks. It meant we&amp;rsquo;d have to rebuild the AGs on the Reporting Servers using a recent backup, and then try to get them to synchronize. We started restoring the databases that were impacted in a &lt;code&gt;NORECOVERY&lt;/code&gt; state with a local copy so the restore process didn&amp;rsquo;t too long. Once the databases were restored, we executed the following on each database to get them syncing again:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;Alter&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;Database&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;database_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;Set&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;HADR&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Availability&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;Group&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;distributed_AG_Name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;];&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;While this all worked great for the primary reporting server, NY-RPTSQL01, we were not as lucky with the secondary server in the reporting cluster, CO-RPTSQL01. We already suffer from throughput issues with CO-RPTSQL01 and all of the de-synchronizing put all of the databases in a state that couldn&amp;rsquo;t be recovered. Unfortunately, all the databases would also have to be rebuilt by restoring copies, then altering them to set them as a part of the availability group. The big problem was we didn&amp;rsquo;t have a local copy in Colorado to restore due to all the other server moves (we had turned off daily backups), so we were going to have to copy the files from NY to CO to then restore on CO-RPTSQL01. That might not be a big deal normally, but we have databases that are several TBs and the move was going to take a while. I decided to call Day 9 done, and pick that process up in the morning, along with other clean-up.&lt;/p&gt;
+
+&lt;h3 id=&#34;day-10-finishing-touches&#34;&gt;Day 10 - Finishing Touches&lt;/h3&gt;
+
+&lt;p&gt;After a &lt;a href=&#34;https://twitter.com/tarynpivots/status/1121052238829375496&#34;&gt;couple of hours of sleep&lt;/a&gt;, it was time to try to finish this up. The list of things left to do was small, but was still quite a bit of work. We had to:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Restore databases to CO-RPTSQL01 and get the AGs/distributed AGs syncing throughout the reporting cluster&lt;/li&gt;
+&lt;li&gt;Destroy the temporary distributed availability groups on the new 2016 clusters&lt;/li&gt;
+&lt;li&gt;Rebuild NY-SQL04 and NY-SQL02 - the last two servers in the old 2012 clusters&lt;/li&gt;
+&lt;li&gt;Insert the newly rebuilt servers into the new 2016 Windows Clusters, install SQL Server, and add them to the AGs&lt;/li&gt;
+&lt;li&gt;Turn on all t-log backups and daily full backups&lt;/li&gt;
+&lt;li&gt;Put read-only routing in place on all availability groups&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The goal was to get through the entire list same day, but that would be too easy. We ran into an issue immediately. Remember that NY-RPTSQL01 we got synchronizing at the end of Day 9 &amp;ndash; it was lying to us. It said it was syncing, but it really wasn&amp;rsquo;t. If you queried the &lt;code&gt;StackOverflow&lt;/code&gt; database, it was several hours behind the current production database&amp;hellip;uh oh, something was broken. We tried to restart the SQL Service to see if that unblocked it, it didn&amp;rsquo;t. Unfortunately, the only way we were able to get it syncing again was to:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;drop, then restore the databases&lt;/li&gt;
+&lt;li&gt;manually apply the t-logs to bring it up to date from the current global primary&lt;/li&gt;
+&lt;li&gt;then after executing some SQL to kick the AGs, like magic, it would be synchronizing again&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We did this for all the impacted databases on the reporting cluster primary, NY-RPTSQL01, and then still had to get CO-RPTSQL01 back online. Nick Craver jumped in and worked on the NY and CO reporting servers, while I started rebuilding the final two servers, NY-SQL04 and NY-SQL02. The rebuild of the final two servers went exactly as expected. Once it came time to put the servers into the availability groups, I took fresh backups from the primaries and restored those. I did this because we weren&amp;rsquo;t going to automatically seed an AG with 354 databases or a 3.5TB one (&lt;code&gt;StackOverflow)&lt;/code&gt;, and I wanted to manually apply as few T-logs to the databases as possible to bring it up to current time.&lt;/p&gt;
+
+&lt;p&gt;It may have taken all day, but eventually we fixed the reporting cluster and had all six of our main SQL Servers moved into the new Windows Server 2016 clusters. By the end of the day, &lt;a href=&#34;https://twitter.com/tarynpivots/status/1121145354760507393&#34;&gt;Opserver was reporting green everywhere&lt;/a&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2019/AllDone.jpg&#34; alt=&#34;Final State - All Done&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It was such a good feeling to have everything moved over. After months of planning, testing, and frustration from hitting issue after issue, plus a bug in SQL Server, it was incredible to see it all come to fruition.&lt;/p&gt;
+
+&lt;h2 id=&#34;final-thoughts&#34;&gt;Final Thoughts&lt;/h2&gt;
+
+&lt;p&gt;Besides the upgrade to &lt;a href=&#34;https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/&#34;&gt;SQL Server 2017 from the year before&lt;/a&gt;, I had never even attempted something with this level of complexity or planning. This project involved a lot of juggling of servers, AGs/distributed AGs, application changes, and considering we don&amp;rsquo;t have maintenance windows at Stack Overflow, it was difficult to imagine how to pull this off without being down for an extended period of time. To know this entire thing was executed with only about 10-15 minutes of downtime for the public facing sites is pretty darn amazing, in my opinion.&lt;/p&gt;
+
+&lt;p&gt;I have some takeaways from this - most are common sense, but I need to repeat them for my own sanity:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Test, re-test, and then test some more. The initial plan was to jump from the lab to prod, the rebuild of our development environment was unexpected. I also didn&amp;rsquo;t think this upgrade would break our development environment, but by doing this immediate steps we found several bugs in our deployment process which we might have hit in production.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Have a lab environment, if possible. Between creating new lab environments and using my existing lab environments, I was able to work through all the different scenarios I figured we would hit in production. Of course, I wasn&amp;rsquo;t able to test at our scale and find the SQL Server bug, but I felt confident the steps I planned would work for the failovers.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Rely on your team. While I&amp;rsquo;m the only official DBA at Stack Overflow, there were times when I was at a loss on how to fix some of our issues with Foreman, Puppet, and needed extra hands. I can&amp;rsquo;t thank my team enough for stepping in and jumping into hangouts with me when I was stuck or something broke.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Remember that no matter how much you plan, something is going to go sideways. We had a ~35 page planning document that I wrote and none of that mattered when we hit the bug with availability groups.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Try not to stress out over the things out of your control. I hit roadblock after roadblock during this project, and felt that I was letting my team down by not moving it forward faster. When you expect a project to be done in one month and it takes about four, it&amp;rsquo;s hard not to feel like you&amp;rsquo;re failing and be stressed out over it. Each issue (failed drives, bugs) moved us forward and we improved our process, even if it was incredibly slow. In the end, we were in a much better situation because we squashed bugs and moved to better software. Keeping perspective on the end-goal is something to remind yourself when in these types of situations.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Keep notes as you’re going through a deployment like this. Every day write yourself a recap of what transpired that day, so you remember what went well or what broke. Unfortunately, I didn’t do this during the production part and spent a lot of time going through chat transcripts trying to remember all the steps and roadblocks we hit to document in this post.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;I&amp;rsquo;m hoping this is helpful to someone who needs to go through this type of upgrade. Now that this project is done, I guess it&amp;rsquo;s time I start thinking about upgrading to SQL Server 2019.&lt;/p&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>How we upgraded Stack Overflow to SQL Server 2017</title>
+      <link>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</link>
+      <pubDate>Wed, 07 Nov 2018 19:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</guid>
+      
+        <description>
+
+&lt;p&gt;This post has been rattling around in my head for months, and with &lt;a href=&#34;https://www.microsoft.com/en-us/sql-server/sql-server-2019&#34; target=&#34;_blank&#34;&gt;SQL Server 2019&lt;/a&gt; on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.&lt;/p&gt;
+
+&lt;p&gt;A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &amp;mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed. We even had an instance of SQL Server 2012 still running. The bulk of our servers hadn’t been patched for 6-9 months, and we were just as behind in our Windows Updates&amp;hellip;eeek. In a perfect world, all servers run the same version and CU. However, since we don’t have regular maintenance windows, tackling this would mean downtime - which meant it had  to be a project not a one-off type of task.&lt;/p&gt;
+
+&lt;p&gt;When I kicked off this project, back in February 2018 (see I told you this has been rattling around in my head for months), we had ~30 servers, the breakdown of them was:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;3 servers in the Stack Overflow cluster (2 in NY, 1 in CO)&lt;/li&gt;
+&lt;li&gt;3 servers in the Stack Exchange cluster (2 in NY, 1 in CO)&lt;/li&gt;
+&lt;li&gt;3 servers in a cluster for Internal Stuff - these power our internal applications (2 in NY, 1 in CO)&lt;/li&gt;
+&lt;li&gt;2 servers for Reporting Cluster - these power various reporting applications (1 in NY, 1 in CO)&lt;/li&gt;
+&lt;li&gt;the remaining servers have miscellaneous functions like - lab/test environments, development servers, traffic logs, and many others used by various teams (located in both NY and CO)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We have various &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-2017&#34; target=&#34;_blank&#34;&gt;availability groups&lt;/a&gt; (AGs) running on the Stack Overflow, Stack Exchange, Internal Development, and Reporting servers. Adding another layer of complexity, we also have availability groups that are a part of &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-2017&#34; target=&#34;_blank&#34;&gt;Distributed Availability Groups&lt;/a&gt; (DAGs). The main clusters (SO, SE, and Internal) have data that flows from a handful of databases downstream to the reporting servers. It looks a bit like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2018/so-sql-server-layout.png&#34; alt=&#34;A very basic overview of our SQL Server layout&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;the-initial-plan&#34;&gt;The Initial Plan&lt;/h2&gt;
+
+&lt;p&gt;With so many servers to upgrade, I needed to figure out the best path to get them done in the least amount of time, with the least amount of downtime. I started out by basically creating a spreadsheet of metadata. This spreadsheet included all the server names, the current software version (including CU/SP), the date of the last Windows Update, the team to notify before starting the maintenance, and the date the upgrade was completed. I also added a rudimentary risk level from low to high, and chose the levels based on whether the server was public, internal, dev, etc. Using this risk level, I prioritized the order in which to upgrade each server. Since all the servers hadn&amp;rsquo;t been patched in months, the patching plan for the day of the upgrade was:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;upgrade to SQL Server 2017&lt;/li&gt;
+&lt;li&gt;run Windows Updates&lt;/li&gt;
+&lt;li&gt;reboot as needed&lt;/li&gt;
+&lt;li&gt;apply SQL Server CU update&lt;/li&gt;
+&lt;li&gt;reboot and repeat as needed - mainly Windows Updates until everything was up to date&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;My goal was to complete all servers over the course of a month. That may sound like a long timeframe, but with only me touching them, it gave me wiggle room in the event there were issues. I started on the servers with the least amount of risk, this meant the Lab, Dev, and some of the miscellaneous servers. These aren&amp;rsquo;t customer facing, and are used internally, so if something went wrong we wouldn&amp;rsquo;t have public downtime. After patching ~15 servers I felt pretty confident that the upgrade of the rest would go fine&amp;hellip;this was a mistake.&lt;/p&gt;
+
+&lt;h2 id=&#34;but-i-followed-the-plan&#34;&gt;But I Followed The Plan&lt;/h2&gt;
+
+&lt;p&gt;Moving to the servers in the AGs/DAGs, I knew I would follow this order for each cluster:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Remote Secondary (CO)&lt;/li&gt;
+&lt;li&gt;Local Secondary (NY)&lt;/li&gt;
+&lt;li&gt;Local Primary (NY)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;In between the NY Secondary and the NY Primary I&amp;rsquo;d perform a failover to let me hit the last server in the cluster. I also decided that I would do the remaining servers in this order:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Reporting Cluster&lt;/li&gt;
+&lt;li&gt;Internal Dev Cluster&lt;/li&gt;
+&lt;li&gt;SO/SE - CO/NY secondaries&lt;/li&gt;
+&lt;li&gt;SO/SE - NY primaries after a failover&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This allowed me to get the majority of the upgrades done during the week, then we&amp;rsquo;d perform a quick failover on a weekend, during lower traffic, and I&amp;rsquo;d knock out upgrading the last two critical servers. Based on this, the CO reporting server was up first.&lt;/p&gt;
+
+&lt;p&gt;All boxes on the patching plan were ticked for this server, and when it came back up after the final reboot, I checked our instance of &lt;a href=&#34;https://github.com/opserver/Opserver&#34; target=&#34;_blank&#34;&gt;OpServer&lt;/a&gt; and everything was green and syncing; I thought &amp;lsquo;Woot, everything is great.&amp;rsquo; Since we use readable secondaries, I wanted to perform a touch test on the databases in the AGs and DAGs to make sure everything was working. I logged into SSMS, but when I attempted to query any database in a DAG they weren&amp;rsquo;t accessible. I couldn&amp;rsquo;t read from them. This was a giant &amp;lsquo;oh crap&amp;rsquo; moment.&lt;/p&gt;
+
+&lt;p&gt;I frantically started checking the server to see if there were errors. There was nothing. Nothing in the logs, and no errors from the installation. From what I could tell, everything went as expected. Then why couldn&amp;rsquo;t I read from the databases? After doing a bit of research, I found it was because the secondary was a higher version from the primary. Initially I thought, &amp;lsquo;OK, I&amp;rsquo;ll upgrade the NY reporting server and everything would be fine&amp;rsquo;, but then I remembered these servers are downstream in the DAGs. Uh oh.&lt;/p&gt;
+
+&lt;p&gt;If I upgraded both reporting servers, which receive data from 3 DAGs (SO/SE/Int Dev), and those are all a lower version of SQL Server, both reporting servers would be totally out of commission until the upstream servers were all upgraded. All this would result in major downtime for reporting and wasn&amp;rsquo;t going to work.&lt;/p&gt;
+
+&lt;p&gt;I did research, pinged people on &lt;a href=&#34;https://dba.stackexchange.com/&#34; target=&#34;_blank&#34;&gt;Database Administrators Stack Exchange&lt;/a&gt;, and poked my co-worker &lt;a href=&#34;https://twitter.com/Nick_Craver/status/963443600997736449&#34;&gt;Nick Craver about it&lt;/a&gt;. From everything I heard and read, the behavior was expected, but incredibly difficult to deal with if you&amp;rsquo;re not upgrading everything at the same time, or in a short amount of time. I wanted to spread the upgrades out over a month to make them manageable, but when they go out of commission because of a upgrade, that timeframe went out the window.&lt;/p&gt;
+
+&lt;p&gt;All this left me in a state of confusion. How the heck am I going to upgrade these with basically zero downtime, and ensure they don&amp;rsquo;t become unreadable for days?&lt;/p&gt;
+
+&lt;p&gt;My plan blew up &amp;mdash; I couldn&amp;rsquo;t do the upgrade in the original order and timeframe that I wanted.&lt;/p&gt;
+
+&lt;h2 id=&#34;back-to-the-drawing-board&#34;&gt;Back to the Drawing Board&lt;/h2&gt;
+
+&lt;p&gt;Since we couldn&amp;rsquo;t be without both reporting servers for days, that meant I needed to come up with a new plan/timeframe to get this done. It would also need buy-in, because at some point we&amp;rsquo;d have more downtime than initially expected.&lt;/p&gt;
+
+&lt;p&gt;Microsoft recommends &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/upgrading-always-on-availability-group-replica-instances?view=sql-server-2017&#34; target=&#34;_blank&#34;&gt;upgrading servers&lt;/a&gt; in this order:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Upgrade remote secondaries&lt;/li&gt;
+&lt;li&gt;Upgrade local secondaries&lt;/li&gt;
+&lt;li&gt;Manual failover of the primary to the local secondary&lt;/li&gt;
+&lt;li&gt;Upgrade previous primary&lt;/li&gt;
+&lt;li&gt;Failback to previous primary&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;As you can see, that&amp;rsquo;s what I was following. The problem comes in when the server is in a Distributed Availability Group. I did the CO reporting server first, and ideally we&amp;rsquo;d do the NY version next, but since these are downstream in 3 DAGs, both NY and CO would be completely unreadable until the primaries upstream in the DAGs are upgraded. This means we automatically have reduced service with the servers, I can&amp;rsquo;t move to the CO secondary in the Internal servers because it&amp;rsquo;ll become unreadable like the reporting servers. As I move outward, the reduced service grows. So now what am I going to do?&lt;/p&gt;
+
+&lt;p&gt;Thankfully, I have a lab environment to test with. If you don&amp;rsquo;t have one, make one. I have 4 VMs that I set up to mimic our AG/DAG environment. This allowed me to test the upgrade order of the servers, perform failovers, verify the AGs/DAGs came back online, etc. After multiple failed attempts at getting the order right, I finally figured out that I would follow the same order and pattern that I was using, just not at the cluster level - it would be based on location instead.&lt;/p&gt;
+
+&lt;p&gt;The new plan would be:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Upgrade all local NY secondaries in a DAG/AG - doing this makes them completely unreadable
+
+&lt;ul&gt;
+&lt;li&gt;the NY secondaries in the Internal, SE, SO clusters&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Upgrade all remote CO secondaries in a DAG/AG - doing this makes them completely unreadable
+
+&lt;ul&gt;
+&lt;li&gt;the CO reporting server was done, this left the CO servers in the Internal, SE, SE clusters&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Perform a failover in a specific order
+
+&lt;ul&gt;
+&lt;li&gt;Reporting Server - failover to CO - this makes the entire cluster unreadable until all upgrades are finished - failover non-DAG availability groups, then failover the DAGs - hope that when it shows it&amp;rsquo;s syncing it really is, since we won&amp;rsquo;t be able to query anything&lt;/li&gt;
+&lt;li&gt;Internal Server - failover to NY secondary - failover DAGs first, verify it&amp;rsquo;s syncing to reporting, then failover AGs&lt;/li&gt;
+&lt;li&gt;SE Cluster - failover to NY secondary - failover DAGs first, verify it&amp;rsquo;s syncing to reporting, then failover AGs&lt;/li&gt;
+&lt;li&gt;SO Cluster - failover to NY secondary - failover DAG&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Verify that everything is syncing or at least verify that everything appears to be syncing - I&amp;rsquo;m looking at you reporting servers&lt;/li&gt;
+&lt;li&gt;Upgrade the former primaries in NY - reporting, internal SE, and SO&lt;/li&gt;
+&lt;li&gt;Verify that all databases are syncing - most likely they aren&amp;rsquo;t, so running &lt;code&gt;ALTER DATABASE [&amp;lt;name&amp;gt;] SET HADR RESUME;&lt;/code&gt; should resolve any syncing issues - again looking at you reporting servers&lt;/li&gt;
+&lt;li&gt;Perform any failovers to reinstate a primary. For us, this only applies to the reporting cluster. When we failover within NY, we just let the new primary stay primary until we need to failover again - this minimizes downtime for us.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;You can see that this deviates from the recommended order by Microsoft because we did the local NY secondaries first. This was done in the event something catastrophic happened in NY, and we had to fail to CO. We knew CO was still up and running since we could query it. If we had upgraded CO and made it unreadable, we wouldn&amp;rsquo;t be able to query it and confirm things were syncing properly for an extended period of time. The thought of this made us uncomfortable.&lt;/p&gt;
+
+&lt;p&gt;I tested and retested this plan in the lab environment to get it down before attempting this on any of the critical servers. The only real issue was the reporting servers would be out of commission until the rest upgraded. This meant everything would have to be upgraded fast, so we did not have reporting unavailable for too long. Based on this, it was decided we&amp;rsquo;d do the local NY secondaries on a Friday, then perform the rest of the upgrades and failover on a Saturday - this meant downtime, so we had to give &lt;a href=&#34;https://meta.stackexchange.com/q/307744/164200&#34; target=&#34;_blank&#34;&gt;plenty of notice to the community&lt;/a&gt; before tackling it.&lt;/p&gt;
+
+&lt;p&gt;In the few days before the upgrade, I wrote up the playbook for the weekend. To minimize downtime and to get the remaining 11 servers upgraded quickly, there were 3 of us who were going to be doing the last upgrades, so I wanted everything documented. The playbook had every step outlined, who was doing what to which server, SQL code for each step (if needed), what was to be installed on each server, the order of failover of AGs&amp;hellip;everything. This was my first major upgrade and I was a nervous wreck, I didn&amp;rsquo;t want anything to be missed or to go wrong, so I probably overplanned, but why not, right?&lt;/p&gt;
+
+&lt;p&gt;The weekend came and went, and we had no issues with the upgrades. When we failover our main SO/SE clusters, we typically put the sites in read-only mode, just to be safe that nothing crazy happens when SQL is failing over - for this upgrade our downtime/read-only time was &amp;lt; 10 minutes which was far less than we expected. If you&amp;rsquo;re super curious, you can &lt;a href=&#34;https://www.youtube.com/watch?v=j5tOodr4ouc&#34; target=&#34;_blank&#34;&gt;watch a recording of the livestream&lt;/a&gt;, though I&amp;rsquo;m not sure why you&amp;rsquo;d want to sit through ~3 hours of us talking about upgrades.&lt;/p&gt;
+
+&lt;p&gt;In the end, I learned a bunch from this. I figured out how best to upgrade to new versions of SQL Server when Distributed Availability Groups are in play without making servers unreadable for too long. I also learned just how darn handy having a lab environment is, and that I super over-prepared/planned for the days of the actual work. I&amp;rsquo;m not sure if this will help anyone else in the future, but now I know to avoid these landmines when upgrading.&lt;/p&gt;
+
+&lt;p&gt;I also know there are probably plenty of other landmines I can hit when we move to SQL Server 2019.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>Pivoting yet again - New blog and domain</title>
@@ -789,7 +1662,7 @@
       
       <guid>https://tarynpivots.com/post/about/</guid>
       
-        <description>&lt;p&gt;Just a little blurb&amp;hellip;I&amp;rsquo;m a former web and application developer, and Community Manager who is currently working as a Database Administrator at &lt;a href=&#34;http://stackoverflow.com/&#34;&gt;Stack Overflow&lt;/a&gt;. When I&amp;rsquo;m not at my desk, I&amp;rsquo;m probably running or pretending to be a woodworker. I can be reached via email at &lt;em&gt;onlybluefeet (SHIFT+2) gmail (period) com&lt;/em&gt;*.&lt;/p&gt;
+        <description>&lt;p&gt;Just a little blurb&amp;hellip;I&amp;rsquo;m a former web and application developer, and Community Manager who is currently working as a Database Administrator at &lt;a href=&#34;http://stackoverflow.com/&#34;&gt;Stack Overflow&lt;/a&gt;. When I&amp;rsquo;m not at my desk, I&amp;rsquo;m probably running or pretending to be a woodworker. I can be reached via email at &lt;em&gt;taryn.e.pratt (SHIFT+2) gmail (period) com&lt;/em&gt;*.&lt;/p&gt;
 
 &lt;p&gt;* If you are human, you should be able to decipher the email address.&lt;/p&gt;
 </description>

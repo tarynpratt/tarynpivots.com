@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>How we upgraded Stack Overflow to SQL Server 2017 - Taryn Pratt</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="Taryn" />
+  <meta name="description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &amp;mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed." />
+
+  <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.47" />
+
+
+<link rel="canonical" href="https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="/css/custom.css">
+
+
+<meta property="og:title" content="How we upgraded Stack Overflow to SQL Server 2017" />
+<meta property="og:description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/" /><meta property="article:published_time" content="2018-11-07T19:00:38&#43;00:00"/>
+<meta property="article:modified_time" content="2018-11-07T19:00:38&#43;00:00"/>
+<meta itemprop="name" content="How we upgraded Stack Overflow to SQL Server 2017">
+<meta itemprop="description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed.">
+
+
+<meta itemprop="datePublished" content="2018-11-07T19:00:38&#43;00:00" />
+<meta itemprop="dateModified" content="2018-11-07T19:00:38&#43;00:00" />
+<meta itemprop="wordCount" content="2132">
+
+
+
+<meta itemprop="keywords" content="sql,sql-server,maintenance,patching,projects,stack-overflow,distributed-availability-group,availibility-group,failover," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="How we upgraded Stack Overflow to SQL Server 2017"/>
+<meta name="twitter:description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-124638032-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Taryn Pratt</a>
+    
+    &mdash;
+    <a href="/" class="logo-tagline">
+       
+         Pivots and other SQL fun
+       
+     </a>
+     
+</div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <div class="logo">
+    <a href="/" class="logo">
+      
+        Taryn Pratt
+      
+    </a>
+  </div>
+
+  
+  <div class="logo-tagline">
+    <a href="/" >
+      
+        Pivots and other SQL fun
+      
+    </a>
+  </div>
+  
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">How we upgraded Stack Overflow to SQL Server 2017</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2018-11-07 </span>
+        
+        <span class="more-meta"> 2132 words </span>
+          <span class="more-meta"> 11 min read </span>
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#the-initial-plan">The Initial Plan</a></li>
+<li><a href="#but-i-followed-the-plan">But I Followed The Plan</a></li>
+<li><a href="#back-to-the-drawing-board">Back to the Drawing Board</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<p>This post has been rattling around in my head for months, and with <a href="https://www.microsoft.com/en-us/sql-server/sql-server-2019" target="_blank">SQL Server 2019</a> on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.</p>
+
+<p>A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed. We even had an instance of SQL Server 2012 still running. The bulk of our servers hadn’t been patched for 6-9 months, and we were just as behind in our Windows Updates&hellip;eeek. In a perfect world, all servers run the same version and CU. However, since we don’t have regular maintenance windows, tackling this would mean downtime - which meant it had  to be a project not a one-off type of task.</p>
+
+<p>When I kicked off this project, back in February 2018 (see I told you this has been rattling around in my head for months), we had ~30 servers, the breakdown of them was:</p>
+
+<ul>
+<li>3 servers in the Stack Overflow cluster (2 in NY, 1 in CO)</li>
+<li>3 servers in the Stack Exchange cluster (2 in NY, 1 in CO)</li>
+<li>3 servers in a cluster for Internal Stuff - these power our internal applications (2 in NY, 1 in CO)</li>
+<li>2 servers for Reporting Cluster - these power various reporting applications (1 in NY, 1 in CO)</li>
+<li>the remaining servers have miscellaneous functions like - lab/test environments, development servers, traffic logs, and many others used by various teams (located in both NY and CO)</li>
+</ul>
+
+<p>We have various <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-2017" target="_blank">availability groups</a> (AGs) running on the Stack Overflow, Stack Exchange, Internal Development, and Reporting servers. Adding another layer of complexity, we also have availability groups that are a part of <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-2017" target="_blank">Distributed Availability Groups</a> (DAGs). The main clusters (SO, SE, and Internal) have data that flows from a handful of databases downstream to the reporting servers. It looks a bit like this:</p>
+
+<p><img src="/image/2018/so-sql-server-layout.png" alt="A very basic overview of our SQL Server layout" /></p>
+
+<h2 id="the-initial-plan">The Initial Plan</h2>
+
+<p>With so many servers to upgrade, I needed to figure out the best path to get them done in the least amount of time, with the least amount of downtime. I started out by basically creating a spreadsheet of metadata. This spreadsheet included all the server names, the current software version (including CU/SP), the date of the last Windows Update, the team to notify before starting the maintenance, and the date the upgrade was completed. I also added a rudimentary risk level from low to high, and chose the levels based on whether the server was public, internal, dev, etc. Using this risk level, I prioritized the order in which to upgrade each server. Since all the servers hadn&rsquo;t been patched in months, the patching plan for the day of the upgrade was:</p>
+
+<ul>
+<li>upgrade to SQL Server 2017</li>
+<li>run Windows Updates</li>
+<li>reboot as needed</li>
+<li>apply SQL Server CU update</li>
+<li>reboot and repeat as needed - mainly Windows Updates until everything was up to date</li>
+</ul>
+
+<p>My goal was to complete all servers over the course of a month. That may sound like a long timeframe, but with only me touching them, it gave me wiggle room in the event there were issues. I started on the servers with the least amount of risk, this meant the Lab, Dev, and some of the miscellaneous servers. These aren&rsquo;t customer facing, and are used internally, so if something went wrong we wouldn&rsquo;t have public downtime. After patching ~15 servers I felt pretty confident that the upgrade of the rest would go fine&hellip;this was a mistake.</p>
+
+<h2 id="but-i-followed-the-plan">But I Followed The Plan</h2>
+
+<p>Moving to the servers in the AGs/DAGs, I knew I would follow this order for each cluster:</p>
+
+<ol>
+<li>Remote Secondary (CO)</li>
+<li>Local Secondary (NY)</li>
+<li>Local Primary (NY)</li>
+</ol>
+
+<p>In between the NY Secondary and the NY Primary I&rsquo;d perform a failover to let me hit the last server in the cluster. I also decided that I would do the remaining servers in this order:</p>
+
+<ol>
+<li>Reporting Cluster</li>
+<li>Internal Dev Cluster</li>
+<li>SO/SE - CO/NY secondaries</li>
+<li>SO/SE - NY primaries after a failover</li>
+</ol>
+
+<p>This allowed me to get the majority of the upgrades done during the week, then we&rsquo;d perform a quick failover on a weekend, during lower traffic, and I&rsquo;d knock out upgrading the last two critical servers. Based on this, the CO reporting server was up first.</p>
+
+<p>All boxes on the patching plan were ticked for this server, and when it came back up after the final reboot, I checked our instance of <a href="https://github.com/opserver/Opserver" target="_blank">OpServer</a> and everything was green and syncing; I thought &lsquo;Woot, everything is great.&rsquo; Since we use readable secondaries, I wanted to perform a touch test on the databases in the AGs and DAGs to make sure everything was working. I logged into SSMS, but when I attempted to query any database in a DAG they weren&rsquo;t accessible. I couldn&rsquo;t read from them. This was a giant &lsquo;oh crap&rsquo; moment.</p>
+
+<p>I frantically started checking the server to see if there were errors. There was nothing. Nothing in the logs, and no errors from the installation. From what I could tell, everything went as expected. Then why couldn&rsquo;t I read from the databases? After doing a bit of research, I found it was because the secondary was a higher version from the primary. Initially I thought, &lsquo;OK, I&rsquo;ll upgrade the NY reporting server and everything would be fine&rsquo;, but then I remembered these servers are downstream in the DAGs. Uh oh.</p>
+
+<p>If I upgraded both reporting servers, which receive data from 3 DAGs (SO/SE/Int Dev), and those are all a lower version of SQL Server, both reporting servers would be totally out of commission until the upstream servers were all upgraded. All this would result in major downtime for reporting and wasn&rsquo;t going to work.</p>
+
+<p>I did research, pinged people on <a href="https://dba.stackexchange.com/" target="_blank">Database Administrators Stack Exchange</a>, and poked my co-worker <a href="https://twitter.com/Nick_Craver/status/963443600997736449">Nick Craver about it</a>. From everything I heard and read, the behavior was expected, but incredibly difficult to deal with if you&rsquo;re not upgrading everything at the same time, or in a short amount of time. I wanted to spread the upgrades out over a month to make them manageable, but when they go out of commission because of a upgrade, that timeframe went out the window.</p>
+
+<p>All this left me in a state of confusion. How the heck am I going to upgrade these with basically zero downtime, and ensure they don&rsquo;t become unreadable for days?</p>
+
+<p>My plan blew up &mdash; I couldn&rsquo;t do the upgrade in the original order and timeframe that I wanted.</p>
+
+<h2 id="back-to-the-drawing-board">Back to the Drawing Board</h2>
+
+<p>Since we couldn&rsquo;t be without both reporting servers for days, that meant I needed to come up with a new plan/timeframe to get this done. It would also need buy-in, because at some point we&rsquo;d have more downtime than initially expected.</p>
+
+<p>Microsoft recommends <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/upgrading-always-on-availability-group-replica-instances?view=sql-server-2017" target="_blank">upgrading servers</a> in this order:</p>
+
+<ul>
+<li>Upgrade remote secondaries</li>
+<li>Upgrade local secondaries</li>
+<li>Manual failover of the primary to the local secondary</li>
+<li>Upgrade previous primary</li>
+<li>Failback to previous primary</li>
+</ul>
+
+<p>As you can see, that&rsquo;s what I was following. The problem comes in when the server is in a Distributed Availability Group. I did the CO reporting server first, and ideally we&rsquo;d do the NY version next, but since these are downstream in 3 DAGs, both NY and CO would be completely unreadable until the primaries upstream in the DAGs are upgraded. This means we automatically have reduced service with the servers, I can&rsquo;t move to the CO secondary in the Internal servers because it&rsquo;ll become unreadable like the reporting servers. As I move outward, the reduced service grows. So now what am I going to do?</p>
+
+<p>Thankfully, I have a lab environment to test with. If you don&rsquo;t have one, make one. I have 4 VMs that I set up to mimic our AG/DAG environment. This allowed me to test the upgrade order of the servers, perform failovers, verify the AGs/DAGs came back online, etc. After multiple failed attempts at getting the order right, I finally figured out that I would follow the same order and pattern that I was using, just not at the cluster level - it would be based on location instead.</p>
+
+<p>The new plan would be:</p>
+
+<ol>
+<li>Upgrade all local NY secondaries in a DAG/AG - doing this makes them completely unreadable
+
+<ul>
+<li>the NY secondaries in the Internal, SE, SO clusters</li>
+</ul></li>
+<li>Upgrade all remote CO secondaries in a DAG/AG - doing this makes them completely unreadable
+
+<ul>
+<li>the CO reporting server was done, this left the CO servers in the Internal, SE, SE clusters</li>
+</ul></li>
+<li>Perform a failover in a specific order
+
+<ul>
+<li>Reporting Server - failover to CO - this makes the entire cluster unreadable until all upgrades are finished - failover non-DAG availability groups, then failover the DAGs - hope that when it shows it&rsquo;s syncing it really is, since we won&rsquo;t be able to query anything</li>
+<li>Internal Server - failover to NY secondary - failover DAGs first, verify it&rsquo;s syncing to reporting, then failover AGs</li>
+<li>SE Cluster - failover to NY secondary - failover DAGs first, verify it&rsquo;s syncing to reporting, then failover AGs</li>
+<li>SO Cluster - failover to NY secondary - failover DAG</li>
+</ul></li>
+<li>Verify that everything is syncing or at least verify that everything appears to be syncing - I&rsquo;m looking at you reporting servers</li>
+<li>Upgrade the former primaries in NY - reporting, internal SE, and SO</li>
+<li>Verify that all databases are syncing - most likely they aren&rsquo;t, so running <code>ALTER DATABASE [&lt;name&gt;] SET HADR RESUME;</code> should resolve any syncing issues - again looking at you reporting servers</li>
+<li>Perform any failovers to reinstate a primary. For us, this only applies to the reporting cluster. When we failover within NY, we just let the new primary stay primary until we need to failover again - this minimizes downtime for us.</li>
+</ol>
+
+<p>You can see that this deviates from the recommended order by Microsoft because we did the local NY secondaries first. This was done in the event something catastrophic happened in NY, and we had to fail to CO. We knew CO was still up and running since we could query it. If we had upgraded CO and made it unreadable, we wouldn&rsquo;t be able to query it and confirm things were syncing properly for an extended period of time. The thought of this made us uncomfortable.</p>
+
+<p>I tested and retested this plan in the lab environment to get it down before attempting this on any of the critical servers. The only real issue was the reporting servers would be out of commission until the rest upgraded. This meant everything would have to be upgraded fast, so we did not have reporting unavailable for too long. Based on this, it was decided we&rsquo;d do the local NY secondaries on a Friday, then perform the rest of the upgrades and failover on a Saturday - this meant downtime, so we had to give <a href="https://meta.stackexchange.com/q/307744/164200" target="_blank">plenty of notice to the community</a> before tackling it.</p>
+
+<p>In the few days before the upgrade, I wrote up the playbook for the weekend. To minimize downtime and to get the remaining 11 servers upgraded quickly, there were 3 of us who were going to be doing the last upgrades, so I wanted everything documented. The playbook had every step outlined, who was doing what to which server, SQL code for each step (if needed), what was to be installed on each server, the order of failover of AGs&hellip;everything. This was my first major upgrade and I was a nervous wreck, I didn&rsquo;t want anything to be missed or to go wrong, so I probably overplanned, but why not, right?</p>
+
+<p>The weekend came and went, and we had no issues with the upgrades. When we failover our main SO/SE clusters, we typically put the sites in read-only mode, just to be safe that nothing crazy happens when SQL is failing over - for this upgrade our downtime/read-only time was &lt; 10 minutes which was far less than we expected. If you&rsquo;re super curious, you can <a href="https://www.youtube.com/watch?v=j5tOodr4ouc" target="_blank">watch a recording of the livestream</a>, though I&rsquo;m not sure why you&rsquo;d want to sit through ~3 hours of us talking about upgrades.</p>
+
+<p>In the end, I learned a bunch from this. I figured out how best to upgrade to new versions of SQL Server when Distributed Availability Groups are in play without making servers unreadable for too long. I also learned just how darn handy having a lab environment is, and that I super over-prepared/planned for the days of the actual work. I&rsquo;m not sure if this will help anyone else in the future, but now I know to avoid these landmines when upgrading.</p>
+
+<p>I also know there are probably plenty of other landmines I can hit when we move to SQL Server 2019.</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://tarynpivots.com/tags/sql/">sql</a>
+          <a href="https://tarynpivots.com/tags/sql-server/">sql-server</a>
+          <a href="https://tarynpivots.com/tags/maintenance/">maintenance</a>
+          <a href="https://tarynpivots.com/tags/patching/">patching</a>
+          <a href="https://tarynpivots.com/tags/projects/">projects</a>
+          <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
+          <a href="https://tarynpivots.com/tags/distributed-availability-group/">distributed-availability-group</a>
+          <a href="https://tarynpivots.com/tags/availibility-group/">availibility-group</a>
+          <a href="https://tarynpivots.com/tags/failover/">failover</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+          <a class="prev" href="/post/how-stack-overflow-upgraded-from-windows-2012/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">How Stack Overflow upgraded from Windows Server 2012</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        
+          <a class="next" href="/post/pivoting-yet-again/">
+            <span class="next-text nav-default">Pivoting yet again - New blog and domain</span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  <div class="disqus-comment">
+  <div class="disqus-button" id="load_disqus" onclick="load_disqus()">
+    Show Disqus Comments
+  </div>
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+    function load_disqus() {
+      
+      
+      if (window.location.hostname === 'localhost') return;
+
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+
+      $('#load_disqus').remove();
+    };
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
+  
+  </div>
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="https://stackoverflow.com/users/426671/taryn" rel="me noopener" class="iconfont icon-stack-overflow"
+        title="stack-overflow" target="_blank">
+      </a>
+      <a href="https://twitter.com/tarynpivots" rel="me noopener" class="iconfont icon-twitter"
+        title="twitter" target="_blank">
+      </a>
+      <a href="https://github.com/tarynpratt" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+  <a href="https://tarynpivots.com/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2013 -
+    2019
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        Taryn
+        
+      </span></span>
+
+  
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -3,6 +3,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</loc>
+    <lastmod>2018-11-07T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/post/pivoting-yet-again/</loc>
     <lastmod>2018-08-27T15:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -59,6 +73,13 @@
   </url>
   
   <url>
+    <loc>https://tarynpivots.com/tags/availibility-group/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/tags/career/</loc>
     <lastmod>2018-08-27T15:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -93,6 +114,20 @@
   </url>
   
   <url>
+    <loc>https://tarynpivots.com/tags/distributed-availability-group/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/failover/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/tags/journey/</loc>
     <lastmod>2015-05-22T22:49:01+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -100,8 +135,22 @@
   </url>
   
   <url>
+    <loc>https://tarynpivots.com/tags/maintenance/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/tags/mysql/</loc>
     <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/patching/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -115,7 +164,7 @@
   
   <url>
     <loc>https://tarynpivots.com/post/</loc>
-    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -129,7 +178,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/projects/</loc>
-    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -143,7 +192,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/sql/</loc>
-    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -164,21 +213,28 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/sql-server/</loc>
-    <lastmod>2015-04-12T18:30:08+00:00</lastmod>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/stack-overflow/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://tarynpivots.com/tags/</loc>
-    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://tarynpivots.com/</loc>
-    <lastmod>2018-08-27T15:00:00+00:00</lastmod>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -193,6 +249,34 @@
   <url>
     <loc>https://tarynpivots.com/tags/transform/</loc>
     <lastmod>2015-01-18T19:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/windows-server/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/windows-server-2012/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/windows-server-2016/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/windows-server-2019/</loc>
+    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
