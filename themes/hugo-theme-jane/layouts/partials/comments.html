@@ -59,13 +59,9 @@
 
   <!-- Disqus -->
   {{- if .Site.DisqusShortname -}}
-  <div class="disqus-comment">
-  <div class="disqus-button" id="load_disqus" onclick="load_disqus()">
-    {{ i18n "loadDisqus" }}
-  </div>
-  <div id="disqus_thread"></div>
+  <div id="disqus_thread"  class="disqus-comment"></div>
   <script type="text/javascript">
-    function load_disqus() {
+    (function() {
       // Don't ever inject Disqus on localhost--it creates unwanted
       // discussions from 'localhost:1313' on your Disqus account...
       if (window.location.hostname === 'localhost') return;
@@ -75,13 +71,11 @@
       dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 
-      $('#load_disqus').remove();
-    };
+    })();
   </script>
   <noscript>Please enable JavaScript to view the
     <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
   </noscript>
   <!-- <a href="http://disqus.com/" class="dsq-brlink" target="_blank">comments powered by <span class="logo-disqus">Disqus</span></a> -->
-  </div>
   {{- end }}
 {{- end }}
