@@ -30,7 +30,7 @@ Production had two WSFCs running Windows Server 2012, each with 3 nodes. Both cl
 
 In order to properly test, I needed 3 servers running Windows Server 2012. Well, guess what? We didn't even have a way to install Windows Server 2012, and no longer had an image of the software. This left me hunting for a copy of it. Eventually I got one, but then our deployment process needed to be setup to work with 7 year old software. Once all those bits were in place, I was able to [spin up my 3 servers to test with](https://twitter.com/tarynpivots/status/1083158959937093632). At this point, I had a new 2012 cluster with 3 nodes (2 in NY, 1 in CO). All were running SQL Server 2017 with 2 availability groups, one AG that was limited to this cluster, and a second AG that was modeled after one in a distributed availability group.
 
-### The 'Will This Even Work' Test
+### The Will This Even Work Test
 
 Before I started breaking this new test cluster, we had the idea of creating another server with Windows Server 2019 to see if it would work with the new lab cluster - basically, a test to see if the data would sync. I spun up another new server; this time it was on a fancy new operating system, Windows Server 2019, with SQL Server 2017 and was all ready to start testing. The goal was to insert the 2019 server into the mix with 2012, so it would receive data from the old server cluster. I wanted it to look like this:
 
@@ -140,7 +140,7 @@ Now what? Well, we had another dev server to test this against, this time our NY
 
 By the time I finally got done with NY Dev, it was about 2 weeks into April, that means it was over two months of working through all the issues with the development deploys. I was totally ready to move this project along and touch production.
 
-## Phase 3: It's Time For Production
+## Phase 3: Time For Production
 
 It was now into April, and I thought this was going to be finished in February, so you could say I was extremely anxious to finish this project and move on to other things. Since our development environment was finally done and it appeared that our deployment process was working, I revisited the plan I wrote in January for our production environment.
 
