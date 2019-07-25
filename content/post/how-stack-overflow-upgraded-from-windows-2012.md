@@ -518,7 +518,7 @@ Besides the upgrade to [SQL Server 2017 from the year before](/post/how-we-upgra
 
 I have some takeaways from this - most are common sense, but I need to repeat them for my own sanity:
 
-1. Test, re-test, and then test some more. The initial plan was to jump from the lab to prod, the rebuild of our development environment was unexpected. I also didn't think this upgrade would break our development environment, but by doing this immediate steps we found several bugs in our deployment process which we might have hit in production.
+1. Test, re-test, and then test some more. The initial plan was to jump from the lab to prod, the rebuild of our development environment was unexpected. I also didn't think this upgrade would break our development environment, but by doing these intermediate steps we found several bugs in our deployment process which we might have hit in production.
 
 2. Have a lab environment, if possible. Between creating new lab environments and using my existing lab environments, I was able to work through all the different scenarios I figured we would hit in production. Of course, I wasn't able to test at our scale and find the SQL Server bug, but I felt confident the steps I planned would work for the failovers.
 
