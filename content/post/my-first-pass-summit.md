@@ -1,7 +1,7 @@
 ---
 title: 'Finally, My first PASS Summit'
 date: Mon, 02 Dec 2019 08:00:00 +0000
-draft: true
+draft: false
 tags: [pass-summit, SQL, pass, sql-server, thoughts, wit-panel, sql-community]
 excerpt: "My Thoughts on attending my first PASS Summit"
 ---
