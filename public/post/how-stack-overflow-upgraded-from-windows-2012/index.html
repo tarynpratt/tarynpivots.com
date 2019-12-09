@@ -77,7 +77,7 @@ Last year, when we upgraded to SQL Server 2017 we didn&rsquo;t make any changes 
 
 
 
-<meta itemprop="keywords" content="sql,sql-server,maintenance,patching,projects,stack-overflow,distributed-availability-group,availibility-group,failover,windows-server,windows-server-2012,windows-server-2016,windows-server-2019," />
+<meta itemprop="keywords" content="sql,sql-server,maintenance,patching,projects,stack-overflow,distributed-availability-group,availability-group,failover,windows-server,windows-server-2012,windows-server-2016,windows-server-2019," />
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="How Stack Overflow upgraded from Windows Server 2012"/>
 <meta name="twitter:description" content="Warning: This post is long. While working through this massive server upgrade/migration process, tears were shed, many cuss words were said, along with a general feeling of frustration, which ultimately culminated into extreme happiness once the migration was completed. The scale and complexity of the implementation factor into the length of this post, and I’ll share my thought process on how this was executed, so here goes.
@@ -1066,7 +1066,7 @@ if (!doNotTrack) {
 <p>I have some takeaways from this - most are common sense, but I need to repeat them for my own sanity:</p>
 
 <ol>
-<li><p>Test, re-test, and then test some more. The initial plan was to jump from the lab to prod, the rebuild of our development environment was unexpected. I also didn&rsquo;t think this upgrade would break our development environment, but by doing this immediate steps we found several bugs in our deployment process which we might have hit in production.</p></li>
+<li><p>Test, re-test, and then test some more. The initial plan was to jump from the lab to prod, the rebuild of our development environment was unexpected. I also didn&rsquo;t think this upgrade would break our development environment, but by doing these intermediate steps we found several bugs in our deployment process which we might have hit in production.</p></li>
 
 <li><p>Have a lab environment, if possible. Between creating new lab environments and using my existing lab environments, I was able to work through all the different scenarios I figured we would hit in production. Of course, I wasn&rsquo;t able to test at our scale and find the SQL Server bug, but I felt confident the steps I planned would work for the failovers.</p></li>
 
@@ -1098,7 +1098,7 @@ if (!doNotTrack) {
           <a href="https://tarynpivots.com/tags/projects/">projects</a>
           <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
           <a href="https://tarynpivots.com/tags/distributed-availability-group/">distributed-availability-group</a>
-          <a href="https://tarynpivots.com/tags/availibility-group/">availibility-group</a>
+          <a href="https://tarynpivots.com/tags/availability-group/">availability-group</a>
           <a href="https://tarynpivots.com/tags/failover/">failover</a>
           <a href="https://tarynpivots.com/tags/windows-server/">windows-server</a>
           <a href="https://tarynpivots.com/tags/windows-server-2012/">windows-server-2012</a>
@@ -1110,6 +1110,11 @@ if (!doNotTrack) {
       
       <nav class="post-nav">
         
+          <a class="prev" href="/post/my-first-pass-summit/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Finally, My first PASS Summit</span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
         
           <a class="next" href="/post/how-we-upgraded-stackoverflow-to-sql-server-2017/">
             <span class="next-text nav-default">How we upgraded Stack Overflow to SQL Server 2017</span>

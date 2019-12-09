@@ -2,7 +2,7 @@
 title: 'How we upgraded Stack Overflow to SQL Server 2017'
 date: Wed, 07 Nov 2018 19:00:38 +0000
 draft: false
-tags: [sql, sql-server, maintenance, patching, projects, stack-overflow, distributed-availability-group, availibility-group, failover]
+tags: [sql, sql-server, maintenance, patching, projects, stack-overflow, distributed-availability-group, availability-group, failover]
 excerpt: "Upgrading SQL Server from 2016 to 2017"
 ---
 

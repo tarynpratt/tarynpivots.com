@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Availability Group on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/availability-group/</link>
+    <description>Recent content in Availability Group on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 09 Dec 2019 06:00:38 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/availability-group/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Hitting Parallel_Redo_Flow_Control waits with Availability Groups</title>
+      <link>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</link>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</guid>
+      <description>In late June 2019, June 26th to be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
+The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped it before an actual outage occurred.</description>
+    </item>
+    
+    <item>
+      <title>How Stack Overflow upgraded from Windows Server 2012</title>
+      <link>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</link>
+      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</guid>
+      <description>Warning: This post is long. While working through this massive server upgrade/migration process, tears were shed, many cuss words were said, along with a general feeling of frustration, which ultimately culminated into extreme happiness once the migration was completed. The scale and complexity of the implementation factor into the length of this post, and I’ll share my thought process on how this was executed, so here goes.
+Last year, when we upgraded to SQL Server 2017 we didn&amp;rsquo;t make any changes to the operating system on our main production servers.</description>
+    </item>
+    
+    <item>
+      <title>How we upgraded Stack Overflow to SQL Server 2017</title>
+      <link>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</link>
+      <pubDate>Wed, 07 Nov 2018 19:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</guid>
+      <description>This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &amp;mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed.</description>
+    </item>
+    
+  </channel>
+</rss>

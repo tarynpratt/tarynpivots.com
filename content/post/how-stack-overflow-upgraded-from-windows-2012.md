@@ -2,7 +2,7 @@
 title: 'How Stack Overflow upgraded from Windows Server 2012'
 date: Thu, 18 Jul 2019 06:00:38 +0000
 draft: false
-tags: [sql, sql-server, maintenance, patching, projects, stack-overflow, distributed-availability-group, availibility-group, failover, windows-server, windows-server-2012, windows-server-2016, windows-server-2019]
+tags: [sql, sql-server, maintenance, patching, projects, stack-overflow, distributed-availability-group, availability-group, failover, windows-server, windows-server-2012, windows-server-2016, windows-server-2019]
 excerpt: "Moving production SQL Servers from Windows Server 2012 without extended downtime"
 ---
 

@@ -6,24 +6,24 @@
     <description>Recent content in Tags on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 09 Dec 2019 06:00:38 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Availibility Group</title>
-      <link>https://tarynpivots.com/tags/availibility-group/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      <title>Availability Group</title>
+      <link>https://tarynpivots.com/tags/availability-group/</link>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
-      <guid>https://tarynpivots.com/tags/availibility-group/</guid>
+      <guid>https://tarynpivots.com/tags/availability-group/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Career</title>
       <link>https://tarynpivots.com/tags/career/</link>
-      <pubDate>Mon, 27 Aug 2018 15:00:00 +0000</pubDate>
+      <pubDate>Mon, 02 Dec 2019 08:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/career/</guid>
       <description></description>
@@ -59,7 +59,7 @@
     <item>
       <title>Distributed Availability Group</title>
       <link>https://tarynpivots.com/tags/distributed-availability-group/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/distributed-availability-group/</guid>
       <description></description>
@@ -86,7 +86,7 @@
     <item>
       <title>Maintenance</title>
       <link>https://tarynpivots.com/tags/maintenance/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/maintenance/</guid>
       <description></description>
@@ -98,6 +98,42 @@
       <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/mysql/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Outage</title>
+      <link>https://tarynpivots.com/tags/outage/</link>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/outage/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Parallel Redo Flow Control</title>
+      <link>https://tarynpivots.com/tags/parallel-redo-flow-control/</link>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/parallel-redo-flow-control/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Pass</title>
+      <link>https://tarynpivots.com/tags/pass/</link>
+      <pubDate>Mon, 02 Dec 2019 08:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/pass/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Pass Summit</title>
+      <link>https://tarynpivots.com/tags/pass-summit/</link>
+      <pubDate>Mon, 02 Dec 2019 08:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/pass-summit/</guid>
       <description></description>
     </item>
     
@@ -149,45 +185,9 @@
     <item>
       <title>Sql</title>
       <link>https://tarynpivots.com/tags/sql/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/sql/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Sql Queries</title>
-      <link>https://tarynpivots.com/tags/sql-queries/</link>
-      <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/sql-queries/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Sql Saturday</title>
-      <link>https://tarynpivots.com/tags/sql-saturday/</link>
-      <pubDate>Sun, 12 Apr 2015 16:50:33 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/sql-saturday/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Sql Server</title>
-      <link>https://tarynpivots.com/tags/sql-server/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/sql-server/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Stack Overflow</title>
-      <link>https://tarynpivots.com/tags/stack-overflow/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/stack-overflow/</guid>
       <description></description>
     </item>
     

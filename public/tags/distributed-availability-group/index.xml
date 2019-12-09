@@ -6,10 +6,20 @@
     <description>Recent content in Distributed Availability Group on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 09 Dec 2019 06:00:38 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/distributed-availability-group/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Hitting Parallel_Redo_Flow_Control waits with Availability Groups</title>
+      <link>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</link>
+      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</guid>
+      <description>In late June 2019, June 26th to be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
+The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped it before an actual outage occurred.</description>
+    </item>
     
     <item>
       <title>How Stack Overflow upgraded from Windows Server 2012</title>
