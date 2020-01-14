@@ -6,10 +6,20 @@
     <description>Recent content in Career on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 02 Dec 2019 08:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 14 Jan 2020 06:00:38 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/career/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>T-SQL Tuesday #122 - Impostor Syndrome</title>
+      <link>https://tarynpivots.com/post/t-sql-tuesday-122-impostor-syndrome/</link>
+      <pubDate>Tue, 14 Jan 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/t-sql-tuesday-122-impostor-syndrome/</guid>
+      <description>This month&amp;rsquo;s T-SQL Tuesday is hosted by Jon Shaulis, who has asked that we talk about impostor syndrome. This subject is close to my heart, as I have dealt with it throughout my career.
+I didn&amp;rsquo;t study computer science or engineering in college. I never even took a computer class. I sort of just fell into working as a web developer because I had someone tell me they wouldn’t hire me due to lack of experience.</description>
+    </item>
     
     <item>
       <title>Finally, My first PASS Summit</title>
