@@ -8,7 +8,7 @@ excerpt: "T-SQL Tuesday #122: Dealing with Impostor Syndrome"
 
 <img src="/image/2020/T-SQL-Tuesday-Logo.jpg" width="300" height="300" style="float:right" />
 
-This month's T-SQL Tuesday is hosted by <a href="https://twitter.com/JonShaulis" target="_blank">Jon Shaulis</a>, who has asked that we talk about <a href="https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-impostor-syndrome/" target="_blank">impostor syndrome</a>. This subject is close to my heart, as I have dealt with it throughout my career. 
+This month's T-SQL Tuesday is hosted by <a href="https://twitter.com/JonShaulis" target="_blank">Jon Shaulis</a>, who has asked that we talk about <a href="https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/" target="_blank">impostor syndrome</a>. This subject is close to my heart, as I have dealt with it throughout my career. 
 
 
 I didn't study computer science or engineering in college. I never even took a computer class. I sort of just fell into working as a web developer because I had [someone tell me they wouldn’t hire me due to lack of experience](/post/ch-ch-ch-changes-are-afoot/). 
