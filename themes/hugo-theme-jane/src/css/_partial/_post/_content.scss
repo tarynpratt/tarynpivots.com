@@ -51,14 +51,7 @@
     line-height: 1.6;
     font-family: Open Sans;
 
-    &::before {
-      font-family: Arial;
-      content: "\201C";
-      color: #999;
-      font-size: 4em;
-      position: absolute;
-      left: 10px;
-      top: -10px;
+
     }
 
     footer {

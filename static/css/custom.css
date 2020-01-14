@@ -45,6 +45,10 @@ body {
     color: #4f576d;
 }
 
+.post .post-content h1, .post .post-content h2 {
+    margin-top: 1em;
+}
+
 .post .post-header {
     text-align: left;
 }
