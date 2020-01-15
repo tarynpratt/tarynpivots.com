@@ -2,7 +2,7 @@
 title: 'T-SQL Tuesday #122 - Impostor Syndrome'
 date: 2020-01-14 06:00:38 +0000
 draft: false
-tags: [career, thoughts, journey, t-sql tuesday]
+tags: [career, thoughts, journey, t-sql tuesday, sql-community]
 excerpt: "T-SQL Tuesday #122: Dealing with Impostor Syndrome"
 ---
 
