@@ -6,7 +6,7 @@
     <description>Recent content in Tags on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 09 Dec 2019 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 15 Jan 2020 06:00:38 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,9 +14,18 @@
     <item>
       <title>Availability Group</title>
       <link>https://tarynpivots.com/tags/availability-group/</link>
-      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/availability-group/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Bug</title>
+      <link>https://tarynpivots.com/tags/bug/</link>
+      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/bug/</guid>
       <description></description>
     </item>
     
@@ -59,7 +68,7 @@
     <item>
       <title>Distributed Availability Group</title>
       <link>https://tarynpivots.com/tags/distributed-availability-group/</link>
-      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/distributed-availability-group/</guid>
       <description></description>
@@ -174,20 +183,11 @@
     </item>
     
     <item>
-      <title>Rows to Columns</title>
-      <link>https://tarynpivots.com/tags/rows-to-columns/</link>
-      <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
+      <title>Readable Secondary</title>
+      <link>https://tarynpivots.com/tags/readable-secondary/</link>
+      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
       
-      <guid>https://tarynpivots.com/tags/rows-to-columns/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Sql</title>
-      <link>https://tarynpivots.com/tags/sql/</link>
-      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/sql/</guid>
+      <guid>https://tarynpivots.com/tags/readable-secondary/</guid>
       <description></description>
     </item>
     

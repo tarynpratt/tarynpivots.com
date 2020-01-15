@@ -6,10 +6,163 @@
     <description>Recent content on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 14 Jan 2020 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 15 Jan 2020 06:00:38 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>The Perils of Querying SQL Server Replicas Under Load</title>
+      <link>https://tarynpivots.com/post/perils-querying-sql-replica-under-load/</link>
+      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/perils-querying-sql-replica-under-load/</guid>
+      
+        <description>
+
+&lt;p&gt;Last week at Stack Overflow we had an internal hack-a-thon, or as we call it, a make-a-thon. I was on the bug-bashing team, which is the team that attempts to fix smallish bugs we haven’t gotten around to fixing, due to other time-constraints. I was &lt;a href=&#34;https://meta.stackoverflow.com/q/384675/426671&#34; target=&#34;_blank&#34;&gt;tagged to investigate a bug&lt;/a&gt; about duplicate badges being awarded because it looked to possibly be an easy fix in SQL. At first glance it looked simple enough, but once I started digging in, I figured out very quickly it wouldn’t be.&lt;/p&gt;
+
+&lt;h2 id=&#34;a-little-background&#34;&gt;A Little Background&lt;/h2&gt;
+
+&lt;p&gt;If you&amp;rsquo;re not familiar with &lt;a href=&#34;https://stackoverflow.com/help/badges&#34; target=&#34;_blank&#34;&gt;badges&lt;/a&gt; on Stack Overflow, they are awarded for performing actions on the site. For example, the badge in the bug report, &lt;a href=&#34;https://stackoverflow.com/help/badges/804/suffrage&#34; target=&#34;_blank&#34;&gt;Suffrage&lt;/a&gt; is awarded for voting 30 times in a day. Some of our badges can be awarded multiple times while others are awarded only once. The Suffrage badge is supposed to be a one time badge, which is why it is odd that someone had it twice.&lt;/p&gt;
+
+&lt;h2 id=&#34;initial-investigation&#34;&gt;Initial Investigation&lt;/h2&gt;
+
+&lt;p&gt;Based on the bug report, I knew three pieces of information: 1) the badge, 2) who it was awarded to and 3) when it happened. I turned to the database to see if I could get any more info.&lt;/p&gt;
+
+&lt;p&gt;My first step was to see if there were other cases where the Suffrage badge was awarded twice.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;count&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Users2Badges&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;BadgeId&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;804&lt;/span&gt; &lt;span class=&#34;c1&#34;&gt;-- Suffrage
+&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;HAVING&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;COUNT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Nope. Only one user was lucky enough to get it twice. Then I decided to see if anything was unusual about the day it was awarded. When I say unusual, I mean, did we have any outages, or, was there anything that could have glitched when the badges were granted?&lt;/p&gt;
+
+&lt;p&gt;The badge in question was awarded on June 22nd 2018, so you might be wondering how in the world would I be able to track down outages, etc. from 1.5 years ago?&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m glad you asked. When we throw certain exceptions on the site, they get sent to our internal chatrooms. All I had to do was go back to the transcript for that specific day, and do a quick scan to see if anything jumped out at me. Lo and behold something did. A whole lot of badge grant exceptions:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2020/chat_exceptions.png&#34; alt=&#34;Chat Exceptions&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;a-bit-more-background&#34;&gt;A Bit More Background&lt;/h3&gt;
+
+&lt;p&gt;Around that time, June 2018, we were feeling the crunch of low free space on our primary SQL Server SSDs. We had &amp;lt; 10% free, which wasn&amp;rsquo;t great, so we investigated what, if anything, we could do without having to buy new drives. During that research, we came across our &lt;code&gt;Log&lt;/code&gt; table, which exists in all of our databases. These tables are used to capture messages from the application. Seems harmless, right? Normally, yes, but we had been logging data into these tables for years and never deleted a single row for most log types. The &lt;code&gt;Log&lt;/code&gt; tables were storing a ridiculous number of rows across &lt;strong&gt;ALL OF OUR DATABASES&lt;/strong&gt;. We were going to gain a ton of space back by purging this old data. Here is just one database as an example:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;StackExchange.Tor:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Database Size: 10.3 GB&lt;/li&gt;
+&lt;li&gt;Log Table Size: 10.12 GB&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Since we needed to purge data from these tables across the entire network, we used our scheduler to do it. The scheduler would allow us to do this in batches, in order to not slam the SQL Servers. The goal was to chew through the deletions, but not cause blocking or timeouts on any other process. It was a game of cat and mouse with the servers as we attempted to figure out the correct batch size. We basically were going to execute this everywhere:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;DELETE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Top&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;50000&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Log&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;LogEntryType&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;30&lt;/span&gt;
+  &lt;span class=&#34;k&#34;&gt;AND&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;CreationDate&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;GETUTCDATE&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;-&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;60&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;We tried a 50k batch size which resulted in timeouts, similar to the screenshot above. We tried 25k which worked. We upped it again to 40k, and it failed. Finally, we dropped it back down to 25k and just let it delete as needed. Any time the scheduled deletions threw exceptions, we had a record of it in our chatroom. These messages in chat were critical to see what was happening when the duplicate badge was granted.&lt;/p&gt;
+
+&lt;p&gt;After looking through the chat transcripts, I had a far better understanding of what was taking place when the badge was awarded incorrectly. I also was pretty sure I knew the cause of the duplicate awards, I just needed to prove it.&lt;/p&gt;
+
+&lt;h2 id=&#34;digging-deeper&#34;&gt;Digging Deeper&lt;/h2&gt;
+
+&lt;p&gt;Based on what I saw in the transcripts, my gut was telling me the issue had to do with the massive influx to the transaction logs making the &lt;code&gt;log_send_queue_size&lt;/code&gt; sky-rocket. This resulted in a much larger amount of data that needed to be written to the secondary, in other words the &lt;code&gt;redo_queue_size&lt;/code&gt; was also extremely large (both values are available by querying &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-hadr-database-replica-states-transact-sql?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;sys.dm_hadr_database_replica_states&lt;/code&gt;&lt;/a&gt;). As a result, we were reading dirty data when we awarded the badges. We award badges in this manner:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Query the readable secondary to verify who should get the badge &amp;mdash; we use the secondary to help spread out our read workload&lt;/li&gt;
+&lt;li&gt;Award the badge on the primary&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;We grant badges every 5 minutes, so if the secondary server was overloaded in trying to write a lot of transactions due to another process, we might be reading stale data on the next execution. I had one example of this from the bug report, I just needed a few more to prove that was the case. Time to go back to the database.&lt;/p&gt;
+
+&lt;p&gt;I wrote up an ugly little query to get a list of all duplicate badges awarded.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;IncorrectAwards&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;as&lt;/span&gt; 
+&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;UserId&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;BadgeId&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Total&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;count&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Users2Badges&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;EXISTS&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;
+                    &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Badges&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;b&lt;/span&gt; 
+                    &lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;b&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;Single&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;
+                        &lt;span class=&#34;k&#34;&gt;AND&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;BadgeId&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;b&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;Id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;GROUP&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;BY&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;UserId&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;BadgeId&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;HAVING&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;count&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Users2Badges&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;EXISTS&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;
+                &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;IncorrectAwards&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ia&lt;/span&gt;
+                &lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;UserId&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ia&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;UserId&lt;/span&gt;
+                    &lt;span class=&#34;k&#34;&gt;and&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ub&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;BadgeId&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ia&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;BadgeId&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Using the results and the exceptions in our chatroom, I was able to confirm that we had other instances where a huge process hit the servers, overloaded the transaction logs, and resulted in duplicate badges. And what do you know I found a bunch of them!&lt;/p&gt;
+
+&lt;p&gt;I didn&amp;rsquo;t need to look very far back in time either. Back in November 2019, we performed a &lt;a href=&#34;https://stackoverflow.blog/2019/11/13/were-rewarding-the-question-askers/&#34; target=&#34;_blank&#34;&gt;massive reputation recalculation&lt;/a&gt; which involved awarding reputation to question askers across the entire network. Let&amp;rsquo;s just say we overwhelmed our servers just a little bit during this time and the redo of the transaction logs in our Availability Groups and Distributed Availability Groups was incredibly slow. Since we were hammering the secondaries with a lot of transactions, we unfortunately were reading staler and staler data when we awarded badges which lead to other duplicates.&lt;/p&gt;
+
+&lt;h2 id=&#34;fixing-the-issue-or-not&#34;&gt;Fixing the Issue&amp;hellip;Or Not&lt;/h2&gt;
+
+&lt;p&gt;Now that I discovered the issue, it should be an easy fix, right? Well, sort of. Yeah, I could easily delete the duplicate badges and move on &amp;mdash; which of course fixes the initial bug report, but doesn&amp;rsquo;t solve the underlying issue.&lt;/p&gt;
+
+&lt;p&gt;What happens the next time we run something massive on the primary and we overload the transaction logs, creating a delay in the data on the secondary? The same thing would most likely happen. The problem is, we need to use the secondary to check to see who should get the badge, we can&amp;rsquo;t move that back to the primary. Honestly, we&amp;rsquo;re not exactly sure how we&amp;rsquo;re going to fix it yet. We have some ideas like maybe checking the size of the redo queue before we execute the badge grants and if it&amp;rsquo;s &lt;code&gt;some undetermined size threshold&lt;/code&gt; we skip the next badge grant, or some other fix we haven&amp;rsquo;t thought of yet.&lt;/p&gt;
+
+&lt;h2 id=&#34;final-thoughts&#34;&gt;Final Thoughts&lt;/h2&gt;
+
+&lt;p&gt;You&amp;rsquo;re probably wondering why I wrote this post since we didn&amp;rsquo;t even fix the bug? Well, mainly because we use our readable secondary a lot and I&amp;rsquo;m sure we aren&amp;rsquo;t the only ones. While I knew we always needed to be mindful of the redo of the transaction logs to our secondaries in the availability groups, I need to be more vigilant in watching the impact to hopefully prevent a lot of clean-up later on.&lt;/p&gt;
+
+&lt;p&gt;By the way, since this initial bug was caused by purging the &lt;code&gt;Log&lt;/code&gt; tables due to low free drive space, I figured I&amp;rsquo;d let you know that purging all that old unneeded data brought us from 90%+ used to &amp;lt;50% used. It triggered some duplicate badges, but it saved us lots of money in buying new SSDs and has given us a few more years of breathing room.&lt;/p&gt;
+
+&lt;p&gt;Also if you&amp;rsquo;ve hit any issues like this and have suggestions on how to fix it, let me know. I&amp;rsquo;m super curious.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>T-SQL Tuesday #122 - Impostor Syndrome</title>
