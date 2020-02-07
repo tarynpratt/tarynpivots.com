@@ -6,10 +6,139 @@
     <description>Recent content on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 15 Jan 2020 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 06 Feb 2020 06:00:38 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Recovering Lost Linked Servers</title>
+      <link>https://tarynpivots.com/post/recovering-lost-linked-servers/</link>
+      <pubDate>Thu, 06 Feb 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/recovering-lost-linked-servers/</guid>
+      
+        <description>
+
+&lt;p&gt;Recently, I kicked off a project to start moving us to &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-ver15?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;SQL Server 2019&lt;/a&gt;. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of &lt;a href=&#34;https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/&#34;&gt;SQL Server&lt;/a&gt; upgrades, as well as &lt;a href=&#34;https://www.tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/&#34;&gt;operating system upgrades&lt;/a&gt;, I couldn&amp;rsquo;t possibly make a mistake, right? Wrong&amp;hellip;I completely forgot to script out the linked servers on the server I upgraded this week. I screwed up and decided to write about how I went about fixing it.&lt;/p&gt;
+
+&lt;h2 id=&#34;my-plan&#34;&gt;My Plan&lt;/h2&gt;
+
+&lt;p&gt;This week, I &lt;a href=&#34;https://meta.stackexchange.com/q/342991/164200&#34; target=&#34;_blank&#34;&gt;tackled the server&lt;/a&gt; running &lt;a href =&#34;https://data.stackexchange.com/&#34; target=&#34;_blank&#34;&gt;Stack Exchange Data Explorer (SEDE)&lt;/a&gt;. In the past, when I have upgraded an operating system on a SQL Server I work off a list:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Take a backup of all system databases - if I&amp;rsquo;m reinstalling the same version of SQL Server, I could restore the &lt;code&gt;master&lt;/code&gt;, &lt;code&gt;model&lt;/code&gt;, and &lt;code&gt;msdb&lt;/code&gt; databases to minimize some of my setup again&lt;/li&gt;
+&lt;li&gt;Script out any objects in the &lt;code&gt;master&lt;/code&gt; that we need, this would be tables and stored procedures. We store objects for maintenance purposes in &lt;code&gt;master&lt;/code&gt;&amp;hellip;please don&amp;rsquo;t scream at me.&lt;/li&gt;
+&lt;li&gt;Generate creation scripts for all jobs&lt;/li&gt;
+&lt;li&gt;Export logins and users from the server&lt;/li&gt;
+&lt;li&gt;Make sure I have everything else I need scripted before kicking off a rebuild&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;upgrade-day&#34;&gt;Upgrade Day&lt;/h2&gt;
+
+&lt;p&gt;Before starting the rebuild, I did one final update of SQL Server 2017 to bring it to the latest patch we were using, &lt;a href=&#34;https://support.microsoft.com/en-us/help/4527377/cumulative-update-18-for-sql-server-2017&#34; target=&#34;_blank&#34;&gt;CU 18&lt;/a&gt;. This was to make sure it was fully up-to-date before I rebuilt the server.&lt;/p&gt;
+
+&lt;p&gt;You might be curious why I patched SQL Server 2017 when we were going to SQL Server 2019? I did this because the server that runs data explorer has a lot of specific permissions, and it also has about 350 databases. My initial goal was to restore the system databases to minimize the risk of missing a permission or something in the shuffle when setting up the new server. Once the system databases were restored, I&amp;rsquo;d upgrade to SQL Server 2019.&lt;/p&gt;
+
+&lt;p&gt;After patching SQL Server, I checked all the steps above, and thought I had everything I needed to recreate the server, so I kicked off the rebuild. About 30 minutes into the process, I had a total facepalm moment and realized I forgot to script the linked servers. It was too late to do anything about it at that time, but thankfully I had the system databases which would save me. Once Windows Server 2016 was done installing, it was time to install SQL Server 2017 and then &lt;em&gt;attempt&lt;/em&gt; the restore of the system databases.&lt;/p&gt;
+
+&lt;p&gt;I say &lt;em&gt;attempt&lt;/em&gt; to restore the system databases because while I&amp;rsquo;ve restored the &lt;code&gt;master&lt;/code&gt; database before, &lt;a href=&#34;https://twitter.com/tarynpivots/status/1225131722397741056&#34; target=&#34;_blank&#34;&gt;it&amp;rsquo;s not fun&lt;/a&gt;, or at least, not my definition of fun. The biggest pain point I have is getting the single connection to the server. I know how to put the server in &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/restore-the-master-database-transact-sql?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;single user mode to restore the &lt;code&gt;master&lt;/code&gt; database&lt;/a&gt;, but at Stack Overflow we have a lot of monitoring systems that are actively checking the server status. Unless I disabled all those logins, it&amp;rsquo;d be nearly impossible to get that single connection.&lt;/p&gt;
+
+&lt;p&gt;I opened up a command window and started going through all the steps to restore the &lt;code&gt;master&lt;/code&gt; database. I executed:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;net stop MSSQLSERVER
+net start MSSQLSERVER /m&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Then, I opened another command window and connected to the instance by using:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;sqlcmd -s .\MSSQLSERVER&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;When I hit go, I received the dreaded error:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Login failed for user &lt;code&gt;&amp;lt;xxx&amp;gt;&lt;/code&gt; Reason: Server is in single user mode. Only one administrator can connect at this time.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Boo. I tried connecting a few more times and each time I couldn&amp;rsquo;t get the single connection. I disabled some logins for our monitoring services and couldn&amp;rsquo;t connect to the instance because something was getting the single connection first. I may also have been hitting my head on my desk out of frustration. After fighting with it for far longer than I&amp;rsquo;m going to admit, I gave up. I knew I was going to just have to rebuild the server from my scripts, and attempt to recreate the linked servers from scratch. Knowing it was inevitable, I went ahead and proceeded with the upgrade to SQL Server 2019. When that was done, I executed all my scripts, got the databases back in place, and released &lt;a href=&#34;https://twitter.com/tarynpivots/status/1225164597822246912&#34; target=&#34;_blank&#34;&gt;data explorer&lt;/a&gt; back to the world.&lt;/p&gt;
+
+&lt;p&gt;The only things still missing were the linked servers. While I was happy to have moved the SQL upgrades along, I was &lt;a href=&#34;https://twitter.com/tarynpivots/status/1225216451746775042&#34; target=&#34;_blank&#34;&gt;very angry with myself for missing that script&lt;/a&gt; in the first place. The server had not received much love, and I didn&amp;rsquo;t have the linked server, which was created long before me, scripted out and uploaded to GitHub (yeah, I know that was also dumb). I setup the linked servers by hand but couldn&amp;rsquo;t get them to connect. After a very long day I knew I wouldn&amp;rsquo;t need the linked server until the weekend, so I left it to be fixed the next morning.&lt;/p&gt;
+
+&lt;h2 id=&#34;recovering-the-lost-linked-servers&#34;&gt;Recovering the Lost Linked Servers&lt;/h2&gt;
+
+&lt;p&gt;The next day, I had to get the linked servers working. My attempts to create them by hand failed miserably. I had the system backups from before the upgrade, so I wanted to try to get the details out of them. I did several things that didn&amp;rsquo;t work, including restoring the &lt;code&gt;master&lt;/code&gt; database to a different server, under a different name (i.e. &lt;code&gt;master_old&lt;/code&gt;) and trying to query the linked server info.&lt;/p&gt;
+
+&lt;p&gt;Finally, I decided to create a new test server, install SQL Server 2017, and restore the &lt;code&gt;master&lt;/code&gt; database to it. I setup a new build process to create a VM with a single disk drive, with just enough space for Windows and SQL to be installed on it. I installed SQL Server 2017 to the same CU I needed, and it was time to try the restore again. My thinking was, I could pretty much do anything to this SQL instance in order to get to the linked server data I wanted.&lt;/p&gt;
+
+&lt;p&gt;Using the same commands as above, I set the instance to single user mode, and then attempted to connect to the instance. No error message this time. I was in the instance as the sole user&amp;hellip;success. Now that I was connected it was time to restore:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;n&#34;&gt;RESTORE&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;DATABASE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;master&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;DISK&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;C:\Backups\master.bak&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WITH&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;REPLACE&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;I received no errors. It looked like everything worked. I opened up the SQL Server Configuration Manager, started the SQL service, and refreshed the page. The SQL service stopped. Uh oh, something is wrong. I went to the error log and popped it open. There was a giant error:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;2020-02-06 16:42:24.74 spid9s      Starting up database &amp;lsquo;model&amp;rsquo;.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:42:24.74 spid9s      Error: 17204, Severity: 16, State: 1.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:42:24.74 spid9s      FCB::Open failed: Could not open file C:\Program Files\Microsoft SQL Server\MSSQL12.MSSQLSERVER\MSSQL\DATA\model.mdf for file number 1.  OS error: 3(The system cannot find the path specified.).&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:42:24.74 spid9s      Database &amp;lsquo;model&amp;rsquo; cannot be opened due to inaccessible files or insufficient memory or disk space.  See the SQL Server errorlog for details.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:42:24.74 spid9s      SQL Server shutdown has been initiated&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:42:24.74 spid9s      SQL Trace was stopped due to server shutdown. Trace ID = &amp;lsquo;1&amp;rsquo;. This is an informational message only; no user action is required.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I saw the issue right away. The server was looking for the &lt;code&gt;model&lt;/code&gt; database in the &lt;code&gt;MSSQL12.MSSQLSERVER&lt;/code&gt; directory, but that didn&amp;rsquo;t exist any longer. The old server had it&amp;rsquo;s files in the directory for SQL Server 2014 aka MSSQL12, but on this new server everything is located in the directory for &lt;code&gt;MSSQL14.MSSQLSERVER&lt;/code&gt;. As I mentioned, I didn&amp;rsquo;t really care what I did to this test machine, so I manually created the directory that it was looking for - &lt;code&gt;C:\Program Files\Microsoft SQL Server\MSSQL12.MSSQLSERVER\MSSQL\DATA&lt;/code&gt; and made sure that the SQL user account had access to the directory. Then I just copied and pasted the &lt;code&gt;model&lt;/code&gt; database from  &lt;code&gt;MSSQL14.MSSQLSERVER&lt;/code&gt; and dropped it into the &lt;code&gt;MSSQL12.MSSQLSERVER&lt;/code&gt; directory.&lt;/p&gt;
+
+&lt;p&gt;I attempted to start the SQL service, and again it failed. Back to the error log, I went. This time the error was:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;2020-02-06 16:48:42.11 spid9s      Clearing tempdb database.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:48:42.11 spid9s      Error: 5123, Severity: 16, State: 1.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:48:42.11 spid9s      CREATE FILE encountered operating system error 3(The system cannot find the path specified.) while attempting to open or create the physical file &amp;rsquo;D:\Data\tempdb.mdf&amp;rsquo;.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:48:42.12 spid9s      Could not create tempdb. You may not have enough disk space available. Free additional disk space by deleting other files on the tempdb drive and then restart SQL Server. Check for additional errors in the operating system error log that may indicate why the tempdb files could not be initialized.&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:48:42.12 spid9s      SQL Server shutdown has been initiated&lt;/p&gt;
+
+&lt;p&gt;2020-02-06 16:48:42.12 spid9s      SQL Trace was stopped due to server shutdown. Trace ID = &amp;lsquo;1&amp;rsquo;. This is an informational message only; no user action is required.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;There was some progress because it was a different error, right?&lt;/p&gt;
+
+&lt;p&gt;Now it&amp;rsquo;s complaining because I don&amp;rsquo;t have a &lt;code&gt;D:\&lt;/code&gt; drive on my test instance. I built the server with a single drive, but luckily I can easily fix that for a VM. I logged into our VM platform, quickly added a tiny new disk drive, then formatted it on my test server. Once the &lt;code&gt;D:\&lt;/code&gt; drive was available, I created &lt;code&gt;D:\Data&lt;/code&gt; and granted permission to the SQL user account to access the directory.&lt;/p&gt;
+
+&lt;p&gt;It was time to go back to the SQL Server Configuration Manager to start the service. As I kicked the service to start, I kept thinking &amp;lsquo;please work, please work&amp;rsquo;. This time the service started and stayed running. I logged into SSMS, connected to the instance, and went looking for my Linked Servers.&lt;/p&gt;
+
+&lt;p&gt;Guess what? They were there. Somehow it worked. I was able to script out both linked servers and execute them where they belong. After some testing, I confirmed that the linked servers were working on the original server I built.&lt;/p&gt;
+
+&lt;p&gt;It&amp;rsquo;s quite possible that there are other ways to recover something like this. I&amp;rsquo;m also &lt;a href=&#34;https://twitter.com/tarynpivots/status/1225475415822589952&#34; target=&#34;_blank&#34;&gt;relieved&lt;/a&gt; this worked and I know I&amp;rsquo;m lucky to have the tools to be able to quickly spin up a new test SQL Server to hack away on. I learned a valuable lesson - verify I have everything that I need when rebuilding servers.&lt;/p&gt;
+
+&lt;p&gt;Oh, and by the way, yes I did upload those linked server creation scripts to GitHub.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>The Perils of Querying SQL Server Replicas Under Load</title>

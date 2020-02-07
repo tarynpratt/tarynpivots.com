@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Server Migration on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/server-migration/</link>
+    <description>Recent content in Server Migration on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 06 Feb 2020 06:00:38 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/server-migration/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Recovering Lost Linked Servers</title>
+      <link>https://tarynpivots.com/post/recovering-lost-linked-servers/</link>
+      <pubDate>Thu, 06 Feb 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/recovering-lost-linked-servers/</guid>
+      <description>Recently, I kicked off a project to start moving us to SQL Server 2019. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of SQL Server upgrades, as well as operating system upgrades, I couldn&amp;rsquo;t possibly make a mistake, right?</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Recovering Lost Linked Servers - Taryn Pratt</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="Taryn" />
+  <meta name="description" content="Recently, I kicked off a project to start moving us to SQL Server 2019. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of SQL Server upgrades, as well as operating system upgrades, I couldn&amp;rsquo;t possibly make a mistake, right?" />
+
+  <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.47" />
+
+
+<link rel="canonical" href="https://tarynpivots.com/post/recovering-lost-linked-servers/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="/css/custom.css">
+
+
+<meta property="og:title" content="Recovering Lost Linked Servers" />
+<meta property="og:description" content="Recently, I kicked off a project to start moving us to SQL Server 2019. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of SQL Server upgrades, as well as operating system upgrades, I couldn&rsquo;t possibly make a mistake, right?" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/recovering-lost-linked-servers/" /><meta property="article:published_time" content="2020-02-06T06:00:38&#43;00:00"/>
+<meta property="article:modified_time" content="2020-02-06T06:00:38&#43;00:00"/>
+<meta itemprop="name" content="Recovering Lost Linked Servers">
+<meta itemprop="description" content="Recently, I kicked off a project to start moving us to SQL Server 2019. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of SQL Server upgrades, as well as operating system upgrades, I couldn&rsquo;t possibly make a mistake, right?">
+
+
+<meta itemprop="datePublished" content="2020-02-06T06:00:38&#43;00:00" />
+<meta itemprop="dateModified" content="2020-02-06T06:00:38&#43;00:00" />
+<meta itemprop="wordCount" content="1738">
+
+
+
+<meta itemprop="keywords" content="sql,sql-server,stack-overflow,server-migration,server-upgrade,windows-server-2016,maintenance,projects," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Recovering Lost Linked Servers"/>
+<meta name="twitter:description" content="Recently, I kicked off a project to start moving us to SQL Server 2019. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of SQL Server upgrades, as well as operating system upgrades, I couldn&rsquo;t possibly make a mistake, right?"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-124638032-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Taryn Pratt</a>
+    
+    &mdash;
+    <a href="/" class="logo-tagline">
+       
+         Pivots and other SQL fun
+       
+     </a>
+     
+</div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <div class="logo">
+    <a href="/" class="logo">
+      
+        Taryn Pratt
+      
+    </a>
+  </div>
+
+  
+  <div class="logo-tagline">
+    <a href="/" >
+      
+        Pivots and other SQL fun
+      
+    </a>
+  </div>
+  
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">Recovering Lost Linked Servers</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2020-02-06 </span>
+        
+        <span class="more-meta"> 1738 words </span>
+          <span class="more-meta"> 9 min read </span>
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#my-plan">My Plan</a></li>
+<li><a href="#upgrade-day">Upgrade Day</a></li>
+<li><a href="#recovering-the-lost-linked-servers">Recovering the Lost Linked Servers</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<p>Recently, I kicked off a project to start moving us to <a href="https://docs.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-ver15?view=sql-server-ver15" target="_blank">SQL Server 2019</a>. During my initial review of our servers, I found quite a few (9 total) that were still running on Windows Server 2012 R2. This meant that I would need to upgrade the operating system and move us to SQL Server 2019. Having completed plenty of <a href="https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/">SQL Server</a> upgrades, as well as <a href="https://www.tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/">operating system upgrades</a>, I couldn&rsquo;t possibly make a mistake, right? Wrong&hellip;I completely forgot to script out the linked servers on the server I upgraded this week. I screwed up and decided to write about how I went about fixing it.</p>
+
+<h2 id="my-plan">My Plan</h2>
+
+<p>This week, I <a href="https://meta.stackexchange.com/q/342991/164200" target="_blank">tackled the server</a> running <a href ="https://data.stackexchange.com/" target="_blank">Stack Exchange Data Explorer (SEDE)</a>. In the past, when I have upgraded an operating system on a SQL Server I work off a list:</p>
+
+<ol>
+<li>Take a backup of all system databases - if I&rsquo;m reinstalling the same version of SQL Server, I could restore the <code>master</code>, <code>model</code>, and <code>msdb</code> databases to minimize some of my setup again</li>
+<li>Script out any objects in the <code>master</code> that we need, this would be tables and stored procedures. We store objects for maintenance purposes in <code>master</code>&hellip;please don&rsquo;t scream at me.</li>
+<li>Generate creation scripts for all jobs</li>
+<li>Export logins and users from the server</li>
+<li>Make sure I have everything else I need scripted before kicking off a rebuild</li>
+</ol>
+
+<h2 id="upgrade-day">Upgrade Day</h2>
+
+<p>Before starting the rebuild, I did one final update of SQL Server 2017 to bring it to the latest patch we were using, <a href="https://support.microsoft.com/en-us/help/4527377/cumulative-update-18-for-sql-server-2017" target="_blank">CU 18</a>. This was to make sure it was fully up-to-date before I rebuilt the server.</p>
+
+<p>You might be curious why I patched SQL Server 2017 when we were going to SQL Server 2019? I did this because the server that runs data explorer has a lot of specific permissions, and it also has about 350 databases. My initial goal was to restore the system databases to minimize the risk of missing a permission or something in the shuffle when setting up the new server. Once the system databases were restored, I&rsquo;d upgrade to SQL Server 2019.</p>
+
+<p>After patching SQL Server, I checked all the steps above, and thought I had everything I needed to recreate the server, so I kicked off the rebuild. About 30 minutes into the process, I had a total facepalm moment and realized I forgot to script the linked servers. It was too late to do anything about it at that time, but thankfully I had the system databases which would save me. Once Windows Server 2016 was done installing, it was time to install SQL Server 2017 and then <em>attempt</em> the restore of the system databases.</p>
+
+<p>I say <em>attempt</em> to restore the system databases because while I&rsquo;ve restored the <code>master</code> database before, <a href="https://twitter.com/tarynpivots/status/1225131722397741056" target="_blank">it&rsquo;s not fun</a>, or at least, not my definition of fun. The biggest pain point I have is getting the single connection to the server. I know how to put the server in <a href="https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/restore-the-master-database-transact-sql?view=sql-server-ver15" target="_blank">single user mode to restore the <code>master</code> database</a>, but at Stack Overflow we have a lot of monitoring systems that are actively checking the server status. Unless I disabled all those logins, it&rsquo;d be nearly impossible to get that single connection.</p>
+
+<p>I opened up a command window and started going through all the steps to restore the <code>master</code> database. I executed:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span><span class="lnt">2
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">net stop MSSQLSERVER
+net start MSSQLSERVER /m</pre></td></tr></table>
+</div>
+</div>
+<p>Then, I opened another command window and connected to the instance by using:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><span class="lnt">1
+</span></pre></td>
+<td class="lntd">
+<pre class="chroma">sqlcmd -s .\MSSQLSERVER</pre></td></tr></table>
+</div>
+</div>
+<p>When I hit go, I received the dreaded error:</p>
+
+<blockquote>
+<p>Login failed for user <code>&lt;xxx&gt;</code> Reason: Server is in single user mode. Only one administrator can connect at this time.</p>
+</blockquote>
+
+<p>Boo. I tried connecting a few more times and each time I couldn&rsquo;t get the single connection. I disabled some logins for our monitoring services and couldn&rsquo;t connect to the instance because something was getting the single connection first. I may also have been hitting my head on my desk out of frustration. After fighting with it for far longer than I&rsquo;m going to admit, I gave up. I knew I was going to just have to rebuild the server from my scripts, and attempt to recreate the linked servers from scratch. Knowing it was inevitable, I went ahead and proceeded with the upgrade to SQL Server 2019. When that was done, I executed all my scripts, got the databases back in place, and released <a href="https://twitter.com/tarynpivots/status/1225164597822246912" target="_blank">data explorer</a> back to the world.</p>
+
+<p>The only things still missing were the linked servers. While I was happy to have moved the SQL upgrades along, I was <a href="https://twitter.com/tarynpivots/status/1225216451746775042" target="_blank">very angry with myself for missing that script</a> in the first place. The server had not received much love, and I didn&rsquo;t have the linked server, which was created long before me, scripted out and uploaded to GitHub (yeah, I know that was also dumb). I setup the linked servers by hand but couldn&rsquo;t get them to connect. After a very long day I knew I wouldn&rsquo;t need the linked server until the weekend, so I left it to be fixed the next morning.</p>
+
+<h2 id="recovering-the-lost-linked-servers">Recovering the Lost Linked Servers</h2>
+
+<p>The next day, I had to get the linked servers working. My attempts to create them by hand failed miserably. I had the system backups from before the upgrade, so I wanted to try to get the details out of them. I did several things that didn&rsquo;t work, including restoring the <code>master</code> database to a different server, under a different name (i.e. <code>master_old</code>) and trying to query the linked server info.</p>
+
+<p>Finally, I decided to create a new test server, install SQL Server 2017, and restore the <code>master</code> database to it. I setup a new build process to create a VM with a single disk drive, with just enough space for Windows and SQL to be installed on it. I installed SQL Server 2017 to the same CU I needed, and it was time to try the restore again. My thinking was, I could pretty much do anything to this SQL instance in order to get to the linked server data I wanted.</p>
+
+<p>Using the same commands as above, I set the instance to single user mode, and then attempted to connect to the instance. No error message this time. I was in the instance as the sole user&hellip;success. Now that I was connected it was time to restore:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">RESTORE</span> <span class="k">DATABASE</span> <span class="n">master</span> <span class="k">FROM</span> <span class="n">DISK</span> <span class="o">=</span> <span class="s1">&#39;C:\Backups\master.bak&#39;</span> <span class="k">WITH</span> <span class="k">REPLACE</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>I received no errors. It looked like everything worked. I opened up the SQL Server Configuration Manager, started the SQL service, and refreshed the page. The SQL service stopped. Uh oh, something is wrong. I went to the error log and popped it open. There was a giant error:</p>
+
+<blockquote>
+<p>2020-02-06 16:42:24.74 spid9s      Starting up database &lsquo;model&rsquo;.</p>
+
+<p>2020-02-06 16:42:24.74 spid9s      Error: 17204, Severity: 16, State: 1.</p>
+
+<p>2020-02-06 16:42:24.74 spid9s      FCB::Open failed: Could not open file C:\Program Files\Microsoft SQL Server\MSSQL12.MSSQLSERVER\MSSQL\DATA\model.mdf for file number 1.  OS error: 3(The system cannot find the path specified.).</p>
+
+<p>2020-02-06 16:42:24.74 spid9s      Database &lsquo;model&rsquo; cannot be opened due to inaccessible files or insufficient memory or disk space.  See the SQL Server errorlog for details.</p>
+
+<p>2020-02-06 16:42:24.74 spid9s      SQL Server shutdown has been initiated</p>
+
+<p>2020-02-06 16:42:24.74 spid9s      SQL Trace was stopped due to server shutdown. Trace ID = &lsquo;1&rsquo;. This is an informational message only; no user action is required.</p>
+</blockquote>
+
+<p>I saw the issue right away. The server was looking for the <code>model</code> database in the <code>MSSQL12.MSSQLSERVER</code> directory, but that didn&rsquo;t exist any longer. The old server had it&rsquo;s files in the directory for SQL Server 2014 aka MSSQL12, but on this new server everything is located in the directory for <code>MSSQL14.MSSQLSERVER</code>. As I mentioned, I didn&rsquo;t really care what I did to this test machine, so I manually created the directory that it was looking for - <code>C:\Program Files\Microsoft SQL Server\MSSQL12.MSSQLSERVER\MSSQL\DATA</code> and made sure that the SQL user account had access to the directory. Then I just copied and pasted the <code>model</code> database from  <code>MSSQL14.MSSQLSERVER</code> and dropped it into the <code>MSSQL12.MSSQLSERVER</code> directory.</p>
+
+<p>I attempted to start the SQL service, and again it failed. Back to the error log, I went. This time the error was:</p>
+
+<blockquote>
+<p>2020-02-06 16:48:42.11 spid9s      Clearing tempdb database.</p>
+
+<p>2020-02-06 16:48:42.11 spid9s      Error: 5123, Severity: 16, State: 1.</p>
+
+<p>2020-02-06 16:48:42.11 spid9s      CREATE FILE encountered operating system error 3(The system cannot find the path specified.) while attempting to open or create the physical file &rsquo;D:\Data\tempdb.mdf&rsquo;.</p>
+
+<p>2020-02-06 16:48:42.12 spid9s      Could not create tempdb. You may not have enough disk space available. Free additional disk space by deleting other files on the tempdb drive and then restart SQL Server. Check for additional errors in the operating system error log that may indicate why the tempdb files could not be initialized.</p>
+
+<p>2020-02-06 16:48:42.12 spid9s      SQL Server shutdown has been initiated</p>
+
+<p>2020-02-06 16:48:42.12 spid9s      SQL Trace was stopped due to server shutdown. Trace ID = &lsquo;1&rsquo;. This is an informational message only; no user action is required.</p>
+</blockquote>
+
+<p>There was some progress because it was a different error, right?</p>
+
+<p>Now it&rsquo;s complaining because I don&rsquo;t have a <code>D:\</code> drive on my test instance. I built the server with a single drive, but luckily I can easily fix that for a VM. I logged into our VM platform, quickly added a tiny new disk drive, then formatted it on my test server. Once the <code>D:\</code> drive was available, I created <code>D:\Data</code> and granted permission to the SQL user account to access the directory.</p>
+
+<p>It was time to go back to the SQL Server Configuration Manager to start the service. As I kicked the service to start, I kept thinking &lsquo;please work, please work&rsquo;. This time the service started and stayed running. I logged into SSMS, connected to the instance, and went looking for my Linked Servers.</p>
+
+<p>Guess what? They were there. Somehow it worked. I was able to script out both linked servers and execute them where they belong. After some testing, I confirmed that the linked servers were working on the original server I built.</p>
+
+<p>It&rsquo;s quite possible that there are other ways to recover something like this. I&rsquo;m also <a href="https://twitter.com/tarynpivots/status/1225475415822589952" target="_blank">relieved</a> this worked and I know I&rsquo;m lucky to have the tools to be able to quickly spin up a new test SQL Server to hack away on. I learned a valuable lesson - verify I have everything that I need when rebuilding servers.</p>
+
+<p>Oh, and by the way, yes I did upload those linked server creation scripts to GitHub.</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://tarynpivots.com/tags/sql/">sql</a>
+          <a href="https://tarynpivots.com/tags/sql-server/">sql-server</a>
+          <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
+          <a href="https://tarynpivots.com/tags/server-migration/">server-migration</a>
+          <a href="https://tarynpivots.com/tags/server-upgrade/">server-upgrade</a>
+          <a href="https://tarynpivots.com/tags/windows-server-2016/">windows-server-2016</a>
+          <a href="https://tarynpivots.com/tags/maintenance/">maintenance</a>
+          <a href="https://tarynpivots.com/tags/projects/">projects</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+        
+          <a class="next" href="/post/perils-querying-sql-replica-under-load/">
+            <span class="next-text nav-default">The Perils of Querying SQL Server Replicas Under Load</span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  <div id="disqus_thread"  class="disqus-comment"></div>
+  <script type="text/javascript">
+    (function() {
+      
+      
+      if (window.location.hostname === 'localhost') return;
+
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="https://stackoverflow.com/users/426671/taryn" rel="me noopener" class="iconfont icon-stack-overflow"
+        title="stack-overflow" target="_blank">
+      </a>
+      <a href="https://twitter.com/tarynpivots" rel="me noopener" class="iconfont icon-twitter"
+        title="twitter" target="_blank">
+      </a>
+      <a href="https://github.com/tarynpratt" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+  <a href="https://tarynpivots.com/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2013 -
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        Taryn
+        
+      </span></span>
+
+  
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+
+
+
+
+</body>
+</html>

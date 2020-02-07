@@ -3,6 +3,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tarynpivots.com/post/recovering-lost-linked-servers/</loc>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/post/perils-querying-sql-replica-under-load/</loc>
     <lastmod>2020-01-15T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -171,7 +178,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/maintenance/</loc>
-    <lastmod>2019-12-09T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -227,7 +234,7 @@
   
   <url>
     <loc>https://tarynpivots.com/post/</loc>
-    <lastmod>2020-01-15T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -241,7 +248,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/projects/</loc>
-    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -268,8 +275,22 @@
   </url>
   
   <url>
+    <loc>https://tarynpivots.com/tags/server-migration/</loc>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/server-upgrade/</loc>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/tags/sql/</loc>
-    <lastmod>2020-01-15T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -297,14 +318,14 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/sql-server/</loc>
-    <lastmod>2020-01-15T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://tarynpivots.com/tags/stack-overflow/</loc>
-    <lastmod>2020-01-15T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -325,7 +346,7 @@
   
   <url>
     <loc>https://tarynpivots.com/</loc>
-    <lastmod>2020-01-15T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -374,7 +395,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/windows-server-2016/</loc>
-    <lastmod>2019-07-18T06:00:38+00:00</lastmod>
+    <lastmod>2020-02-06T06:00:38+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
