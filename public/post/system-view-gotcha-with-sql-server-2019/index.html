@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>A gotcha when upgrading to SQL Server 2019 - Taryn Pratt</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="Taryn" />
+  <meta name="description" content="In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
+A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams." />
+
+  <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.47" />
+
+
+<link rel="canonical" href="https://tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="/css/custom.css">
+
+
+<meta property="og:title" content="A gotcha when upgrading to SQL Server 2019" />
+<meta property="og:description" content="In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
+A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/" /><meta property="article:published_time" content="2020-02-21T06:00:38&#43;00:00"/>
+<meta property="article:modified_time" content="2020-02-21T06:00:38&#43;00:00"/>
+<meta itemprop="name" content="A gotcha when upgrading to SQL Server 2019">
+<meta itemprop="description" content="In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
+A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams.">
+
+
+<meta itemprop="datePublished" content="2020-02-21T06:00:38&#43;00:00" />
+<meta itemprop="dateModified" content="2020-02-21T06:00:38&#43;00:00" />
+<meta itemprop="wordCount" content="1214">
+
+
+
+<meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,server-upgrade,maintenance,projects," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="A gotcha when upgrading to SQL Server 2019"/>
+<meta name="twitter:description" content="In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
+A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-124638032-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Taryn Pratt</a>
+    
+    &mdash;
+    <a href="/" class="logo-tagline">
+       
+         Pivots and other SQL fun
+       
+     </a>
+     
+</div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <div class="logo">
+    <a href="/" class="logo">
+      
+        Taryn Pratt
+      
+    </a>
+  </div>
+
+  
+  <div class="logo-tagline">
+    <a href="/" >
+      
+        Pivots and other SQL fun
+      
+    </a>
+  </div>
+  
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">A gotcha when upgrading to SQL Server 2019</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2020-02-21 </span>
+        
+        <span class="more-meta"> 1214 words </span>
+          <span class="more-meta"> 6 min read </span>
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#a-little-background">A Little Background</a></li>
+<li><a href="#upgrade-day">Upgrade Day</a>
+<ul>
+<li><a href="#the-failing-job">The Failing Job</a></li>
+<li><a href="#the-fix">The Fix</a></li>
+</ul></li>
+<li><a href="#ok-but-what-was-the-gotcha">Ok, but what was the gotcha?</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<p>In my <a href="https://www.tarynpivots.com/post/recovering-lost-linked-servers/">last post</a>, I mentioned that I started the process of upgrading Stack Overflow to <a href="https://docs.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-ver15?view=sql-server-ver15" target="_blank">SQL Server 2019</a>. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.</p>
+
+<h2 id="a-little-background">A Little Background</h2>
+
+<p>The servers I upgraded were the three SQL Servers that run <a href="https://stackoverflow.com/teams" target="_blank">Stack Overflow for Teams</a>. For those not familiar with our setup, we use <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/overview-of-always-on-availability-groups-sql-server?view=sql-server-ver15" target="_blank">availability groups</a> (AGs) across all of our main SQL Servers. This allows us to use the primary server for read/writes, and use the secondaries for a lot of the read-only traffic. Since we utilize both the primary and secondaries for read purposes, logins need to be the same across all of the servers in the AGs. In order to keep the logins in sync, we have a job that periodically runs on each server and creates new logins using dynamic SQL.</p>
+
+<h2 id="upgrade-day">Upgrade Day</h2>
+
+<p>Since I previously upgraded our servers to <a href="https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/">SQL Server 2017</a>, I knew what to expect as I moved through the cluster. Once I started with the secondary servers the databases would <a href="https://twitter.com/tarynpivots/status/1227676918083772416" target="_blank">not be accessible</a> until the failover was complete. After upgrading a secondary, I would see this if I tried to access a database:</p>
+
+<p><img src="/image/2020/database_unavailable.jpg" alt="Database not accessible" /></p>
+
+<p>This also meant that any of the jobs touching the databases would fail, so I disabled SQL Agent jobs to minimize noisy alerts to my email. After the upgrade and failover, I&rsquo;d enable all the jobs and be on my merry way.</p>
+
+<p>The upgrade of both secondary servers went totally as planned, without any issues. The evening rolled around and despite <a href="https://twitter.com/Nick_Craver/status/1229933221565038592" target="_blank">Nick Craver&rsquo;s popcorn</a>, the failover was successful, and we <a href="https://twitter.com/tarynpivots/status/1229936342471036928" target="_blank">finally had SQL Server 2019</a> running in production.</p>
+
+<p>I upgraded the last server in the cluster (the former primary), and did some other clean-up tasks, including enabling all the SQL Agent jobs, before calling it a night. Once the jobs were enabled I started getting emails that one was failing &mdash; the Login Replication job.</p>
+
+<p>Something&rsquo;s broken - time to investigate.</p>
+
+<h3 id="the-failing-job">The Failing Job</h3>
+
+<p>I pulled up the history on the job and saw the error:</p>
+
+<blockquote>
+<p>Message</p>
+
+<p>Executed as user: &lt;username&gt;. Invalid value given for parameter PASSWORD. Specify a valid parameter value. [SQLSTATE 42000] (Error 15021).  The step failed.</p>
+</blockquote>
+
+<p><em>Sigh</em> ok, something is really broken because this was working before we failed over.</p>
+
+<p>The code for the login replication basically does the following via a cursor (yeah, I know, but it works&hellip;normally):</p>
+
+<ol>
+<li>Select from the primary via <code>OPENQUERY</code> to query the logins and passwords</li>
+<li>Using <a href="https://support.microsoft.com/en-us/help/918992/how-to-transfer-logins-and-passwords-between-instances-of-sql-server" target="_blank"><code>sp_hexadecimal</code></a> convert the <code>varbinary</code> password to a <code>string</code> value</li>
+<li>Create a string to be executed, i.e. dynamic SQL that runs a <code>CREATE LOGIN</code></li>
+</ol>
+
+<p>I have trimmed the code because it&rsquo;s long, but the key parts query the login and password.</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> <span class="o">*</span>
+<span class="k">FROM</span> <span class="n">OPENQUERY</span><span class="p">([</span><span class="k">SQL</span><span class="o">-</span><span class="n">AG</span><span class="p">],</span> <span class="s1">&#39;
+</span><span class="s1">    SELECT p.sid sid_varbinary, p.name, p.default_database_name,
+</span><span class="s1">        CAST(l.password AS varbinary (256)) pwd_varbinary,
+</span><span class="s1">        CASE sl.is_policy_checked WHEN 1 THEN &#39;&#39;ON&#39;&#39; WHEN 0 THEN &#39;&#39;OFF&#39;&#39; ELSE NULL END is_policy_checked,
+</span><span class="s1">        CASE sl.is_expiration_checked WHEN 1 THEN &#39;&#39;ON&#39;&#39; WHEN 0 THEN &#39;&#39;OFF&#39;&#39; ELSE NULL END is_expiration_checked
+</span><span class="s1">    FROM sys.server_principals p
+</span><span class="s1">    JOIN sys.syslogins l ON l.name = p.name
+</span><span class="s1">    JOIN sys.sql_logins sl ON l.name = sl.name
+</span><span class="s1">    WHERE p.type = &#39;&#39;S&#39;&#39;
+</span><span class="s1">      AND p.name &lt;&gt; &#39;&#39;sa&#39;&#39;
+</span><span class="s1">      AND l.denylogin = 0
+</span><span class="s1">      AND l.hasaccess = 1
+</span><span class="s1">      AND p.is_disabled = 0
+</span><span class="s1">    ORDER BY p.name&#39;</span><span class="p">);</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>The value of <code>pwd_varbinary</code> and <code>sid</code> are then used with <code>sp_hexadecimal</code>:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">EXEC</span> <span class="n">sp_hexadecimal</span> <span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">PWD_string</span> <span class="k">OUT</span>
+<span class="k">EXEC</span> <span class="n">sp_hexadecimal</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">SID_string</span> <span class="k">OUT</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>Finally, we concatenate them into a SQL string that we execute:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SET</span> <span class="o">@</span><span class="n">sqlString</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="k">CREATE</span> <span class="n">LOGIN</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span> 
+    <span class="o">+</span> <span class="s1">&#39;&#39;</span> <span class="k">WITH</span> <span class="n">PASSWORD</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">PWD_string</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span> <span class="n">HASHED</span><span class="p">,</span> <span class="n">SID</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">SID_string</span> 
+    <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">DEFAULT_DATABASE</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">defaultdb</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">]</span><span class="s1">&#39;&#39;</span>
+    <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">CHECK_POLICY</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">is_policy_checked</span>
+    <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">CHECK_EXPIRATION</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">is_expiration_checked</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>When I ran the <code>SELECT</code> statement, I noticed the issue &mdash; the value of <code>pwd_varbinary</code> was <code>null</code> which obviously was wrong, and since we were passing a <code>null</code> as the password to <code>sp_hexadecimal</code> the job was failing.</p>
+
+<p>Great, so now what?</p>
+
+<h3 id="the-fix">The Fix</h3>
+
+<p>We couldn&rsquo;t just stop replicating the logins across all servers, due to our usage of the secondaries, and we needed to do this automatically on a regular interval. We had to figure out a solution. Thankfully the fix was easy.</p>
+
+<p>After seeing that the <code>null</code> value of the password was coming from <code>sys.logins</code>, and since we were already querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15" target="_blank"><code>sys.sql_logins</code></a> we could easily replace:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">CAST</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">password</span> <span class="k">AS</span> <span class="n">varbinary</span> <span class="p">(</span><span class="mi">256</span><span class="p">))</span> <span class="n">pwd_varbinary</span><span class="p">,</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>from <code>sys.logins</code> with</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">sl</span><span class="p">.</span><span class="n">password_hash</span> <span class="n">pwd_varbinary</span><span class="p">,</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>from <code>sys.sql_logins</code> (h/t to <a href="https://twitter.com/Nick_Craver" target="_blank">Nick Craver</a>). With this one change to the query, the new <code>SELECT</code> statement was:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> <span class="o">*</span>
+<span class="k">FROM</span> <span class="n">OPENQUERY</span><span class="p">([</span><span class="k">SQL</span><span class="o">-</span><span class="n">AG</span><span class="p">],</span> <span class="s1">&#39;
+</span><span class="s1">    SELECT p.sid sid_varbinary, p.name, p.default_database_name,
+</span><span class="s1">        sl.password_hash pwd_varbinary,
+</span><span class="s1">        CASE sl.is_policy_checked WHEN 1 THEN &#39;&#39;ON&#39;&#39; WHEN 0 THEN &#39;&#39;OFF&#39;&#39; ELSE NULL END is_policy_checked,
+</span><span class="s1">        CASE sl.is_expiration_checked WHEN 1 THEN &#39;&#39;ON&#39;&#39; WHEN 0 THEN &#39;&#39;OFF&#39;&#39; ELSE NULL END is_expiration_checked
+</span><span class="s1">    FROM sys.server_principals p
+</span><span class="s1">    JOIN sys.syslogins l ON l.name = p.name
+</span><span class="s1">    JOIN sys.sql_logins sl ON l.name = sl.name
+</span><span class="s1">    WHERE p.type = &#39;&#39;S&#39;&#39;
+</span><span class="s1">      AND p.name &lt;&gt; &#39;&#39;sa&#39;&#39;
+</span><span class="s1">      AND l.denylogin = 0
+</span><span class="s1">      AND l.hasaccess = 1
+</span><span class="s1">      AND p.is_disabled = 0
+</span><span class="s1">    ORDER BY p.name&#39;</span><span class="p">);</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>Once it was updated, the job successfully ran, and our logins were replicating again without issue. Now, I really called it a night.</p>
+
+<h2 id="ok-but-what-was-the-gotcha">Ok, but what was the gotcha?</h2>
+
+<p>Remember I said that this was working fine on SQL Server 2017?</p>
+
+<p>When we started looking for solutions, I looked up the Microsoft Docs for <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-compatibility-views/sys-syslogins-transact-sql?view=sql-server-ver15" target="_blank"><code>sys.syslogins</code></a> and right at the top of the doc it says:</p>
+
+<blockquote>
+<p>This SQL Server 2000 system table is included as a view for backward compatibility. We recommend that you use the current SQL Server system views instead. To find the equivalent system view or views, see <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-tables/mapping-system-tables-to-system-views-transact-sql?view=sql-server-ver15" target="_blank">Mapping System Tables to System Views (Transact-SQL)</a>. This feature will be removed in a future version of Microsoft SQL Server. Avoid using this feature in new development work, and plan to modify applications that currently use this feature.</p>
+</blockquote>
+
+<p>The doc shows the description and value of <code>password</code>:</p>
+
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Data type</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>password</td>
+<td>nvarchar(128)</td>
+<td>Returns NULL.</td>
+</tr>
+</tbody>
+</table>
+
+<p>Hmm, that&rsquo;s weird because the <code>password</code> column contains an actual value in SQL Server 2017. Something obviously changed. Yes, we were risky because we were using an old view, but the important thing is the value in the <code>password</code> column changed, and it bit us.</p>
+
+<p>In SQL Server 2017, there is still a value for <code>password</code> in <code>sys.syslogins</code>, but in SQL Server 2019 it is now <code>null</code>.</p>
+
+<p>If this was mentioned somewhere, I missed it. Thankfully, this wasn&rsquo;t a critical job otherwise it could have been more problematic. We don&rsquo;t have the Login Replication job running in development, so we didn&rsquo;t hit the issue until we moved to production.</p>
+
+<p>Technically it&rsquo;s on us because we were using an old system view and didn&rsquo;t check for changes, but keep in mind if you&rsquo;re using the <code>sys.syslogins</code> view anywhere, and rely on the <code>password</code>, you&rsquo;ll need to make a code update before moving to SQL Server 2019.</p>
+
+<p>If you&rsquo;ve upgraded to SQL Server 2019, have you hit any of these issues yet?</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://tarynpivots.com/tags/sql/">sql</a>
+          <a href="https://tarynpivots.com/tags/sql-server/">sql-server</a>
+          <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
+          <a href="https://tarynpivots.com/tags/sql-server-2019/">sql-server-2019</a>
+          <a href="https://tarynpivots.com/tags/server-upgrade/">server-upgrade</a>
+          <a href="https://tarynpivots.com/tags/maintenance/">maintenance</a>
+          <a href="https://tarynpivots.com/tags/projects/">projects</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+        
+          <a class="next" href="/post/recovering-lost-linked-servers/">
+            <span class="next-text nav-default">Recovering Lost Linked Servers</span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  <div id="disqus_thread"  class="disqus-comment"></div>
+  <script type="text/javascript">
+    (function() {
+      
+      
+      if (window.location.hostname === 'localhost') return;
+
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="https://stackoverflow.com/users/426671/taryn" rel="me noopener" class="iconfont icon-stack-overflow"
+        title="stack-overflow" target="_blank">
+      </a>
+      <a href="https://twitter.com/tarynpivots" rel="me noopener" class="iconfont icon-twitter"
+        title="twitter" target="_blank">
+      </a>
+      <a href="https://github.com/tarynpratt" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+  <a href="https://tarynpivots.com/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2013 -
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        Taryn
+        
+      </span></span>
+
+  
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sql Server 2019 on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/sql-server-2019/</link>
+    <description>Recent content in Sql Server 2019 on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 21 Feb 2020 06:00:38 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/sql-server-2019/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>A gotcha when upgrading to SQL Server 2019</title>
+      <link>https://tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/</link>
+      <pubDate>Fri, 21 Feb 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/</guid>
+      <description>In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
+A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams.</description>
+    </item>
+    
+  </channel>
+</rss>
