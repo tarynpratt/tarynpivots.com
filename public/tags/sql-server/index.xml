@@ -6,10 +6,19 @@
     <description>Recent content in Sql Server on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 21 Feb 2020 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 24 Apr 2020 04:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/sql-server/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>SQL Server 2019 Aggressive Clustered Columnstore Cleanup</title>
+      <link>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</link>
+      <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
+      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
+    </item>
     
     <item>
       <title>A gotcha when upgrading to SQL Server 2019</title>

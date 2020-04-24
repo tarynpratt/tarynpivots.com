@@ -6,10 +6,341 @@
     <description>Recent content on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 21 Feb 2020 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 24 Apr 2020 04:00:00 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>SQL Server 2019 Aggressive Clustered Columnstore Cleanup</title>
+      <link>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</link>
+      <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
+      
+        <description>
+
+&lt;p&gt;In late March 2020, we upgraded our production SQL Servers to &lt;a href=&#34;https://www.microsoft.com/en-us/sql-server/sql-server-2019&#34; target=&#34;_blank&#34;&gt;SQL Server 2019&lt;/a&gt; with CU3. After finishing the upgrade, we hit an issue with &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014&#34; target=”_blank”&gt;clustered columnstore&lt;/a&gt; that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.&lt;/p&gt;
+
+&lt;h2 id=&#34;background&#34;&gt;Background&lt;/h2&gt;
+
+&lt;p&gt;We have one database in production, called PRIZM, which is made up exclusively of tables with clustered columnstore indexes. PRIZM is used for event tracking, and it backs our A/B testing, feature funnels, etc. in hopes of improving most of what we do. Because we use PRIZM everywhere, it&amp;rsquo;s one of our larger databases with lots of tables. At the time of the upgrade, the database was approximately 500GB with about 1000 tables.&lt;/p&gt;
+
+&lt;p&gt;There were various driving forces for it, but in early February we needed to purge data from PRIZM. Some of the reasons for doing so included:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;disk space being utilized&lt;/li&gt;
+&lt;li&gt;general cleanup/removal of old events we no longer needed to maintain&lt;/li&gt;
+&lt;li&gt;ease of GDPR compliance processing&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We, or I should say &lt;a href=&#34;https://twitter.com/marcgravell&#34; target=&#34;_blank&#34;&gt;Marc Gravell&lt;/a&gt;, deleted approximately 8 billion rows across 912 tables in the database. By doing this, we gained back drive space and removed data we no longer needed to keep.&lt;/p&gt;
+
+&lt;p&gt;After performing the deletions, we did some of the recommended maintenance on columnstore indexes. While many of the smaller tables were rebuilt, a handful of tables (11 total) weren&amp;rsquo;t rebuilt due to their size. Since we don’t have maintenance windows, it would be high-impact to attempt these rebuilds on a very active production environment.&lt;/p&gt;
+
+&lt;p&gt;The plan was to perform these table rebuilds after upgrading to 2019. SQL Server 2019 added the ability &lt;a href=&#34;http://www.nikoport.com/2018/06/21/columnstore-indexes-part-123-clustered-columnstore-index-online-rebuild/&#34; target=&#34;_blank&#34;&gt;to rebuild clustered columnstore indexes online&lt;/a&gt; and that feature was one of the main reasons we wanted to upgrade.&lt;/p&gt;
+
+&lt;h2 id=&#34;upgrade-day&#34;&gt;Upgrade Day&lt;/h2&gt;
+
+&lt;p&gt;I&amp;rsquo;m not going to cover our full upgrade to 2019 - that will hopefully be a later post. At this point, let&amp;rsquo;s just assume everything went as planned and this is picking up after the main failovers of the servers that run Stack Overflow and the rest of the public network.&lt;/p&gt;
+
+&lt;p&gt;After we finished the failovers for our public production servers, there was some behind the scenes work that needed to be done. This included patching and upgrading the former primary servers, and a failover of our reporting servers. The reporting cluster is a member of several &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;distributed availability groups&lt;/a&gt;. When we&amp;rsquo;re doing upgrades, we move the primary server from New York (NY-RPTSQL01) to Colorado (CO-RPTSQL01). Once all the upstream SQL Servers are upgraded, there&amp;rsquo;s one last failover to get the primary back to NY-RPTSQL01. I&amp;rsquo;m specifically mentioning these servers because they receive data from PRIZM, so they are impacted by any activity in that database.&lt;/p&gt;
+
+&lt;h2 id=&#34;transaction-logs-exponentially-growing&#34;&gt;Transaction Logs Exponentially Growing&lt;/h2&gt;
+
+&lt;p&gt;As I was upgrading the former primaries, I noticed the transaction log files for PRIZM were growing. Initially, I just assumed it was normal and I went about finishing my other tasks.&lt;/p&gt;
+
+&lt;p&gt;After about an hour, the log had grown again, and was growing rapidly. Like really rapidly, which was unusual. &lt;strong&gt;The logs were growing about 10GB every 5 minutes.&lt;/strong&gt; We have lower traffic on the weekend so the amount of data being inserted into the database should not have been anywhere near this level.&lt;/p&gt;
+
+&lt;p&gt;Normally large transaction logs might raise my eyebrows, but I wouldn&amp;rsquo;t be super concerned. However, I needed to perform the failover of the reporting cluster, and with the logs increasing at the rate they were, it was going to make that more difficult, if not impossible.&lt;/p&gt;
+
+&lt;p&gt;If you&amp;rsquo;re not familiar with availability groups, the transaction logs from the primary server need to be written to the secondary servers. This same thing happens with distributed availability groups, but at a larger scale. In this case the transaction logs for the databases, including PRIZM which is on our primary server for Stack Overflow, needed to be flushed to the reporting cluster.&lt;/p&gt;
+
+&lt;p&gt;As the logs were increasing in PRIZM, they needed to be written to the reporting servers and CO-RPTSQL01 had a huge &lt;code&gt;log send queue&lt;/code&gt;, and NY-RPTSQL01 had a huge &lt;code&gt;recovery queue&lt;/code&gt;. Both of those are defined in the &lt;a href=&#34;https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2012/ff878356(v=sql.110)&#34; target=&#34;_blank&#34;&gt;Microsoft docs&lt;/a&gt;, but I’ve included the definitions below:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Log send queue&lt;/strong&gt; - Amount of log records in the log files of the primary database, in kilobytes, that has not yet been sent to the secondary replica. This value is sent to the secondary replica from the primary replica. Queue size does not include FILESTREAM files that are sent to a secondary.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Recovery queue&lt;/strong&gt; - Amount of log records in the log files of the secondary replica that has not yet been redone.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The &lt;code&gt;recovery queue&lt;/code&gt; needs to be at zero to failover - when it&amp;rsquo;s zero it means the server is caught up to the primary. Since there were transaction logs that needed to be written to the secondary in the reporting cluster, NY-RPTSQL01, I couldn&amp;rsquo;t failover.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-on-earth-is-happening&#34;&gt;What on Earth is Happening?&lt;/h3&gt;
+
+&lt;p&gt;When I first noticed the &lt;code&gt;log send queue&lt;/code&gt; size, it was about 90GB. Within just a few hours it was at 320GB, and growing.&lt;/p&gt;
+
+&lt;p&gt;We knew normal traffic wasn&amp;rsquo;t causing the increase. We also knew there wasn’t a delete job that would have triggered the massive growth of transaction logs, especially at the rate we were seeing. Now it was time to try and figure out what was causing the rapid growth.&lt;/p&gt;
+
+&lt;p&gt;I looked at our instance of &lt;a href=&#34;https://github.com/opserver/Opserver&#34; target=&#34;_blank&#34;&gt;OpServer&lt;/a&gt; to see if it reported any queries running against PRIZM. Nothing.&lt;/p&gt;
+
+&lt;p&gt;I executed &lt;a href=&#34;http://whoisactive.com/&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;sp_whoisactive&lt;/code&gt;&lt;/a&gt;. Nothing.&lt;/p&gt;
+
+&lt;p&gt;From what I was seeing it appeared &amp;ldquo;something&amp;rdquo; was crawling through our CCI tables and processing &amp;ldquo;something&amp;rdquo;. Like all the hand-wavy &amp;ldquo;something was doing something&amp;rdquo;? Yeah me too. We didn&amp;rsquo;t know what was happening and I was frantically trying to get it to stop.&lt;/p&gt;
+
+&lt;p&gt;I then executed &lt;code&gt;sp_who2&lt;/code&gt; and saw some PRIZM related things as background/system tasks, so I quickly wrote a script that would let me filter only for PRIZM:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;DECLARE&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;@&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;Table&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;TABLE&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;SPID&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;INT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;Status&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;LOGIN&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;HostName&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;BlkBy&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;DBName&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;Command&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;CPUTime&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;INT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;DiskIO&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;INT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;LastBatch&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;ProgramName&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;VARCHAR&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;MAX&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;SPID_1&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;INT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+       &lt;span class=&#34;n&#34;&gt;REQUESTID&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;INT&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;INSERT&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;INTO&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;@&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;Table&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;EXEC&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sp_who2&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt;  &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt;    &lt;span class=&#34;o&#34;&gt;@&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;Table&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;DBName&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;PRIZM&amp;#39;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The output of &lt;code&gt;sp_who2&lt;/code&gt; was repeatedly showing &lt;code&gt;GHOST CLEANUP&lt;/code&gt; and &lt;code&gt;CREATE INDEX&lt;/code&gt;. Over and over and over again. To be clear, I’m not a clustered columnstore expert, I know enough to be able to maintain them as needed. I went to &lt;a href=&#34;https://twitter.com/tarynpivots/status/1243984519314558976&#34; target=&#34;_blank&#34;&gt;Twitter&lt;/a&gt; and mentioned what I was seeing. I was advised by &lt;a href=&#34;https://twitter.com/sqL_handLe/status/1243988928484511746&#34; target=&#34;_blank&#34;&gt;@sqL_handLe&lt;/a&gt; to try trace flag 661 which disables the ghost record removal process, and by Joe Obbish via &lt;a href=&#34;https://twitter.com/erikdarlingdata/status/1244005847140884480”&#34; target=&#34;_blank&#34;&gt;Erik Darling&lt;/a&gt; to enable trace flag 634 to disable the tuple mover background task.&lt;/p&gt;
+
+&lt;p&gt;Initially, we enabled trace flag 634, but the logs continued to grow. We disabled trace flag 634. Then we enabled trace flag 661, and the logs continued to grow, so we disabled it. Finally, we tried enabling both of the trace flags. The big jumps stopped, but we now had about 400GB of logs that needed to be written to the reporting cluster before we could perform the failover.&lt;/p&gt;
+
+&lt;p&gt;While the logs were exploding we wondered if whatever was happening might have been caused by the deletions we did in early February. But why would they be triggered by the upgrade to SQL Server 2019?&lt;/p&gt;
+
+&lt;p&gt;We figured we could just let whatever was running, keep running, and maybe it&amp;rsquo;d eventually stop. However remember I mentioned one of the reasons we deleted a bunch of data from PRIZM was due to disk space being utilized? Well, the t-log growth was rapidly taking that back. The morning of the upgrade we were at 83% being used, as the day went on we were approaching 90%. This became an urgent issue because the growth was not slowing down and honestly we were worried we&amp;rsquo;d run out of disk space if we just let it play out.&lt;/p&gt;
+
+&lt;p&gt;It was time to open a support ticket. Hopefully support could help us.&lt;/p&gt;
+
+&lt;p&gt;A brief side note, before we enabled the trace flags we were getting lots of exceptions across the network. Once we enabled them, the exceptions slowed. Coincidence?&lt;/p&gt;
+
+&lt;h2 id=&#34;time-to-investigate&#34;&gt;Time to Investigate&lt;/h2&gt;
+
+&lt;p&gt;The next morning we still had logs that were being written to the reporting cluster, 195GB to be exact. Yes I know that as ridiculously high still, but we have throughput issues between our two datacenters (that’s a whole different story). Due to the size of the recovery queue that meant no failover until that flushed.&lt;/p&gt;
+
+&lt;p&gt;We heard back from support, so it was time to investigate. They requested that we take a full dump file, which is pretty difficult since we have 1.5TB of memory on the Stack Overflow SQL Server and the C: drive isn&amp;rsquo;t large enough to capture that, so we went with a smaller filtered dump and 3 minidumps. That meant &lt;a href=&#34;https://twitter.com/tarynpivots/status/1244257820905627653&#34; target=&#34;_blank&#34;&gt;another public outage&lt;/a&gt;, but we needed the files for them.&lt;/p&gt;
+
+&lt;p&gt;When we took the dump files, we disabled both trace flags (634 and 661), during the &lt;a href=&#34;https://twitter.com/tarynpivots/status/1244408854768578561&#34; target=&#34;_blank&#34;&gt;10 minutes the trace flags were off, the transaction logs increased another 25-30GB&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;we-re-being-haunted-by-ghosts&#34;&gt;We’re Being Haunted by Ghosts&lt;/h3&gt;
+
+&lt;p&gt;After providing the dump files, they requested that we check the status of the ghost records in the database using and provide the results:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; 
+    &lt;span class=&#34;n&#34;&gt;database_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; 
+    &lt;span class=&#34;n&#34;&gt;object_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;as&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;Name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; 
+    &lt;span class=&#34;n&#34;&gt;index_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; 
+    &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;record_count&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; 
+    &lt;span class=&#34;n&#34;&gt;GHOST_RECORD_COUNT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;Version_ghost_record_count&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;INDEX_TYPE_DESC&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; 
+    &lt;span class=&#34;n&#34;&gt;ALLOC_UNIT_TYPE_DESC&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;dm_db_index_physical_stats&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;DB_ID&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;N&lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;PRIZM&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;&amp;lt;TableName&amp;gt;&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;NULL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;NULL&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;DETAILED&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;ORDER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;BY&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;GHOST_RECORD_COUNT&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;desc&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The results of the query were:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2020/ghost_records_original.png&#34; alt=&#34;Total Ghost Records&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After running the query, I performed another test for support, which involved:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Taking a t-log backup&lt;/li&gt;
+&lt;li&gt;Removing both trace flags 634 and 661 allowing the logs to increase&lt;/li&gt;
+&lt;li&gt;Enabling the trace flags&lt;/li&gt;
+&lt;li&gt;Taking another log backup&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Disabling the trace flags for just a few minutes resulted in the logs increasing rapidly, but in looking at the results from the query above, the total number of ghost records dropped.&lt;/p&gt;
+
+&lt;p&gt;I decided to test further to see if disabling the trace flags would fully remove the &lt;code&gt;GHOST_RECORD_COUNT&lt;/code&gt;. Each time both trace flags were disabled, the total ghost records would drop and the t-logs would explode in size, but we weren&amp;rsquo;t sure which trace flag we should keep enabled, so it was time for yet another test.&lt;/p&gt;
+
+&lt;p&gt;I tried just disabling trace flag 661, which would allow the ghost record process to run. I wanted to see if the cleanup process would finish, and the logs would stop growing. Eventually, the total number of ghost records dropped to zero, and the logs seemed to stop growing. Problem partially solved.&lt;/p&gt;
+
+&lt;h3 id=&#34;oh-tuple-mover-what-are-you-doing&#34;&gt;Oh, Tuple Mover what are you doing?&lt;/h3&gt;
+
+&lt;p&gt;Now that one of the trace flags was disabled, we had to deal with trace flag 634 which we did not have enabled on SQL Server 2017. I started querying the status of the rowgroups on each table and I found something that appeared odd. I ran the following query for a specific table in PRIZM:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;select&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;partition_number&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;row_group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;delta_store_hobt_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;state_desc&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;total_rows&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;deleted_rows&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;mi&#34;&gt;100&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;ISNULL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;deleted_rows&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;))&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;/&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;total_rows&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;AS&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;Fragmentation&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;created_time&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;closed_time&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;from&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;dm_db_column_store_row_group_physical_stats&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;inner&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;join&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;indexes&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;on&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;and&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;index_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;index_id&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;order&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;by&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The results showed a lot of rowgroups in a &lt;code&gt;TOMBSTONE&lt;/code&gt; state:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2020/rowgroups.png&#34; alt=&#34;TOMBSTONES&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This was curious to me because, in my limited experience with clustered columnstore, these older closed rowgroups in a &lt;code&gt;TOMBSTONE&lt;/code&gt; state should have been cleaned up a long time ago, well before we upgraded to SQL Server 2019.&lt;/p&gt;
+
+&lt;p&gt;On April 15th, I ran a test disabling trace flag 634. As soon as the trace flag was disabled, we experienced several things:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;transaction log growth&lt;/li&gt;
+&lt;li&gt;a drop in the total number of &lt;code&gt;TOMBSTONE&lt;/code&gt; rowgroups&lt;/li&gt;
+&lt;li&gt;and, a dramatic increase in query timeouts on the server&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I left the trace flag disabled for several hours, all the while monitoring the 3 things above.&lt;/p&gt;
+
+&lt;p&gt;About mid-day, I re-enabled the trace flag on the server. When I did that, the logs stopped growing, the total number of &lt;code&gt;TOMBSTONE&lt;/code&gt; rowgroups stopping decreasing, and the flood of query timeouts we saw throughout the entire test slowed to a trickle. All of this information was passed along to support. They suggested that the &lt;code&gt;TUPLE_MOVER&lt;/code&gt; doesn’t touch the &lt;code&gt;TOMBSTONE&lt;/code&gt; rowgroups and that should only be handled by the ghost cleanup process, but that was not the behavior we were seeing. They requested another test, but this time they also wanted us to keep track of the &lt;code&gt;OPEN&lt;/code&gt; and &lt;code&gt;CLOSED&lt;/code&gt; rowgroups.&lt;/p&gt;
+
+&lt;p&gt;The next day, it was time to try this again. Prior to disabling trace flag 634, we had the following rowgroup states in the PRIZM database:&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Total&lt;/th&gt;
+&lt;th&gt;State&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;581&lt;/td&gt;
+&lt;td&gt;TOMBSTONE&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;672&lt;/td&gt;
+&lt;td&gt;OPEN&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;167&lt;/td&gt;
+&lt;td&gt;CLOSED&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;I left the trace flag off for about 2 hours. While it was disabled, the transaction logs grew 136GB, and we also experienced significant &lt;code&gt;CXPACKET&lt;/code&gt; waits across the server which resulted in a lot of queries timing out.&lt;/p&gt;
+
+&lt;p&gt;The total number of &lt;code&gt;TOMBSTONE&lt;/code&gt; row groups dropped during that time, eventually dropping to ~13 rowgroups. Once the &lt;code&gt;TOMBSTONE&lt;/code&gt; totals bottomed out, the number of &lt;code&gt;CLOSED&lt;/code&gt; rowgroups started to drop, and the total &lt;code&gt;TOMBSTONE&lt;/code&gt; rowgroups started to increase again. When the test was complete, the rowgroup state totals were:&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Total&lt;/th&gt;
+&lt;th&gt;State&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;48&lt;/td&gt;
+&lt;td&gt;TOMBSTONE&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;672&lt;/td&gt;
+&lt;td&gt;OPEN&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;131&lt;/td&gt;
+&lt;td&gt;CLOSED&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;I could only run the test for about 2 hours due to the amount of exceptions we saw. The curious thing is that when we enable the trace flag again, the number of queries that timeout on significantly decreases and the amount of &lt;code&gt;CXPACKET&lt;/code&gt; waits we see also drops.&lt;/p&gt;
+
+&lt;h2 id=&#34;next-steps&#34;&gt;Next Steps&lt;/h2&gt;
+
+&lt;p&gt;We&amp;rsquo;re still working with support on this, but we need to do one of a two choices:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Disable trace flag 634 and let it just finish whatever it&amp;rsquo;s doing while monitoring the rowgroup states. Maybe it would eventually stop aggressively increasing the transaction logs, we’re not sure. We have not done this yet because having this backlog allows us to test other fixes, but it also just fixes the immediate issue, it doesn&amp;rsquo;t prevent us from hitting this issue again later if we need to perform another large delete in PRIZM.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Manually rebuild the 11 tables that were never rebuilt. I tried to do this online several times now that we&amp;rsquo;re on SQL Server 2019, but it results in blocking of data being inserted to PRIZM, which is a shame since we were hoping to use that feature. In order for us to rebuild, we&amp;rsquo;ll need to disable any of the processes that use PRIZM first, then rebuild each table, so that will be done at a later date.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;We have some other issues in progress with SQL Server 2019, so I&amp;rsquo;m juggling those issues and this one. I&amp;rsquo;m hoping for a resolution soon on this, but before I forgot any of the details I wanted to share them.&lt;/p&gt;
+
+&lt;h3 id=&#34;final-thoughts&#34;&gt;Final Thoughts&lt;/h3&gt;
+
+&lt;p&gt;We still have a lot of outstanding questions on this, the biggest one being, why did the upgrade to SQL Server 2019 trigger what appears to be a massive cleanup of these clustered columnstore indexes? We didn&amp;rsquo;t have either trace flag enabled on SQL Server 2017, so there shouldn&amp;rsquo;t have been anything preventing the clean-up of the ghost records or the &lt;code&gt;TOMBSTONE&lt;/code&gt; rowgroups, so why did this happen immediately after we failed over to 2019? Is there something different about it being an in-place upgrade?&lt;/p&gt;
+
+&lt;p&gt;If you have tested SQL Server 2019 and you use clustered columnstore indexes, have you seen this behavior? If so, what did you do to fix the issue? Did you just enable the trace flags and leave them on?&lt;/p&gt;
+
+&lt;p&gt;And yes we were eventually able to failover the reporting cluster&amp;hellip;I know you were worried. :)&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>A gotcha when upgrading to SQL Server 2019</title>

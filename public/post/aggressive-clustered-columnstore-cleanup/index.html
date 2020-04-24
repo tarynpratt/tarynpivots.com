@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>SQL Server 2019 Aggressive Clustered Columnstore Cleanup - Taryn Pratt</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="Taryn" />
+  <meta name="description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience." />
+
+  <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.47" />
+
+
+<link rel="canonical" href="https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="/css/custom.css">
+
+
+<meta property="og:title" content="SQL Server 2019 Aggressive Clustered Columnstore Cleanup" />
+<meta property="og:description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/" /><meta property="article:published_time" content="2020-04-24T04:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2020-04-24T04:00:00&#43;00:00"/>
+<meta itemprop="name" content="SQL Server 2019 Aggressive Clustered Columnstore Cleanup">
+<meta itemprop="description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.">
+
+
+<meta itemprop="datePublished" content="2020-04-24T04:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2020-04-24T04:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="2658">
+
+
+
+<meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,server-upgrade,maintenance,projects,failover,distributed-availability-group,availability-group," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="SQL Server 2019 Aggressive Clustered Columnstore Cleanup"/>
+<meta name="twitter:description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-124638032-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Taryn Pratt</a>
+    
+    &mdash;
+    <a href="/" class="logo-tagline">
+       
+         Pivots and other SQL fun
+       
+     </a>
+     
+</div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <div class="logo">
+    <a href="/" class="logo">
+      
+        Taryn Pratt
+      
+    </a>
+  </div>
+
+  
+  <div class="logo-tagline">
+    <a href="/" >
+      
+        Pivots and other SQL fun
+      
+    </a>
+  </div>
+  
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">SQL Server 2019 Aggressive Clustered Columnstore Cleanup</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2020-04-24 </span>
+        
+        <span class="more-meta"> 2658 words </span>
+          <span class="more-meta"> 13 min read </span>
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#upgrade-day">Upgrade Day</a></li>
+<li><a href="#transaction-logs-exponentially-growing">Transaction Logs Exponentially Growing</a>
+<ul>
+<li><a href="#what-on-earth-is-happening">What on Earth is Happening?</a></li>
+</ul></li>
+<li><a href="#time-to-investigate">Time to Investigate</a>
+<ul>
+<li><a href="#we-re-being-haunted-by-ghosts">We’re Being Haunted by Ghosts</a></li>
+<li><a href="#oh-tuple-mover-what-are-you-doing">Oh, Tuple Mover what are you doing?</a></li>
+</ul></li>
+<li><a href="#next-steps">Next Steps</a>
+<ul>
+<li><a href="#final-thoughts">Final Thoughts</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<p>In late March 2020, we upgraded our production SQL Servers to <a href="https://www.microsoft.com/en-us/sql-server/sql-server-2019" target="_blank">SQL Server 2019</a> with CU3. After finishing the upgrade, we hit an issue with <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014" target=”_blank”>clustered columnstore</a> that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</p>
+
+<h2 id="background">Background</h2>
+
+<p>We have one database in production, called PRIZM, which is made up exclusively of tables with clustered columnstore indexes. PRIZM is used for event tracking, and it backs our A/B testing, feature funnels, etc. in hopes of improving most of what we do. Because we use PRIZM everywhere, it&rsquo;s one of our larger databases with lots of tables. At the time of the upgrade, the database was approximately 500GB with about 1000 tables.</p>
+
+<p>There were various driving forces for it, but in early February we needed to purge data from PRIZM. Some of the reasons for doing so included:</p>
+
+<ul>
+<li>disk space being utilized</li>
+<li>general cleanup/removal of old events we no longer needed to maintain</li>
+<li>ease of GDPR compliance processing</li>
+</ul>
+
+<p>We, or I should say <a href="https://twitter.com/marcgravell" target="_blank">Marc Gravell</a>, deleted approximately 8 billion rows across 912 tables in the database. By doing this, we gained back drive space and removed data we no longer needed to keep.</p>
+
+<p>After performing the deletions, we did some of the recommended maintenance on columnstore indexes. While many of the smaller tables were rebuilt, a handful of tables (11 total) weren&rsquo;t rebuilt due to their size. Since we don’t have maintenance windows, it would be high-impact to attempt these rebuilds on a very active production environment.</p>
+
+<p>The plan was to perform these table rebuilds after upgrading to 2019. SQL Server 2019 added the ability <a href="http://www.nikoport.com/2018/06/21/columnstore-indexes-part-123-clustered-columnstore-index-online-rebuild/" target="_blank">to rebuild clustered columnstore indexes online</a> and that feature was one of the main reasons we wanted to upgrade.</p>
+
+<h2 id="upgrade-day">Upgrade Day</h2>
+
+<p>I&rsquo;m not going to cover our full upgrade to 2019 - that will hopefully be a later post. At this point, let&rsquo;s just assume everything went as planned and this is picking up after the main failovers of the servers that run Stack Overflow and the rest of the public network.</p>
+
+<p>After we finished the failovers for our public production servers, there was some behind the scenes work that needed to be done. This included patching and upgrading the former primary servers, and a failover of our reporting servers. The reporting cluster is a member of several <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-ver15" target="_blank">distributed availability groups</a>. When we&rsquo;re doing upgrades, we move the primary server from New York (NY-RPTSQL01) to Colorado (CO-RPTSQL01). Once all the upstream SQL Servers are upgraded, there&rsquo;s one last failover to get the primary back to NY-RPTSQL01. I&rsquo;m specifically mentioning these servers because they receive data from PRIZM, so they are impacted by any activity in that database.</p>
+
+<h2 id="transaction-logs-exponentially-growing">Transaction Logs Exponentially Growing</h2>
+
+<p>As I was upgrading the former primaries, I noticed the transaction log files for PRIZM were growing. Initially, I just assumed it was normal and I went about finishing my other tasks.</p>
+
+<p>After about an hour, the log had grown again, and was growing rapidly. Like really rapidly, which was unusual. <strong>The logs were growing about 10GB every 5 minutes.</strong> We have lower traffic on the weekend so the amount of data being inserted into the database should not have been anywhere near this level.</p>
+
+<p>Normally large transaction logs might raise my eyebrows, but I wouldn&rsquo;t be super concerned. However, I needed to perform the failover of the reporting cluster, and with the logs increasing at the rate they were, it was going to make that more difficult, if not impossible.</p>
+
+<p>If you&rsquo;re not familiar with availability groups, the transaction logs from the primary server need to be written to the secondary servers. This same thing happens with distributed availability groups, but at a larger scale. In this case the transaction logs for the databases, including PRIZM which is on our primary server for Stack Overflow, needed to be flushed to the reporting cluster.</p>
+
+<p>As the logs were increasing in PRIZM, they needed to be written to the reporting servers and CO-RPTSQL01 had a huge <code>log send queue</code>, and NY-RPTSQL01 had a huge <code>recovery queue</code>. Both of those are defined in the <a href="https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2012/ff878356(v=sql.110)" target="_blank">Microsoft docs</a>, but I’ve included the definitions below:</p>
+
+<ul>
+<li><strong>Log send queue</strong> - Amount of log records in the log files of the primary database, in kilobytes, that has not yet been sent to the secondary replica. This value is sent to the secondary replica from the primary replica. Queue size does not include FILESTREAM files that are sent to a secondary.</li>
+<li><strong>Recovery queue</strong> - Amount of log records in the log files of the secondary replica that has not yet been redone.</li>
+</ul>
+
+<p>The <code>recovery queue</code> needs to be at zero to failover - when it&rsquo;s zero it means the server is caught up to the primary. Since there were transaction logs that needed to be written to the secondary in the reporting cluster, NY-RPTSQL01, I couldn&rsquo;t failover.</p>
+
+<h3 id="what-on-earth-is-happening">What on Earth is Happening?</h3>
+
+<p>When I first noticed the <code>log send queue</code> size, it was about 90GB. Within just a few hours it was at 320GB, and growing.</p>
+
+<p>We knew normal traffic wasn&rsquo;t causing the increase. We also knew there wasn’t a delete job that would have triggered the massive growth of transaction logs, especially at the rate we were seeing. Now it was time to try and figure out what was causing the rapid growth.</p>
+
+<p>I looked at our instance of <a href="https://github.com/opserver/Opserver" target="_blank">OpServer</a> to see if it reported any queries running against PRIZM. Nothing.</p>
+
+<p>I executed <a href="http://whoisactive.com/" target="_blank"><code>sp_whoisactive</code></a>. Nothing.</p>
+
+<p>From what I was seeing it appeared &ldquo;something&rdquo; was crawling through our CCI tables and processing &ldquo;something&rdquo;. Like all the hand-wavy &ldquo;something was doing something&rdquo;? Yeah me too. We didn&rsquo;t know what was happening and I was frantically trying to get it to stop.</p>
+
+<p>I then executed <code>sp_who2</code> and saw some PRIZM related things as background/system tasks, so I quickly wrote a script that would let me filter only for PRIZM:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span> <span class="o">@</span><span class="k">Table</span> <span class="k">TABLE</span><span class="p">(</span>
+       <span class="n">SPID</span> <span class="nb">INT</span><span class="p">,</span>
+       <span class="n">Status</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">LOGIN</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">HostName</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">BlkBy</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">DBName</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">Command</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">CPUTime</span> <span class="nb">INT</span><span class="p">,</span>
+       <span class="n">DiskIO</span> <span class="nb">INT</span><span class="p">,</span>
+       <span class="n">LastBatch</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">ProgramName</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="k">MAX</span><span class="p">),</span>
+       <span class="n">SPID_1</span> <span class="nb">INT</span><span class="p">,</span>
+       <span class="n">REQUESTID</span> <span class="nb">INT</span>
+<span class="p">)</span>
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="o">@</span><span class="k">Table</span> <span class="k">EXEC</span> <span class="n">sp_who2</span>
+<span class="k">SELECT</span>  <span class="o">*</span>
+<span class="k">FROM</span>    <span class="o">@</span><span class="k">Table</span>
+<span class="k">WHERE</span> <span class="n">DBName</span> <span class="o">=</span> <span class="s1">&#39;PRIZM&#39;</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>The output of <code>sp_who2</code> was repeatedly showing <code>GHOST CLEANUP</code> and <code>CREATE INDEX</code>. Over and over and over again. To be clear, I’m not a clustered columnstore expert, I know enough to be able to maintain them as needed. I went to <a href="https://twitter.com/tarynpivots/status/1243984519314558976" target="_blank">Twitter</a> and mentioned what I was seeing. I was advised by <a href="https://twitter.com/sqL_handLe/status/1243988928484511746" target="_blank">@sqL_handLe</a> to try trace flag 661 which disables the ghost record removal process, and by Joe Obbish via <a href="https://twitter.com/erikdarlingdata/status/1244005847140884480”" target="_blank">Erik Darling</a> to enable trace flag 634 to disable the tuple mover background task.</p>
+
+<p>Initially, we enabled trace flag 634, but the logs continued to grow. We disabled trace flag 634. Then we enabled trace flag 661, and the logs continued to grow, so we disabled it. Finally, we tried enabling both of the trace flags. The big jumps stopped, but we now had about 400GB of logs that needed to be written to the reporting cluster before we could perform the failover.</p>
+
+<p>While the logs were exploding we wondered if whatever was happening might have been caused by the deletions we did in early February. But why would they be triggered by the upgrade to SQL Server 2019?</p>
+
+<p>We figured we could just let whatever was running, keep running, and maybe it&rsquo;d eventually stop. However remember I mentioned one of the reasons we deleted a bunch of data from PRIZM was due to disk space being utilized? Well, the t-log growth was rapidly taking that back. The morning of the upgrade we were at 83% being used, as the day went on we were approaching 90%. This became an urgent issue because the growth was not slowing down and honestly we were worried we&rsquo;d run out of disk space if we just let it play out.</p>
+
+<p>It was time to open a support ticket. Hopefully support could help us.</p>
+
+<p>A brief side note, before we enabled the trace flags we were getting lots of exceptions across the network. Once we enabled them, the exceptions slowed. Coincidence?</p>
+
+<h2 id="time-to-investigate">Time to Investigate</h2>
+
+<p>The next morning we still had logs that were being written to the reporting cluster, 195GB to be exact. Yes I know that as ridiculously high still, but we have throughput issues between our two datacenters (that’s a whole different story). Due to the size of the recovery queue that meant no failover until that flushed.</p>
+
+<p>We heard back from support, so it was time to investigate. They requested that we take a full dump file, which is pretty difficult since we have 1.5TB of memory on the Stack Overflow SQL Server and the C: drive isn&rsquo;t large enough to capture that, so we went with a smaller filtered dump and 3 minidumps. That meant <a href="https://twitter.com/tarynpivots/status/1244257820905627653" target="_blank">another public outage</a>, but we needed the files for them.</p>
+
+<p>When we took the dump files, we disabled both trace flags (634 and 661), during the <a href="https://twitter.com/tarynpivots/status/1244408854768578561" target="_blank">10 minutes the trace flags were off, the transaction logs increased another 25-30GB</a>.</p>
+
+<h3 id="we-re-being-haunted-by-ghosts">We’re Being Haunted by Ghosts</h3>
+
+<p>After providing the dump files, they requested that we check the status of the ghost records in the database using and provide the results:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> 
+    <span class="n">database_id</span><span class="p">,</span> 
+    <span class="n">object_name</span><span class="p">(</span><span class="n">object_id</span><span class="p">)</span> <span class="k">as</span> <span class="n">Name</span><span class="p">,</span> 
+    <span class="n">index_id</span><span class="p">,</span> 
+    <span class="n">i</span><span class="p">.</span><span class="n">record_count</span><span class="p">,</span> 
+    <span class="n">GHOST_RECORD_COUNT</span><span class="p">,</span>
+    <span class="n">Version_ghost_record_count</span><span class="p">,</span>
+    <span class="n">INDEX_TYPE_DESC</span><span class="p">,</span> 
+    <span class="n">ALLOC_UNIT_TYPE_DESC</span>
+<span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">dm_db_index_physical_stats</span> <span class="p">(</span><span class="n">DB_ID</span><span class="p">(</span><span class="n">N</span><span class="s1">&#39;PRIZM&#39;</span><span class="p">),</span> <span class="n">object_id</span><span class="p">(</span><span class="s1">&#39;&lt;TableName&gt;&#39;</span><span class="p">),</span> <span class="k">NULL</span><span class="p">,</span> <span class="k">NULL</span> <span class="p">,</span> <span class="s1">&#39;DETAILED&#39;</span><span class="p">)</span> <span class="n">i</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">GHOST_RECORD_COUNT</span> <span class="k">desc</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>The results of the query were:</p>
+
+<p><img src="/image/2020/ghost_records_original.png" alt="Total Ghost Records" /></p>
+
+<p>After running the query, I performed another test for support, which involved:</p>
+
+<ul>
+<li>Taking a t-log backup</li>
+<li>Removing both trace flags 634 and 661 allowing the logs to increase</li>
+<li>Enabling the trace flags</li>
+<li>Taking another log backup</li>
+</ul>
+
+<p>Disabling the trace flags for just a few minutes resulted in the logs increasing rapidly, but in looking at the results from the query above, the total number of ghost records dropped.</p>
+
+<p>I decided to test further to see if disabling the trace flags would fully remove the <code>GHOST_RECORD_COUNT</code>. Each time both trace flags were disabled, the total ghost records would drop and the t-logs would explode in size, but we weren&rsquo;t sure which trace flag we should keep enabled, so it was time for yet another test.</p>
+
+<p>I tried just disabling trace flag 661, which would allow the ghost record process to run. I wanted to see if the cleanup process would finish, and the logs would stop growing. Eventually, the total number of ghost records dropped to zero, and the logs seemed to stop growing. Problem partially solved.</p>
+
+<h3 id="oh-tuple-mover-what-are-you-doing">Oh, Tuple Mover what are you doing?</h3>
+
+<p>Now that one of the trace flags was disabled, we had to deal with trace flag 634 which we did not have enabled on SQL Server 2017. I started querying the status of the rowgroups on each table and I found something that appeared odd. I ran the following query for a specific table in PRIZM:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">select</span>
+    <span class="n">i</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">object_id</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">partition_number</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">row_group_id</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">delta_store_hobt_id</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">state_desc</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">total_rows</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">deleted_rows</span><span class="p">,</span>
+    <span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="o">*</span><span class="p">(</span><span class="k">ISNULL</span><span class="p">(</span><span class="n">rg</span><span class="p">.</span><span class="n">deleted_rows</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span><span class="o">/</span><span class="n">total_rows</span> <span class="k">AS</span> <span class="s1">&#39;Fragmentation&#39;</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">created_time</span><span class="p">,</span>
+    <span class="n">rg</span><span class="p">.</span><span class="n">closed_time</span>
+<span class="k">from</span> <span class="n">sys</span><span class="p">.</span><span class="n">dm_db_column_store_row_group_physical_stats</span> <span class="n">rg</span>
+<span class="k">inner</span> <span class="k">join</span> <span class="n">sys</span><span class="p">.</span><span class="n">indexes</span> <span class="n">i</span>
+<span class="k">on</span> <span class="n">rg</span><span class="p">.</span><span class="n">object_id</span> <span class="o">=</span> <span class="n">i</span><span class="p">.</span><span class="n">object_id</span>
+<span class="k">and</span> <span class="n">rg</span><span class="p">.</span><span class="n">index_id</span> <span class="o">=</span> <span class="n">i</span><span class="p">.</span><span class="n">index_id</span>
+<span class="k">order</span> <span class="k">by</span> <span class="n">i</span><span class="p">.</span><span class="n">name</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>The results showed a lot of rowgroups in a <code>TOMBSTONE</code> state:</p>
+
+<p><img src="/image/2020/rowgroups.png" alt="TOMBSTONES" /></p>
+
+<p>This was curious to me because, in my limited experience with clustered columnstore, these older closed rowgroups in a <code>TOMBSTONE</code> state should have been cleaned up a long time ago, well before we upgraded to SQL Server 2019.</p>
+
+<p>On April 15th, I ran a test disabling trace flag 634. As soon as the trace flag was disabled, we experienced several things:</p>
+
+<ul>
+<li>transaction log growth</li>
+<li>a drop in the total number of <code>TOMBSTONE</code> rowgroups</li>
+<li>and, a dramatic increase in query timeouts on the server</li>
+</ul>
+
+<p>I left the trace flag disabled for several hours, all the while monitoring the 3 things above.</p>
+
+<p>About mid-day, I re-enabled the trace flag on the server. When I did that, the logs stopped growing, the total number of <code>TOMBSTONE</code> rowgroups stopping decreasing, and the flood of query timeouts we saw throughout the entire test slowed to a trickle. All of this information was passed along to support. They suggested that the <code>TUPLE_MOVER</code> doesn’t touch the <code>TOMBSTONE</code> rowgroups and that should only be handled by the ghost cleanup process, but that was not the behavior we were seeing. They requested another test, but this time they also wanted us to keep track of the <code>OPEN</code> and <code>CLOSED</code> rowgroups.</p>
+
+<p>The next day, it was time to try this again. Prior to disabling trace flag 634, we had the following rowgroup states in the PRIZM database:</p>
+
+<table>
+<thead>
+<tr>
+<th>Total</th>
+<th>State</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>581</td>
+<td>TOMBSTONE</td>
+</tr>
+
+<tr>
+<td>672</td>
+<td>OPEN</td>
+</tr>
+
+<tr>
+<td>167</td>
+<td>CLOSED</td>
+</tr>
+</tbody>
+</table>
+
+<p>I left the trace flag off for about 2 hours. While it was disabled, the transaction logs grew 136GB, and we also experienced significant <code>CXPACKET</code> waits across the server which resulted in a lot of queries timing out.</p>
+
+<p>The total number of <code>TOMBSTONE</code> row groups dropped during that time, eventually dropping to ~13 rowgroups. Once the <code>TOMBSTONE</code> totals bottomed out, the number of <code>CLOSED</code> rowgroups started to drop, and the total <code>TOMBSTONE</code> rowgroups started to increase again. When the test was complete, the rowgroup state totals were:</p>
+
+<table>
+<thead>
+<tr>
+<th>Total</th>
+<th>State</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>48</td>
+<td>TOMBSTONE</td>
+</tr>
+
+<tr>
+<td>672</td>
+<td>OPEN</td>
+</tr>
+
+<tr>
+<td>131</td>
+<td>CLOSED</td>
+</tr>
+</tbody>
+</table>
+
+<p>I could only run the test for about 2 hours due to the amount of exceptions we saw. The curious thing is that when we enable the trace flag again, the number of queries that timeout on significantly decreases and the amount of <code>CXPACKET</code> waits we see also drops.</p>
+
+<h2 id="next-steps">Next Steps</h2>
+
+<p>We&rsquo;re still working with support on this, but we need to do one of a two choices:</p>
+
+<ol>
+<li><p>Disable trace flag 634 and let it just finish whatever it&rsquo;s doing while monitoring the rowgroup states. Maybe it would eventually stop aggressively increasing the transaction logs, we’re not sure. We have not done this yet because having this backlog allows us to test other fixes, but it also just fixes the immediate issue, it doesn&rsquo;t prevent us from hitting this issue again later if we need to perform another large delete in PRIZM.</p></li>
+
+<li><p>Manually rebuild the 11 tables that were never rebuilt. I tried to do this online several times now that we&rsquo;re on SQL Server 2019, but it results in blocking of data being inserted to PRIZM, which is a shame since we were hoping to use that feature. In order for us to rebuild, we&rsquo;ll need to disable any of the processes that use PRIZM first, then rebuild each table, so that will be done at a later date.</p></li>
+</ol>
+
+<p>We have some other issues in progress with SQL Server 2019, so I&rsquo;m juggling those issues and this one. I&rsquo;m hoping for a resolution soon on this, but before I forgot any of the details I wanted to share them.</p>
+
+<h3 id="final-thoughts">Final Thoughts</h3>
+
+<p>We still have a lot of outstanding questions on this, the biggest one being, why did the upgrade to SQL Server 2019 trigger what appears to be a massive cleanup of these clustered columnstore indexes? We didn&rsquo;t have either trace flag enabled on SQL Server 2017, so there shouldn&rsquo;t have been anything preventing the clean-up of the ghost records or the <code>TOMBSTONE</code> rowgroups, so why did this happen immediately after we failed over to 2019? Is there something different about it being an in-place upgrade?</p>
+
+<p>If you have tested SQL Server 2019 and you use clustered columnstore indexes, have you seen this behavior? If so, what did you do to fix the issue? Did you just enable the trace flags and leave them on?</p>
+
+<p>And yes we were eventually able to failover the reporting cluster&hellip;I know you were worried. :)</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://tarynpivots.com/tags/sql/">sql</a>
+          <a href="https://tarynpivots.com/tags/sql-server/">sql-server</a>
+          <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
+          <a href="https://tarynpivots.com/tags/sql-server-2019/">sql-server-2019</a>
+          <a href="https://tarynpivots.com/tags/server-upgrade/">server-upgrade</a>
+          <a href="https://tarynpivots.com/tags/maintenance/">maintenance</a>
+          <a href="https://tarynpivots.com/tags/projects/">projects</a>
+          <a href="https://tarynpivots.com/tags/failover/">failover</a>
+          <a href="https://tarynpivots.com/tags/distributed-availability-group/">distributed-availability-group</a>
+          <a href="https://tarynpivots.com/tags/availability-group/">availability-group</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+        
+          <a class="next" href="/post/system-view-gotcha-with-sql-server-2019/">
+            <span class="next-text nav-default">A gotcha when upgrading to SQL Server 2019</span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  <div id="disqus_thread"  class="disqus-comment"></div>
+  <script type="text/javascript">
+    (function() {
+      
+      
+      if (window.location.hostname === 'localhost') return;
+
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="https://stackoverflow.com/users/426671/taryn" rel="me noopener" class="iconfont icon-stack-overflow"
+        title="stack-overflow" target="_blank">
+      </a>
+      <a href="https://twitter.com/tarynpivots" rel="me noopener" class="iconfont icon-twitter"
+        title="twitter" target="_blank">
+      </a>
+      <a href="https://github.com/tarynpratt" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+  <a href="https://tarynpivots.com/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2013 -
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        Taryn
+        
+      </span></span>
+
+  
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+
+
+
+
+</body>
+</html>
