@@ -87,13 +87,13 @@ Great, so now what?
 
 We couldn't just stop replicating the logins across all servers, due to our usage of the secondaries, and we needed to do this automatically on a regular interval. We had to figure out a solution. Thankfully the fix was easy. 
 
-After seeing that the `null` value of the password was coming from `sys.logins`, and since we were already querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15" target="_blank">`sys.sql_logins`</a> we could easily replace:
+After seeing that the `null` value of the password was coming from `sys.syslogins`, and since we were already querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15" target="_blank">`sys.sql_logins`</a> we could easily replace:
 
 {{< highlight sql>}}
 CAST(l.password AS varbinary (256)) pwd_varbinary,
 {{< / highlight >}}
 
-from `sys.logins` with 
+from `sys.syslogins` with 
 
 {{< highlight sql>}}
 sl.password_hash pwd_varbinary,
