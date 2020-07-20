@@ -463,7 +463,7 @@ if (!doNotTrack) {
 
 <p>We couldn&rsquo;t just stop replicating the logins across all servers, due to our usage of the secondaries, and we needed to do this automatically on a regular interval. We had to figure out a solution. Thankfully the fix was easy.</p>
 
-<p>After seeing that the <code>null</code> value of the password was coming from <code>sys.logins</code>, and since we were already querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15" target="_blank"><code>sys.sql_logins</code></a> we could easily replace:</p>
+<p>After seeing that the <code>null</code> value of the password was coming from <code>sys.syslogins</code>, and since we were already querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15" target="_blank"><code>sys.sql_logins</code></a> we could easily replace:</p>
 
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -474,7 +474,7 @@ if (!doNotTrack) {
 </div>
 </div>
 
-<p>from <code>sys.logins</code> with</p>
+<p>from <code>sys.syslogins</code> with</p>
 
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">

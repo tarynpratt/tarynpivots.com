@@ -39,6 +39,15 @@
     </item>
     
     <item>
+      <title>Clustered Columnstore</title>
+      <link>https://tarynpivots.com/tags/clustered-columnstore/</link>
+      <pubDate>Mon, 20 Jul 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/clustered-columnstore/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Crosstab</title>
       <link>https://tarynpivots.com/tags/crosstab/</link>
       <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
@@ -95,7 +104,7 @@
     <item>
       <title>Maintenance</title>
       <link>https://tarynpivots.com/tags/maintenance/</link>
-      <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
+      <pubDate>Mon, 20 Jul 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/maintenance/</guid>
       <description></description>
@@ -179,15 +188,6 @@
       <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/projects/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Readable Secondary</title>
-      <link>https://tarynpivots.com/tags/readable-secondary/</link>
-      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/readable-secondary/</guid>
       <description></description>
     </item>
     

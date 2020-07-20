@@ -216,3 +216,5 @@ If you have tested SQL Server 2019 and you use clustered columnstore indexes, ha
 
 And yes we were eventually able to failover the reporting cluster...I know you were worried. :)
 
+A follow-up on the next steps has been posted [here](http://localhost:1313/post/sql-server-2019-tuple-mover-behavior-change/).
+

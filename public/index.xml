@@ -6,10 +6,260 @@
     <description>Recent content on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 24 Apr 2020 04:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 20 Jul 2020 04:00:00 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>SQL Server 2019 Tuple Mover Behavior Change</title>
+      <link>https://tarynpivots.com/post/sql-server-2019-tuple-mover-behavior-change/</link>
+      <pubDate>Mon, 20 Jul 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/sql-server-2019-tuple-mover-behavior-change/</guid>
+      
+        <description>
+
+&lt;p&gt;This is a follow-up to &lt;a href=&#34;https://www.tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/&#34; target=&#34;_blank&#34;&gt;my post about an issue with clustered columnstore&lt;/a&gt;, when upgrading from SQL Server 2017 to SQL Server 2019. After extensive testing and working with support, I wanted to share some information about a change in SQL Server 2019 that might impact others.&lt;/p&gt;
+
+&lt;h2 id=&#34;overview&#34;&gt;Overview&lt;/h2&gt;
+
+&lt;p&gt;I suggest reading &lt;a href=&#34;https://www.tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/&#34; target=&#34;_blank&#34;&gt;my other post first&lt;/a&gt;, it&amp;rsquo;ll only take a few minutes. I&amp;rsquo;ll wait&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;However, if you really don&amp;rsquo;t want to read it, here&amp;rsquo;s a quick recap on the initial issue.&lt;/p&gt;
+
+&lt;p&gt;In early February 2020, a lot of data was deleted from some &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014&#34; target=”_blank”&gt;clustered columnstore indexes&lt;/a&gt; in our PRIZM database. Some of the tables were rebuilt, but 11 tables weren&amp;rsquo;t since we don&amp;rsquo;t have maintenance windows, and that would involve downtime. The rebuilds would happen once we upgraded to SQL Server 2019, to take advantage of the ability to rebuild those columnstore indexes online.&lt;/p&gt;
+
+&lt;p&gt;The day we upgraded to SQL Server 2019, there was rapid growth of the transaction logs for PRIZM. The only way to get the growth to stop, was to enable both &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-traceon-trace-flags-transact-sql?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;trace flags 634 and 661&lt;/a&gt;.&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Trace Flag&lt;/th&gt;
+&lt;th&gt;Definition&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;634&lt;/td&gt;
+&lt;td&gt;Disables the background columnstore compression task. SQL Server periodically runs the tuple mover background task that compresses columnstore index rowgroups with uncompressed data, one such rowgroup at a time.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;661&lt;/td&gt;
+&lt;td&gt;Disables the ghost record removal process. For more information, see this &lt;a href=&#34;https://support.microsoft.com/kb/920093&#34; target=&#34;_blank&#34;&gt;Microsoft Support article.&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;After working with support, we were able to remove trace flag 661, but still had 634 in place, so more work needed to be done.&lt;/p&gt;
+
+&lt;h2 id=&#34;enabling-another-trace-flag&#34;&gt;Enabling Another Trace Flag&lt;/h2&gt;
+
+&lt;p&gt;Removing trace flag 634 from the production server was the next step, but &lt;a href=&#34;https://www.tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/#oh-tuple-mover-what-are-you-doing&#34; target=&#34;_blank&#34;&gt;every attempt&lt;/a&gt;, led to the rapid increase in the transaction logs and a spike in query timeouts on the server.&lt;/p&gt;
+
+&lt;p&gt;After passing lots of details to support, they requested we enable an undocumented trace flag - 10257 - to see if we still experienced the transaction log growth. Since this trace flag isn&amp;rsquo;t documented, the description we were given is:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;10257 - disables the columnstore tuple mover background merge process. The tuple mover background merge runs a reorganize on a few rowgroups at a time with more conservative thresholds.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Time for more testing!!&lt;/p&gt;
+
+&lt;p&gt;I removed trace flag 634, and enabled trace flag 10257 to see how the transaction logs responded. The swap was done for about an hour and during this time the transaction logs didn&amp;rsquo;t have the rapid growth, but there still was an increase in query timeouts.&lt;/p&gt;
+
+&lt;p&gt;The rowgroup states also changed:&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Rowgroup State&lt;/th&gt;
+&lt;th&gt;Before with TF 634 (only)&lt;/th&gt;
+&lt;th&gt;After with TF 10257 (only)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Compressed&lt;/td&gt;
+&lt;td&gt;9844&lt;/td&gt;
+&lt;td&gt;9927&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Closed&lt;/td&gt;
+&lt;td&gt;261&lt;/td&gt;
+&lt;td&gt;194&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Open&lt;/td&gt;
+&lt;td&gt;721&lt;/td&gt;
+&lt;td&gt;721&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Tombstone&lt;/td&gt;
+&lt;td&gt;48&lt;/td&gt;
+&lt;td&gt;68&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;The change in the numbers showed the tuple mover was running, but with the background merge process disabled there wasn&amp;rsquo;t the rapid growth of the logs (which was a good thing). However, we had to deal with query timeouts when trace flag 634 was removed. Now what?&lt;/p&gt;
+
+&lt;h2 id=&#34;more-investigating&#34;&gt;More Investigating&lt;/h2&gt;
+
+&lt;p&gt;I wanted a backup from before the upgrade to do two things:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Check the state of the rowgroups before our initial upgrade. I was hoping to see how many were tombstones, open, closed, compressed?&lt;/li&gt;
+&lt;li&gt;Could I recreate the issue by upgrading a server from SQL Server 2017 to SQL Server 2019?&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;It had been a month since we upgraded our SQL Servers, which meant our backups were only available offsite. After a &lt;a href=&#34;https://twitter.com/tarynpivots/status/1255883993670578176&#34; target=&#34;_blank&#34;&gt;little fighting&lt;/a&gt;, I was finally able to pull it from storage.&lt;/p&gt;
+
+&lt;p&gt;I initially restored the database to one of our existing test servers with SQL Server 2019 on it. I wanted to see the state of the rowgroups on the tables that had not been rebuilt. Did we have hundreds of tombstones or not?  Unfortunately, after restoring the database &lt;a href=&#34;https://twitter.com/tarynpivots/status/1256012151447158784&#34; target=&#34;_blank&#34;&gt;it didn&amp;rsquo;t show me what I was looking for&lt;/a&gt;. Based on a suggestion from Andy Mallon (&lt;a href=&#34;https://am2.co/&#34; target=&#34;_blank&#34;&gt;b&lt;/a&gt; | &lt;a href=&#34;https://twitter.com/AMtwo&#34; target=&#34;_blank&#34;&gt;t&lt;/a&gt;), I tried to &lt;a href=&#34;https://twitter.com/AMtwo/status/1256017346449342465&#34; target=&#34;_blank&#34;&gt;restore with &lt;code&gt;STANDBY&lt;/code&gt;&lt;/a&gt; to see if that made any difference&amp;hellip;it didn&amp;rsquo;t. I was able to get stats, but it didn&amp;rsquo;t have the rowgroups in a tombstone state.&lt;/p&gt;
+
+&lt;p&gt;Next, I decided to restore the database to a server with SQL Server 2017 on it, but since I already upgraded all of our servers to 2019, one wasn&amp;rsquo;t readily available. Thankfully, I have the ability to spin up test servers as needed, so that&amp;rsquo;s what I did.&lt;/p&gt;
+
+&lt;p&gt;After restoring the database to the 2017 SQL Server, it had the following:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;No ghost records&lt;/li&gt;
+&lt;li&gt;No TOMBSTONE rowgroups&lt;/li&gt;
+&lt;li&gt;666 OPEN rowgroups&lt;/li&gt;
+&lt;li&gt;0 closed rowgroups&lt;/li&gt;
+&lt;li&gt;The transaction log was approximately 19.5 GB&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Hmmm, ok there was nothing too concerning in the restored database. No red flags or alarm bells. It was time to upgrade to SQL Server 2019 to see what happens.&lt;/p&gt;
+
+&lt;p&gt;Immediately after upgrading to SQL Server 2019, everything appeared ok. Then, I waited about 30 minutes to capture the stats again. After 30 minutes on 2019, we had:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;24k ghost records&lt;/li&gt;
+&lt;li&gt;79 TOMBSTONE rowgroups&lt;/li&gt;
+&lt;li&gt;666 OPEN rowgroups&lt;/li&gt;
+&lt;li&gt;0 closed rowgroups&lt;/li&gt;
+&lt;li&gt;and a transaction log that is 43GB&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Initially, I didn&amp;rsquo;t have either trace flag (634, or 661) enabled. Once the trace flags were enabled, the growth of the transaction logs stopped. Welp, I had reproduced the issue.&lt;/p&gt;
+
+&lt;p&gt;Support also asked me to grab the results of the following query when the database was still on SQL Server 2017, and again, after I upgraded to SQL Server 2019 to get the status of deleted rows:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;select&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;partition_number&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;row_group_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;delta_store_hobt_id&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;state_desc&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;total_rows&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;deleted_rows&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;mi&#34;&gt;100&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;ISNULL&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;deleted_rows&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;))&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;/&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;total_rows&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;AS&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;Fragmentation&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;created_time&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;closed_time&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;from&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;dm_db_column_store_row_group_physical_stats&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;inner&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;join&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;sys&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;indexes&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;on&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;object_id&lt;/span&gt;
+    &lt;span class=&#34;k&#34;&gt;and&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;rg&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;index_id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;index_id&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;order&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;by&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;name&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;I passed this info along to them, and we were finally able to put it all together.&lt;/p&gt;
+
+&lt;h2 id=&#34;putting-the-pieces-together&#34;&gt;Putting the Pieces Together&lt;/h2&gt;
+
+&lt;p&gt;Now that we had more data points, we could step back and look at the big picture, which allowed us to determine what caused the problem in the first place, and how to prevent it going forward.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-root-cause&#34;&gt;The Root Cause&lt;/h3&gt;
+
+&lt;p&gt;The deletions we did in early February were the start of the problem. Without having maintenance windows, we were unable to rebuild the tables, leaving rowgroups in a highly fragmented state with a lot of deleted rows - many of them had 100% deletion. We didn&amp;rsquo;t see an issue in SQL Server 2017, because the tuple mover only triggered when a rowgroup closed and the tuple mover moved it to a compressed state.&lt;/p&gt;
+
+&lt;h3 id=&#34;behavior-change&#34;&gt;Behavior Change&lt;/h3&gt;
+
+&lt;p&gt;In SQL Server 2019, the tuple mover has a helper called the background merge task. The &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-query-performance?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;docs have some details about it&lt;/a&gt;:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Starting with SQL Server 2019 (15.x), the tuple-mover is helped by a background merge task that automatically compresses smaller OPEN delta rowgroups that have existed for some time as determined by an internal threshold, or merges COMPRESSED rowgroups from where a large number of rows has been deleted. This improves the columnstore index quality over time.&lt;/p&gt;
+
+&lt;p&gt;If deleting large amounts of data from the columnstore index is required, consider splitting that operation into smaller delete batches over time, allowing the background merge task to handle the task of merging smaller rowgroups and improve index quality, eliminating the need to schedule index reorganization maintenance windows after data deletion.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;In other words, the new background merge task has benefits, such as, helping the tuple mover clean up smaller rowgroups to improve the overall quality of the index. This task also automatically kicks in to merge compressed rowgroups where the number of deleted rows hits an internal threshold&amp;hellip;kinda sounds a little like what we had.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-log-growth-issue&#34;&gt;The Log Growth Issue&lt;/h3&gt;
+
+&lt;p&gt;We experienced rapid transaction log growth the day we upgraded to SQL Server 2019 because the background merge task was triggered by the deleted rows we had in various tables. The log growth was due to the merge task trying to free the space in the rowgroup.&lt;/p&gt;
+
+&lt;p&gt;Since we had a lot of rowgroups with deleted rows, the merge task was aggressively cleaning them up, which led to exponential growth of the  logs. By enabling trace flag 634, we disabled the tuple mover process which stopped the logs from growing. If we wanted to keep the tuple mover enabled, then we&amp;rsquo;d need to use the new trace flag 10257 to disable the new background merge task.&lt;/p&gt;
+
+&lt;p&gt;Initially, the new background merge task was extremely aggressive, which is why we saw so many query timeouts. There were a lot of rowgroups that needed cleaning, so the process ran all the time, resulting in contention with our normal load on the server.&lt;/p&gt;
+
+&lt;p&gt;We never saw this behavior in any of our testing because we weren&amp;rsquo;t deleting data from our development environments.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-resolution&#34;&gt;The Resolution&lt;/h3&gt;
+
+&lt;p&gt;In order to remove trace flag 634 from production, we had a couple of options:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Disable the trace flag and let the tuple mover finish its business&lt;/li&gt;
+&lt;li&gt;Rebuild the tables&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;We went with option 1.&lt;/p&gt;
+
+&lt;p&gt;I disabled the trace flag and monitored the transaction log which took several hours to finish. During which, we experienced minimal log growth. We also saw query timeouts, but these dropped significantly as the number of rowgroups being processed by the background merge task steadily dropped to zero. Eventually, we had no rowgroups that needed to be cleaned up, which meant no further log growth, and no additional query timeouts from the tuple mover background merge task.&lt;/p&gt;
+
+&lt;p&gt;We finally resolved this issue that lingered from the day we upgraded.&lt;/p&gt;
+
+&lt;h2 id=&#34;avoiding-this-issue&#34;&gt;Avoiding this Issue&lt;/h2&gt;
+
+&lt;p&gt;If you&amp;rsquo;re planning on moving to SQL Server 2019, and you have clustered columnstore indexes, and deleted data from them, then check the total number of deleted rows. If you have a lot, plan to perform maintenance before upgrading, or to utilize the trace flags to keep the tuple mover in check while cleaning the tables.&lt;/p&gt;
+
+&lt;p&gt;Don&amp;rsquo;t be like us, especially if you delete a lot of data from your clustered columnstore indexes.&lt;/p&gt;
+
+&lt;p&gt;A critical thing to remember with SQL Server 2019 is, if you need to delete data from your columnstore indexes, do it in smaller batches and trickle deletes. This allows the background merge task to perform the clean up slowly, and minimizes some of the pain we experienced when upgrading.&lt;/p&gt;
+
+&lt;p&gt;As a reminder, before enabling any trace flags on your server (especially in production) make sure you know what you&amp;rsquo;re doing, or, you&amp;rsquo;re working with support and they suggest using it. The new background merge task is there to assist the tuple mover in keeping columnstore indexes in a better state. In other words, ideally, you&amp;rsquo;ll leave it alone and let it do its job. If you&amp;rsquo;re performing maintenance on your columnstore indexes, the background merge task should not negatively impact you, and should actually help with index quality.&lt;/p&gt;
+
+&lt;h2 id=&#34;final-thoughts&#34;&gt;Final Thoughts&lt;/h2&gt;
+
+&lt;p&gt;I tested SQL Server 2019 for months before we upgraded, and didn&amp;rsquo;t see this behavior at any point. But, as many of us know, upgrades are always fun. There is always a risk of issues when installing new versions. It doesn&amp;rsquo;t matter how much you test or plan, there&amp;rsquo;s always a possibility of something going wrong.&lt;/p&gt;
+
+&lt;p&gt;I hope this helps someone who is thinking about upgrading, uses clustered columnstore, and doesn&amp;rsquo;t have an easy way to perform maintenance in their production environment. Check those deleted rows, and test, test, and test again, if you&amp;rsquo;re planning on upgrading.&lt;/p&gt;
+
+&lt;p&gt;At some point soon, I&amp;rsquo;ll put pen to paper or fingers to keyboard and start writing about the upgrade to SQL Server 2019, along with what benefits we&amp;rsquo;ve gotten from it so far.&lt;/p&gt;
+
+&lt;p&gt;I also would like to personally thank Pedro Lopes (&lt;a href=&#34;https://twitter.com/SQLPedro&#34; target=&#34;_blank&#34;&gt;t&lt;/a&gt;), for helping with this issue and others we encountered after upgrading to SQL Server 2019, as well as reviewing this post.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>SQL Server 2019 Aggressive Clustered Columnstore Cleanup</title>
@@ -338,6 +588,8 @@
 &lt;p&gt;If you have tested SQL Server 2019 and you use clustered columnstore indexes, have you seen this behavior? If so, what did you do to fix the issue? Did you just enable the trace flags and leave them on?&lt;/p&gt;
 
 &lt;p&gt;And yes we were eventually able to failover the reporting cluster&amp;hellip;I know you were worried. :)&lt;/p&gt;
+
+&lt;p&gt;A follow-up on the next steps has been posted &lt;a href=&#34;http://localhost:1313/post/sql-server-2019-tuple-mover-behavior-change/&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
 </description>
       
     </item>
@@ -470,7 +722,7 @@
 
 &lt;p&gt;We couldn&amp;rsquo;t just stop replicating the logins across all servers, due to our usage of the secondaries, and we needed to do this automatically on a regular interval. We had to figure out a solution. Thankfully the fix was easy.&lt;/p&gt;
 
-&lt;p&gt;After seeing that the &lt;code&gt;null&lt;/code&gt; value of the password was coming from &lt;code&gt;sys.logins&lt;/code&gt;, and since we were already querying &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;sys.sql_logins&lt;/code&gt;&lt;/a&gt; we could easily replace:&lt;/p&gt;
+&lt;p&gt;After seeing that the &lt;code&gt;null&lt;/code&gt; value of the password was coming from &lt;code&gt;sys.syslogins&lt;/code&gt;, and since we were already querying &lt;a href=&#34;https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;sys.sql_logins&lt;/code&gt;&lt;/a&gt; we could easily replace:&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
 &lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
@@ -481,7 +733,7 @@
 &lt;/div&gt;
 &lt;/div&gt;
 
-&lt;p&gt;from &lt;code&gt;sys.logins&lt;/code&gt; with&lt;/p&gt;
+&lt;p&gt;from &lt;code&gt;sys.syslogins&lt;/code&gt; with&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
 &lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
