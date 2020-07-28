@@ -6,10 +6,19 @@
     <description>Recent content in Stack Overflow on Taryn Pratt</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 24 Apr 2020 04:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 28 Jul 2020 06:00:38 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/stack-overflow/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Migrating a 40TB SQL Server Database</title>
+      <link>https://tarynpivots.com/post/migrating-40tb-sql-server-database/</link>
+      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/migrating-40tb-sql-server-database/</guid>
+      <description>Initially, I wasn’t sure whether to write about this migration project, but when I randomly asked if people would be interested, the response was overwhelming. This was a long, kind of boring, very repetitive, and at times incredibly frustrating project, but I learned a lot, and maybe someone else will learn from this too. There may be far better ways to move this amount of data. In the path I went down, there was a huge amount of juggling that had to take place (I’ll explain that later).</description>
+    </item>
     
     <item>
       <title>SQL Server 2019 Aggressive Clustered Columnstore Cleanup</title>

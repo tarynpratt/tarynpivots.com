@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Data Migration on Taryn Pratt</title>
+    <link>https://tarynpivots.com/tags/data-migration/</link>
+    <description>Recent content in Data Migration on Taryn Pratt</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 28 Jul 2020 06:00:38 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/data-migration/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Migrating a 40TB SQL Server Database</title>
+      <link>https://tarynpivots.com/post/migrating-40tb-sql-server-database/</link>
+      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/migrating-40tb-sql-server-database/</guid>
+      <description>Initially, I wasn’t sure whether to write about this migration project, but when I randomly asked if people would be interested, the response was overwhelming. This was a long, kind of boring, very repetitive, and at times incredibly frustrating project, but I learned a lot, and maybe someone else will learn from this too. There may be far better ways to move this amount of data. In the path I went down, there was a huge amount of juggling that had to take place (I’ll explain that later).</description>
+    </item>
+    
+  </channel>
+</rss>

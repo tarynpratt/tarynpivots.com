@@ -134,3 +134,8 @@ h1, h2{
 .post .post-header .post-title{
     line-height: 1.3em;
 }
+
+div .highlight {
+    max-width: 750px;
+
+}
