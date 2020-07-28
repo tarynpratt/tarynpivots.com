@@ -67,7 +67,9 @@
 
 &lt;h3 id=&#34;why-not-delete-or-purge-some-of-the-data&#34;&gt;Why not delete or purge some of the data?&lt;/h3&gt;
 
-&lt;p&gt;As I mentioned, we were dealing with very little free disk space on both servers. The plan was to eventually get new hardware to replace them, but we weren’t exactly sure when that would happen. The goal was to migrate the data to the new format, then when we got new servers it would be as simple as moving the drives to get the new database in place (or so we thought).&lt;/p&gt;
+&lt;p&gt;As I mentioned, we were dealing with very little free disk space on both servers. This data is primarily used by the developers for investigating issues and by the data team for analysis. We already had purged some data, but for the data team - more data is better.&lt;/p&gt;
+
+&lt;p&gt;Instead of purgin, the plan was to eventually get new hardware to replace them, but we weren’t exactly sure when that would happen. The goal was to migrate the data to the new format, then when we got new servers it would be as simple as moving the drives to get the new database in place (or so we thought).&lt;/p&gt;
 
 &lt;p&gt;Each server had the following drives and approximate free space:&lt;/p&gt;
 
