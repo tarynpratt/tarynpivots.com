@@ -52,7 +52,7 @@ There were lots of reasons this needed to be done, one being tech debt. We reali
 
 As I mentioned, we were dealing with very little free disk space on both servers. This data is primarily used by the developers for investigating issues and by the data team for analysis. We already had purged some data, but for the data team - more data is better. 
 
-Instead of purgin, the plan was to eventually get new hardware to replace them, but we weren’t exactly sure when that would happen. The goal was to migrate the data to the new format, then when we got new servers it would be as simple as moving the drives to get the new database in place (or so we thought).
+Instead of purging, the plan was to eventually get new hardware to replace them, but we weren’t exactly sure when that would happen. The goal was to migrate the data to the new format, then when we got new servers it would be as simple as moving the drives to get the new database in place (or so we thought).
 
 Each server had the following drives and approximate free space:
  
