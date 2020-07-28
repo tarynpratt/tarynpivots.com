@@ -54,6 +54,8 @@ As I mentioned, we were dealing with very little free disk space on both servers
 
 Instead of purging, the plan was to eventually get new hardware to replace them, but we weren’t exactly sure when that would happen. The goal was to migrate the data to the new format, then when we got new servers it would be as simple as moving the drives to get the new database in place (or so we thought).
 
+## So It Begins
+
 Each server had the following drives and approximate free space:
  
 - a 230GB C: drive for Windows - obviously we wouldn't put data files here

@@ -71,6 +71,8 @@
 
 &lt;p&gt;Instead of purging, the plan was to eventually get new hardware to replace them, but we weren’t exactly sure when that would happen. The goal was to migrate the data to the new format, then when we got new servers it would be as simple as moving the drives to get the new database in place (or so we thought).&lt;/p&gt;
 
+&lt;h2 id=&#34;so-it-begins&#34;&gt;So It Begins&lt;/h2&gt;
+
 &lt;p&gt;Each server had the following drives and approximate free space:&lt;/p&gt;
 
 &lt;ul&gt;
