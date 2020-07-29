@@ -77,7 +77,7 @@
 
 &lt;ul&gt;
 &lt;li&gt;a 230GB C: drive for Windows - obviously we wouldn&amp;rsquo;t put data files here&lt;/li&gt;
-&lt;li&gt;a 3.64GB NVMe D: drive - containing tempdb, one data file, and the log file for the existing HAProxyLogs database - it was approximately 85% full&lt;/li&gt;
+&lt;li&gt;a 3.64TB NVMe D: drive - containing tempdb, one data file, and the log file for the existing HAProxyLogs database - it was approximately 85% full&lt;/li&gt;
 &lt;li&gt;a 44TB E: drive filled with spinny disks - with the remaining 3 data files for the HAProxyLogs database - this was anywhere from 85-90% full&lt;/li&gt;
 &lt;/ul&gt;
 

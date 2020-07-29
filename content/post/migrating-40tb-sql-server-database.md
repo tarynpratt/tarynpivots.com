@@ -59,7 +59,7 @@ Instead of purging, the plan was to eventually get new hardware to replace them,
 Each server had the following drives and approximate free space:
  
 - a 230GB C: drive for Windows - obviously we wouldn't put data files here
-- a 3.64GB NVMe D: drive - containing tempdb, one data file, and the log file for the existing HAProxyLogs database - it was approximately 85% full
+- a 3.64TB NVMe D: drive - containing tempdb, one data file, and the log file for the existing HAProxyLogs database - it was approximately 85% full
 - a 44TB E: drive filled with spinny disks - with the remaining 3 data files for the HAProxyLogs database - this was anywhere from 85-90% full
  
 There was not a lot of room to move terabytes of data to a new database on the same server.
