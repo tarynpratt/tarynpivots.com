@@ -8,7 +8,7 @@ excerpt: A handy list of the tools I use when working with SQL Server.
 
 I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I'll also do my best to keep it updated as things change.
 
-The current list of both free and 3rd paid tools is below:
+The current list of both free and 3rd party paid tools is below:
 
 ## Free Tools
 
