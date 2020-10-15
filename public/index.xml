@@ -1,15 +1,85 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Taryn Pratt</title>
+    <title>Taryn Pratt - Pivots and other SQL fun</title>
     <link>https://tarynpivots.com/</link>
-    <description>Recent content on Taryn Pratt</description>
+    <description>Recent content on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 28 Jul 2020 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 15 Oct 2020 04:00:00 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>My SQL Server Toolbox</title>
+      <link>https://tarynpivots.com/post/2020/my-sql-server-toolbox/</link>
+      <pubDate>Thu, 15 Oct 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2020/my-sql-server-toolbox/</guid>
+      
+        <description>
+
+&lt;p&gt;I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&amp;rsquo;ll also do my best to keep it updated as things change.&lt;/p&gt;
+
+&lt;p&gt;The current list of both free and 3rd paid tools is below:&lt;/p&gt;
+
+&lt;h2 id=&#34;free-tools&#34;&gt;Free Tools&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://github.com/opserver/Opserver&#34; target=&#34;_blank&#34;&gt;Opserver&lt;/a&gt; - Stack Exchange&amp;rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Brent Ozar&amp;rsquo;s &lt;a href=&#34;https://www.brentozar.com/responder/&#34; target=&#34;_blank&#34;&gt;First Reponder Kit&lt;/a&gt;. This is filled with lots of goodies to help you understand what&amp;rsquo;s going on with your server. Currently we install these scripts from the kit:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;sp_Blitz.sql&lt;/li&gt;
+&lt;li&gt;sp_BlitzCache.sql&lt;/li&gt;
+&lt;li&gt;sp_BlitzFirst.sql&lt;/li&gt;
+&lt;li&gt;sp_BlitzIndex.sql&lt;/li&gt;
+&lt;li&gt;sp_BlitzLock.sql&lt;/li&gt;
+&lt;li&gt;sp_BlitzQueryStore.sql&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Adam Machanic&amp;rsquo;s &lt;a href=&#34;http://whoisactive.com/&#34; target=&#34;_blank&#34;&gt;sp_whoisactive&lt;/a&gt; - this is similar to executing &lt;code&gt;sp_who2&lt;/code&gt; but provides a more detailed look at what is happening on your server&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://support.microsoft.com/en-us/help/918992/how-to-transfer-logins-and-passwords-between-instances-of-sql-server&#34; target=&#34;_blank&#34;&gt;sp_hexadecimal and sp_help_revlogin&lt;/a&gt; to transfer logins between instances of SQL Server&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Ola Hallengren&amp;rsquo;s &lt;a href=&#34;https://ola.hallengren.com/&#34; target=&#34;_blank&#34;&gt;SQL Server Maintenance Solution&lt;/a&gt; for Backups, Integrity Checks, and Index and Statistics Maintenance. We don&amp;rsquo;t use the entire package of scripts, but we currently use:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;DatabaseIntegrityCheck.sql&lt;/li&gt;
+&lt;li&gt;IndexOptimize.sql&lt;/li&gt;
+&lt;li&gt;CommandExecute.sql&lt;/li&gt;
+&lt;li&gt;CommandLog.sql&lt;/li&gt;
+&lt;li&gt;DatabaseBackup.sql - we use a modified version of this script everywhere&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://dbatools.io/&#34; target=&#34;_blank&#34;&gt;dbatools&lt;/a&gt; PowerShell modules&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Erik Darling&amp;rsquo;s &lt;a href=&#34;https://github.com/erikdarlingdata/DarlingData&#34; target=&#34;_blank&#34;&gt;SQL Server Troubleshooting Scripts&lt;/a&gt; - additional tools to help you identify and troubleshoot problems with your SQL Servers&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Columnstore Maintenance Scripts from a few places:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Joe Obbish&amp;rsquo;s &lt;a href=&#34;https://github.com/jobbish-sql/SQL-Server-Multi-Thread&#34; target=&#34;_blank&#34;&gt;cci_maintenance&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Nike Neugebauer&amp;rsquo;s &lt;a href=&#34;https://github.com/NikoNeugebauer/CISL&#34; target=&#34;_blank&#34;&gt;Columnstore Indexes Scripts Library&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;3rd-party-tools&#34;&gt;3rd Party Tools&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;SentryOne &lt;a href=&#34;https://www.sentryone.com/plan-explorer&#34; target=&#34;_blank&#34;&gt;Plan Explorer&lt;/a&gt; - this is a great tool to review execution plans. I find it far easier to review execution plans in Plan Explorer than in SQL Server Management Studio&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;SentryOne &lt;a href=&#34;https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring&#34; target=&#34;_blank&#34;&gt;SQL Sentry&lt;/a&gt; monitors all of our SQL Servers and provides excellent details on performance and insight into specific queries that might be running during various CPU spikes or other periods of concern&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ApexSQL &lt;a href=&#34;https://www.apexsql.com/sql-tools-script.aspx&#34; target=&#34;_blank&#34;&gt;SQL script generation&lt;/a&gt; - there are times we need to rebase our SQL migrations and this tool is a great way to script out all objects and data&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;All the SQL scripts get deployed via process that I wrote. I&amp;rsquo;ll share how I do that in my next post.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>Migrating a 40TB SQL Server Database</title>

@@ -1,5 +1,5 @@
 baseURL = "https://tarynpivots.com/"
-title = "Taryn Pratt"
+title = "Taryn Pratt - Pivots and other SQL fun"
 enableRobotsTXT = true
 enableEmoji = true
 theme = "hugo-theme-jane"

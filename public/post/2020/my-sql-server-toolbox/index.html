@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>My SQL Server Toolbox - Taryn Pratt - Pivots and other SQL fun</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="Taryn" />
+  <meta name="description" content="I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&amp;rsquo;ll also do my best to keep it updated as things change.
+The current list of both free and 3rd paid tools is below:
+Free Tools  Opserver - Stack Exchange&amp;rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers" />
+
+  <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.47" />
+
+
+<link rel="canonical" href="https://tarynpivots.com/post/2020/my-sql-server-toolbox/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="/css/custom.css">
+
+
+<meta property="og:title" content="My SQL Server Toolbox" />
+<meta property="og:description" content="I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&rsquo;ll also do my best to keep it updated as things change.
+The current list of both free and 3rd paid tools is below:
+Free Tools  Opserver - Stack Exchange&rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/2020/my-sql-server-toolbox/" /><meta property="article:published_time" content="2020-10-15T04:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2020-10-15T04:00:00&#43;00:00"/>
+<meta itemprop="name" content="My SQL Server Toolbox">
+<meta itemprop="description" content="I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&rsquo;ll also do my best to keep it updated as things change.
+The current list of both free and 3rd paid tools is below:
+Free Tools  Opserver - Stack Exchange&rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers">
+
+
+<meta itemprop="datePublished" content="2020-10-15T04:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2020-10-15T04:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="361">
+
+
+
+<meta itemprop="keywords" content="sql,sql-server,stack-overflow,performance-tuning,monitoring,monitoring-tools," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="My SQL Server Toolbox"/>
+<meta name="twitter:description" content="I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&rsquo;ll also do my best to keep it updated as things change.
+The current list of both free and 3rd paid tools is below:
+Free Tools  Opserver - Stack Exchange&rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-124638032-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Taryn Pratt</a>
+    
+    &mdash;
+    <a href="/" class="logo-tagline">
+       
+         Pivots and other SQL fun
+       
+     </a>
+     
+</div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <div class="logo">
+    <a href="/" class="logo">
+      
+        Taryn Pratt
+      
+    </a>
+  </div>
+
+  
+  <div class="logo-tagline">
+    <a href="/" >
+      
+        Pivots and other SQL fun
+      
+    </a>
+  </div>
+  
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">My SQL Server Toolbox</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2020-10-15 </span>
+        
+        <span class="more-meta"> 361 words </span>
+          <span class="more-meta"> 2 min read </span>
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#free-tools">Free Tools</a></li>
+<li><a href="#3rd-party-tools">3rd Party Tools</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<p>I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&rsquo;ll also do my best to keep it updated as things change.</p>
+
+<p>The current list of both free and 3rd paid tools is below:</p>
+
+<h2 id="free-tools">Free Tools</h2>
+
+<ul>
+<li><p><a href="https://github.com/opserver/Opserver" target="_blank">Opserver</a> - Stack Exchange&rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers</p></li>
+
+<li><p>Brent Ozar&rsquo;s <a href="https://www.brentozar.com/responder/" target="_blank">First Reponder Kit</a>. This is filled with lots of goodies to help you understand what&rsquo;s going on with your server. Currently we install these scripts from the kit:</p>
+
+<ul>
+<li>sp_Blitz.sql</li>
+<li>sp_BlitzCache.sql</li>
+<li>sp_BlitzFirst.sql</li>
+<li>sp_BlitzIndex.sql</li>
+<li>sp_BlitzLock.sql</li>
+<li>sp_BlitzQueryStore.sql</li>
+</ul></li>
+
+<li><p>Adam Machanic&rsquo;s <a href="http://whoisactive.com/" target="_blank">sp_whoisactive</a> - this is similar to executing <code>sp_who2</code> but provides a more detailed look at what is happening on your server</p></li>
+
+<li><p><a href="https://support.microsoft.com/en-us/help/918992/how-to-transfer-logins-and-passwords-between-instances-of-sql-server" target="_blank">sp_hexadecimal and sp_help_revlogin</a> to transfer logins between instances of SQL Server</p></li>
+
+<li><p>Ola Hallengren&rsquo;s <a href="https://ola.hallengren.com/" target="_blank">SQL Server Maintenance Solution</a> for Backups, Integrity Checks, and Index and Statistics Maintenance. We don&rsquo;t use the entire package of scripts, but we currently use:</p>
+
+<ul>
+<li>DatabaseIntegrityCheck.sql</li>
+<li>IndexOptimize.sql</li>
+<li>CommandExecute.sql</li>
+<li>CommandLog.sql</li>
+<li>DatabaseBackup.sql - we use a modified version of this script everywhere</li>
+</ul></li>
+
+<li><p><a href="https://dbatools.io/" target="_blank">dbatools</a> PowerShell modules</p></li>
+
+<li><p>Erik Darling&rsquo;s <a href="https://github.com/erikdarlingdata/DarlingData" target="_blank">SQL Server Troubleshooting Scripts</a> - additional tools to help you identify and troubleshoot problems with your SQL Servers</p></li>
+
+<li><p>Columnstore Maintenance Scripts from a few places:</p>
+
+<ul>
+<li>Joe Obbish&rsquo;s <a href="https://github.com/jobbish-sql/SQL-Server-Multi-Thread" target="_blank">cci_maintenance</a></li>
+<li>Nike Neugebauer&rsquo;s <a href="https://github.com/NikoNeugebauer/CISL" target="_blank">Columnstore Indexes Scripts Library</a></li>
+</ul></li>
+</ul>
+
+<h2 id="3rd-party-tools">3rd Party Tools</h2>
+
+<ul>
+<li><p>SentryOne <a href="https://www.sentryone.com/plan-explorer" target="_blank">Plan Explorer</a> - this is a great tool to review execution plans. I find it far easier to review execution plans in Plan Explorer than in SQL Server Management Studio</p></li>
+
+<li><p>SentryOne <a href="https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring" target="_blank">SQL Sentry</a> monitors all of our SQL Servers and provides excellent details on performance and insight into specific queries that might be running during various CPU spikes or other periods of concern</p></li>
+
+<li><p>ApexSQL <a href="https://www.apexsql.com/sql-tools-script.aspx" target="_blank">SQL script generation</a> - there are times we need to rebase our SQL migrations and this tool is a great way to script out all objects and data</p></li>
+</ul>
+
+<p>All the SQL scripts get deployed via process that I wrote. I&rsquo;ll share how I do that in my next post.</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://tarynpivots.com/tags/sql/">sql</a>
+          <a href="https://tarynpivots.com/tags/sql-server/">sql-server</a>
+          <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
+          <a href="https://tarynpivots.com/tags/performance-tuning/">performance-tuning</a>
+          <a href="https://tarynpivots.com/tags/monitoring/">monitoring</a>
+          <a href="https://tarynpivots.com/tags/monitoring-tools/">monitoring-tools</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+        
+          <a class="next" href="/post/migrating-40tb-sql-server-database/">
+            <span class="next-text nav-default">Migrating a 40TB SQL Server Database</span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  <div id="disqus_thread"  class="disqus-comment"></div>
+  <script type="text/javascript">
+    (function() {
+      
+      
+      if (window.location.hostname === 'localhost') return;
+
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="https://stackoverflow.com/users/426671/taryn" rel="me noopener" class="iconfont icon-stack-overflow"
+        title="stack-overflow" target="_blank">
+      </a>
+      <a href="https://twitter.com/tarynpivots" rel="me noopener" class="iconfont icon-twitter"
+        title="twitter" target="_blank">
+      </a>
+      <a href="https://github.com/tarynpratt" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+  <a href="https://tarynpivots.com/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2013 -
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        Taryn
+        
+      </span></span>
+
+  
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+
+
+
+
+</body>
+</html>

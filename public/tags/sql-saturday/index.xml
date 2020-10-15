@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Sql Saturday on Taryn Pratt</title>
+    <title>Sql Saturday on Taryn Pratt - Pivots and other SQL fun</title>
     <link>https://tarynpivots.com/tags/sql-saturday/</link>
-    <description>Recent content in Sql Saturday on Taryn Pratt</description>
+    <description>Recent content in Sql Saturday on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Sun, 12 Apr 2015 16:50:33 +0000</lastBuildDate>
