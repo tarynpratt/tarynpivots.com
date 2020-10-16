@@ -6,10 +6,19 @@
     <description>Recent content in Performance Tuning on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 15 Oct 2020 04:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 16 Oct 2020 04:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/performance-tuning/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Deploying My SQL Server Maintenance Scripts</title>
+      <link>https://tarynpivots.com/post/2020/deploying-my-sql-server-maintenance-scripts/</link>
+      <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2020/deploying-my-sql-server-maintenance-scripts/</guid>
+      <description>In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&amp;rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment.</description>
+    </item>
     
     <item>
       <title>My SQL Server Toolbox</title>

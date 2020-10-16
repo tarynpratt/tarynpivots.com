@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Deploying My SQL Server Maintenance Scripts - Taryn Pratt - Pivots and other SQL fun</title>
+  
+
+<meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta name="MobileOptimized" content="width"/>
+<meta name="HandheldFriendly" content="true"/>
+
+
+<meta name="applicable-device" content="pc,mobile">
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="author" content="Taryn" />
+  <meta name="description" content="In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&amp;rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment." />
+
+  <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.47" />
+
+
+<link rel="canonical" href="https://tarynpivots.com/post/2020/deploying-my-sql-server-maintenance-scripts/" />
+
+
+
+<link rel="icon" href="/favicon.ico" />
+
+
+
+
+
+
+
+
+
+
+<link href="/dist/jane.min.css?v=2.7.0" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="/css/custom.css">
+
+
+<meta property="og:title" content="Deploying My SQL Server Maintenance Scripts" />
+<meta property="og:description" content="In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/2020/deploying-my-sql-server-maintenance-scripts/" /><meta property="article:published_time" content="2020-10-16T04:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2020-10-16T04:00:00&#43;00:00"/>
+<meta itemprop="name" content="Deploying My SQL Server Maintenance Scripts">
+<meta itemprop="description" content="In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment.">
+
+
+<meta itemprop="datePublished" content="2020-10-16T04:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2020-10-16T04:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="1255">
+
+
+
+<meta itemprop="keywords" content="sql,sql-server,stack-overflow,performance-tuning,monitoring,maintenance,powershell," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Deploying My SQL Server Maintenance Scripts"/>
+<meta name="twitter:description" content="In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-124638032-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Taryn Pratt</a>
+    
+    &mdash;
+    <a href="/" class="logo-tagline">
+       
+         Pivots and other SQL fun
+       
+     </a>
+     
+</div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+        
+      </li><li class="mobile-menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+        
+      </li>
+    
+  </ul>
+</nav>
+
+
+  
+    
+
+
+
+
+
+
+  <link rel="stylesheet" href="/lib/photoswipe/photoswipe.min.css" />
+  <link rel="stylesheet" href="/lib/photoswipe/default-skin/default-skin.min.css" />
+
+
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+  
+
+  
+
+  <header id="header" class="header container">
+    <div class="logo-wrapper">
+  <div class="logo">
+    <a href="/" class="logo">
+      
+        Taryn Pratt
+      
+    </a>
+  </div>
+
+  
+  <div class="logo-tagline">
+    <a href="/" >
+      
+        Pivots and other SQL fun
+      
+    </a>
+  </div>
+  
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/">Home</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/">Archives</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/tags/">Tags</a>
+          
+
+        
+
+      </li>
+    
+      <li class="menu-item">
+        
+          
+          
+            <a class="menu-item-link" href="https://tarynpivots.com/post/about/">About</a>
+          
+
+        
+
+      </li>
+    
+    
+  </ul>
+</nav>
+
+  </header>
+
+  <div id="mobile-panel">
+    <main id="main" class="main bg-llight">
+      <div class="content-wrapper">
+        <div id="content" class="content container">
+          <article class="post bg-white">
+    
+    <header class="post-header">
+      <h1 class="post-title">Deploying My SQL Server Maintenance Scripts</h1>
+      
+      <div class="post-meta">
+        <span class="post-time"> 2020-10-16 </span>
+        
+        <span class="more-meta"> 1255 words </span>
+          <span class="more-meta"> 6 min read </span>
+
+        
+        
+      </div>
+    </header>
+
+    
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#my-little-deploying-scripts-project">My Little Deploying Scripts Project</a>
+<ul>
+<li><a href="#storing-the-sql-scripts">Storing the SQL Scripts</a></li>
+<li><a href="#gathering-the-list-of-sql-servers">Gathering the List of SQL Servers</a></li>
+<li><a href="#my-little-powershell-script">My Little PowerShell Script</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+</div>
+
+    
+    <div class="post-content">
+      
+
+<p>In my <a href="https://www.tarynpivots.com/post/2020/my-sql-server-toolbox/">previous post</a>, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment.</p>
+
+<h2 id="background">Background</h2>
+
+<p>When I started as the DBA at Stack Overflow, our SQL Servers were kind of a mess (sorry to those who maintained them before me, but they were). Many of the servers hadn&rsquo;t been patched in a long time, and we had different versions of various SQL scripts like, <a href="http://whoisactive.com/" target="_blank">sp_whoisactive</a> and Brent Ozar&rsquo;s <a href="https://www.brentozar.com/responder/" target="_blank">First Reponder Kit</a>,  everywhere. Since the SQL Servers were now my responsibility I wanted everything in order. I decided that one of my first tasks would be to create a simple process to deploy the same scripts everwhere.</p>
+
+<h2 id="my-little-deploying-scripts-project">My Little Deploying Scripts Project</h2>
+
+<p>When I started the project, I had already decided what maintenance tools I wanted to install across our environments - these are most of the SQL scripts in my toolbox - I just needed to figure out how I was going to get them on our 30 servers at the same time.</p>
+
+<p>After several years away from SQL Server and PowerShell, I needed to get my feet wet again, so I decided to write a very basic process that would do the following:</p>
+
+<ol>
+<li>Put the .sql files somewhere accessible</li>
+<li>Get the list of servers to install on</li>
+<li>Loop through each server and deploy all the .sql files</li>
+</ol>
+
+<h3 id="storing-the-sql-scripts">Storing the SQL Scripts</h3>
+
+<p>I decided to put the .sql files in a centralized location that all of the servers would be able to access. This was easy enough because we already had infrastructure in place that could be used for this purpose. All I needed to do was pick a spot and throw all the files in a directory.</p>
+
+<p>Once the files were in the location, I would just loop through them and execute each one. Step 1 done.</p>
+
+<h3 id="gathering-the-list-of-sql-servers">Gathering the List of SQL Servers</h3>
+
+<p>Step 2 in the project was to get a list of all the SQL Servers I wanted the tools on. Easy enough, right? But then I needed a way to parse that list in PowerShell. I wasn&rsquo;t exact sure how I wanted to do this.</p>
+
+<p>I looked at some of the other tools being used at Stack Overflow for ideas. The SRE team uses <a href="https://puppet.com/" target="_blank">puppet</a> to deploy to our infrastructure, and puppet uses JSON files to store key-value pairs. I wondered if I could do the same for this tiny little project.</p>
+
+<p>After several failed attempts at getting the JSON right, I was able to use the following format to store the info about the SQL Servers I wanted to deploy to:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-json" data-lang="json"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+    <span class="nt">&#34;ScriptDirectory&#34;</span><span class="p">:</span><span class="s2">&#34;\\\\put\\your\\directory\\name\\here\\&#34;</span><span class="p">,</span>
+    <span class="nt">&#34;servers&#34;</span><span class="p">:[</span>
+        <span class="p">{</span>
+            <span class="nt">&#34;name&#34;</span><span class="p">:</span><span class="s2">&#34;sqlserver01&#34;</span>
+            <span class="p">,</span><span class="nt">&#34;type&#34;</span><span class="p">:</span><span class="s2">&#34;zone1_servers&#34;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&#34;name&#34;</span><span class="p">:</span><span class="s2">&#34;sqlserver02&#34;</span>
+            <span class="p">,</span><span class="nt">&#34;type&#34;</span><span class="p">:</span><span class="s2">&#34;zone3_servers&#34;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&#34;name&#34;</span><span class="p">:</span><span class="s2">&#34;sqlserver03&#34;</span>
+            <span class="p">,</span><span class="nt">&#34;type&#34;</span><span class="p">:</span><span class="s2">&#34;zone4_servers&#34;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&#34;name&#34;</span><span class="p">:</span><span class="s2">&#34;protectedsqlserver01&#34;</span>
+            <span class="p">,</span><span class="nt">&#34;type&#34;</span><span class="p">:</span><span class="s2">&#34;zone2_servers&#34;</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>In the config.json file, I&rsquo;m storing the <code>ScriptDirectory</code> which is the path I put all of the .sql files to install. Next, it contains an array of the list of servers. Within the array, I&rsquo;m storing the <code>name</code> of the server and then the <code>type</code> of the server. The <code>name</code> is pretty self-explanatory, just include each server name and you&rsquo;re done.</p>
+
+<p>The <code>type</code> might seem slightly odd since these are all SQL Servers, but there was a reason I needed this. We have some servers protected by different firewalls, for example the servers that hold the Stack Overflow and the Stack Exchange network of databases are in a totally different zone, than the servers for <a href="https://stackoverflow.com/teams" target="_blank">Stack Overflow for Teams</a>. My PowerShell script would need to be able to distinguish between the multiple firewalls, so I used this as the identifier.</p>
+
+<p>Now that I had a way to get all the servers to push to Step 2 was done.</p>
+
+<h3 id="my-little-powershell-script">My Little PowerShell Script</h3>
+
+<p>The last part of the project was to put all the pieces together and write the PowerShell script to deploy everything automatically. I wrote the script to accept a couple of parameters:</p>
+
+<ul>
+<li><code>$DeploySecure</code> - this parameter is required and is used to direct the deployment to the specific firewalled areas I mentioned above</li>
+<li><code>$ServerGroup</code> - this is an optional parameter and will let you deploy to specific sets of servers based on their <code>type</code> in the config</li>
+</ul>
+
+<p>Keep in mind this script is about 3 years old, and I know it could be written much better than it is.</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="cm">&lt;#
+</span><span class="cm"></span><span class="sd">.SYNOPSIS</span><span class="cm">
+</span><span class="cm">    Script for deploying SQL Server maintenance scripts across environments
+</span><span class="cm">
+</span><span class="cm"></span><span class="sd">.EXAMPLE</span><span class="cm">
+</span><span class="cm">    # for zone 1 environments
+</span><span class="cm">    .\Deploy-MaintenanceScripts.ps1 -DeploySecure $false
+</span><span class="cm">
+</span><span class="cm">    # for zone 2 environments
+</span><span class="cm">    .\Deploy-MaintenanceScripts.ps1 -DeploySecure $true
+</span><span class="cm">#&gt;</span>
+
+<span class="p">[</span><span class="k">CmdletBinding</span><span class="p">()]</span> <span class="c">#See http://technet.microsoft.com/en-us/library/hh847884(v=wps.620).aspx for CmdletBinding common parameters</span>
+<span class="k">param</span><span class="p">(</span>
+    <span class="p">[</span><span class="k">parameter</span><span class="p">(</span><span class="k">Mandatory</span> <span class="p">=</span> <span class="nv">$true</span><span class="p">)]</span>
+    <span class="no">[bool]</span><span class="nv">$DeploySecure</span> <span class="p">=</span> <span class="nv">$false</span><span class="p">,</span>
+    <span class="p">[</span><span class="k">parameter</span><span class="p">(</span><span class="k">Mandatory</span> <span class="p">=</span> <span class="nv">$false</span><span class="p">)]</span>
+    <span class="no">[string]</span><span class="nv">$ServerGroup</span>
+<span class="p">)</span>
+
+<span class="nv">$Config</span> <span class="p">=</span> <span class="nb">Get-Content</span> <span class="p">.\</span><span class="n">Config</span><span class="p">.</span><span class="n">json</span> <span class="p">|</span> <span class="nb">ConvertFrom-Json</span> 
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$DeploySecure</span> <span class="o">-eq</span> <span class="nv">$false</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$Servers</span> <span class="p">=</span> <span class="nv">$Config</span><span class="p">.</span><span class="n">servers</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span><span class="nv">$_</span><span class="p">.</span><span class="n">type</span> <span class="o">-ne</span> <span class="s2">&#34;zone2_servers&#34;</span><span class="p">}</span>
+    <span class="nb">Write-Host</span> <span class="s2">&#34;Deploying to non-zone 2 environments.&#34;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$Servers</span> <span class="p">=</span> <span class="nv">$Config</span><span class="p">.</span><span class="n">servers</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span><span class="nv">$_</span><span class="p">.</span><span class="n">type</span> <span class="o">-eq</span> <span class="s2">&#34;zone2_servers&#34;</span><span class="p">}</span>
+    <span class="nb">Write-Host</span> <span class="s2">&#34;Deploying to zone 2 environments.&#34;</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$ServerGroup</span><span class="p">){</span>
+    <span class="nv">$Servers</span> <span class="p">=</span> <span class="nv">$Config</span><span class="p">.</span><span class="n">servers</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span><span class="nv">$_</span><span class="p">.</span><span class="n">type</span> <span class="o">-eq</span> <span class="nv">$ServerGroup</span><span class="p">}</span>
+    <span class="nb">Write-Host</span> <span class="s2">&#34;Deploying servers to $ServerGroup&#34;</span>
+<span class="p">}</span>
+
+<span class="nv">$ScriptDirectory</span> <span class="p">=</span> <span class="nv">$Config</span><span class="p">.</span><span class="n">ScriptDirectory</span>
+
+<span class="k">If</span><span class="p">(</span><span class="o">-not</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="nv">$ScriptDirectory</span><span class="p">)){</span>
+    <span class="nb">Write-Error</span> <span class="s2">&#34;$ScriptDirectory cannot be accessed!&#34;</span> <span class="n">-ErrorAction</span> <span class="n">Stop</span>
+<span class="p">}</span>
+
+<span class="nv">$scripts</span> <span class="p">=</span> <span class="nb">Get-ChildItem</span> <span class="nv">$ScriptDirectory</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span><span class="nv">$_</span><span class="p">.</span><span class="n">Extension</span> <span class="o">-eq</span> <span class="s2">&#34;.sql&#34;</span><span class="p">}</span>
+<span class="nv">$script_count</span> <span class="p">=</span> <span class="p">(</span><span class="nb">Get-ChildItem</span> <span class="nv">$ScriptDirectory</span> <span class="p">|</span> <span class="nb">Measure-Object</span><span class="p">).</span><span class="n">Count</span>
+<span class="nv">$str_script</span> <span class="p">=</span> <span class="k">if</span><span class="p">(</span><span class="nv">$script_count</span> <span class="o">-eq</span> <span class="n">1</span><span class="p">)</span> <span class="p">{</span><span class="s1">&#39;script&#39;</span><span class="p">}</span> <span class="k">else</span> <span class="p">{</span><span class="s1">&#39;scripts&#39;</span><span class="p">}</span>
+
+<span class="nb">Write-Host</span> <span class="s2">&#34;Attempting to deploy $script_count $str_script to each server.&#34;</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$server</span> <span class="k">in</span> <span class="nv">$Servers</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">&#34;Deploying to&#34;</span> <span class="nv">$server</span><span class="p">.</span><span class="n">name</span>
+
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$script</span> <span class="k">in</span> <span class="nv">$scripts</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">Write-Host</span> <span class="s2">&#34;Installing&#34;</span> <span class="nv">$script</span> 
+        <span class="nb">Invoke-Sqlcmd</span> <span class="n">-ServerInstance</span> <span class="nv">$server</span><span class="p">.</span><span class="n">Name</span> <span class="n">-InputFile</span> <span class="nv">$script</span><span class="p">.</span><span class="n">FullName</span> <span class="n">-DisableVariables</span>
+
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>Step 3 done.</p>
+
+<p>As you can see, it&rsquo;s a pretty basic script. It grabs the list of servers from the config.json file, goes to the <code>ScriptDirectory</code> to loop through each file, and executes it on each SQL Server. I&rsquo;m sure there are plenty of other ways to do this, but it works and it only needs to be run when there are changes to the maintenance scripts I want to deploy which isn&rsquo;t often.</p>
+
+<p>The script is flexible for my needs. If I want to execute it for my restricted firewalled area, I just need to run:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="p">.\</span><span class="n">Deploy-MaintenanceScripts</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-DeploySecure</span> <span class="nv">$true</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>And it will install the scripts on every server in <code>zone2_servers</code>.</p>
+
+<p>If I want to deploy to a specific set of servers, I can run:</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="p">.\</span><span class="n">Deploy-MaintenanceScripts</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-DeploySecure</span> <span class="nv">$false</span> <span class="p">-</span><span class="nv">$ServerGroup</span> <span class="n">zone1_servers</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>And it will deploy to all servers with <code>zone1_servers</code> as their type.</p>
+
+<p>I&rsquo;ve uploaded the code to <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/DeployMaintenanceScripts" target="_blank">a repo in GitHub</a> if anyone would find it useful.</p>
+
+<h3 id="next-steps">Next Steps</h3>
+
+<p>Since I rarely need to make changes to the scripts, I don&rsquo;t have this currently setup in our CI/CD to deploy automatically when I push changes to GitHub. I could, and might at some point, then I wouldn&rsquo;t have to manually deploy via an automated script.</p>
+
+<p>While this works for me, what do you use to deploy maintenance scripts to all your SQL Servers? Do you have a homegrown process or a 3rd party tool?</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
+      <div class="post-tags">
+          <a href="https://tarynpivots.com/tags/sql/">sql</a>
+          <a href="https://tarynpivots.com/tags/sql-server/">sql-server</a>
+          <a href="https://tarynpivots.com/tags/stack-overflow/">stack-overflow</a>
+          <a href="https://tarynpivots.com/tags/performance-tuning/">performance-tuning</a>
+          <a href="https://tarynpivots.com/tags/monitoring/">monitoring</a>
+          <a href="https://tarynpivots.com/tags/maintenance/">maintenance</a>
+          <a href="https://tarynpivots.com/tags/powershell/">powershell</a>
+          
+        </div>
+
+      
+      <nav class="post-nav">
+        
+        
+          <a class="next" href="/post/2020/my-sql-server-toolbox/">
+            <span class="next-text nav-default">My SQL Server Toolbox</span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+
+  
+  
+
+  
+  
+
+  
+
+  
+
+  <div id="disqus_thread"  class="disqus-comment"></div>
+  <script type="text/javascript">
+    (function() {
+      
+      
+      if (window.location.hostname === 'localhost') return;
+
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
+  
+
+        </div>
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="https://stackoverflow.com/users/426671/taryn" rel="me noopener" class="iconfont icon-stack-overflow"
+        title="stack-overflow" target="_blank">
+      </a>
+      <a href="https://twitter.com/tarynpivots" rel="me noopener" class="iconfont icon-twitter"
+        title="twitter" target="_blank">
+      </a>
+      <a href="https://github.com/tarynpratt" rel="me noopener" class="iconfont icon-github"
+        title="github" target="_blank">
+      </a>
+  <a href="https://tarynpivots.com/index.xml" rel="noopener alternate" type="application/rss&#43;xml" class="iconfont icon-rss"
+    title="rss" target="_blank">
+  </a>
+  </div>
+
+<div class="copyright">
+  <span class="power-by">
+    Powered by <a class="hexo-link" href="https://gohugo.io">Hugo</a>
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    Theme - <a class="theme-link" href="https://github.com/xianmin/hugo-theme-jane">Jane</a>
+  </span>
+
+  <span class="copyright-year">
+    &copy;
+    
+      2013 -
+    2020
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span><span class="author">
+        Taryn
+        
+      </span></span>
+
+  
+  
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+<script type="text/javascript" src="/lib/jquery/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/lib/slideout/slideout-1.0.1.min.js"></script>
+<script type="text/javascript" src="/dist/jane.min.js?v=2.7.0"></script>
+
+
+
+
+
+  
+    <script type="text/javascript" src="/js/load-photoswipe.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe.min.js"></script>
+    <script type="text/javascript" src="/lib/photoswipe/photoswipe-ui-default.min.js"></script>
+  
+
+
+
+
+
+
+
+
+</body>
+</html>
