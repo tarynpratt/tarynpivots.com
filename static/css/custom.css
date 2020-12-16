@@ -136,6 +136,14 @@ h1, h2{
 }
 
 div .highlight {
-    max-width: 750px;
+    max-width: 950px;
+}
 
+.post {
+    padding: 3em 3em;
+    margin: 0 3em 3em;
+}
+
+.archive {
+    margin: 0 3em 3em;
 }
