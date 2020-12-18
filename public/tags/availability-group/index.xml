@@ -6,10 +6,20 @@
     <description>Recent content in Availability Group on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 28 Jul 2020 06:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 18 Dec 2020 04:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/availability-group/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Syncing Logins Between Availability Group Replicas</title>
+      <link>https://tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/</link>
+      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/</guid>
+      <description>I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;amp;A sites, Jobs, and Stack Overflow for Teams. It&amp;rsquo;s a great way to implement disaster recovery for a SQL Server environment.
+Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary.</description>
+    </item>
     
     <item>
       <title>Migrating a 40TB SQL Server Database</title>

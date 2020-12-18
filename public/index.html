@@ -63,7 +63,7 @@
 <meta property="og:description" content="Pivots and other SQL fun" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://tarynpivots.com/" />
-<meta property="og:updated_time" content="2020-10-16T04:00:00&#43;00:00"/>
+<meta property="og:updated_time" content="2020-12-18T04:00:00&#43;00:00"/>
 <meta itemprop="name" content="Taryn Pratt - Pivots and other SQL fun">
 <meta itemprop="description" content="Pivots and other SQL fun">
 
@@ -297,6 +297,32 @@ if (!doNotTrack) {
     
       <article class="post bg-white">
   <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="/post/2020/syncing-logins-between-availablity-group-replicas/">Syncing Logins Between Availability Group Replicas</a></h1>
+    
+    <div class="post-meta">
+      <span class="post-time"> 2020-12-18 </span>
+      
+      <span class="more-meta"> 1631 words </span>
+      <span class="more-meta"> 8 min read </span>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    
+    <div class="post-summary">
+      I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;A sites, Jobs, and Stack Overflow for Teams. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.
+Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary.
+    </div>
+    <div class="read-more">
+      <a href="/post/2020/syncing-logins-between-availablity-group-replicas/" class="read-more-link">Read more</a>
+    </div>
+    
+  </div>
+</article>
+
+    
+      <article class="post bg-white">
+  <header class="post-header">
     <h1 class="post-title"><a class="post-link" href="/post/2020/deploying-my-sql-server-maintenance-scripts/">Deploying My SQL Server Maintenance Scripts</a></h1>
     
     <div class="post-meta">
@@ -393,31 +419,6 @@ However, if you really don&rsquo;t want to read it, here&rsquo;s a quick recap o
     </div>
     <div class="read-more">
       <a href="/post/sql-server-2019-tuple-mover-behavior-change/" class="read-more-link">Read more</a>
-    </div>
-    
-  </div>
-</article>
-
-    
-      <article class="post bg-white">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/aggressive-clustered-columnstore-cleanup/">SQL Server 2019 Aggressive Clustered Columnstore Cleanup</a></h1>
-    
-    <div class="post-meta">
-      <span class="post-time"> 2020-04-24 </span>
-      
-      <span class="more-meta"> 2668 words </span>
-      <span class="more-meta"> 13 min read </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    
-    <div class="post-summary">
-      In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.
-    </div>
-    <div class="read-more">
-      <a href="/post/aggressive-clustered-columnstore-cleanup/" class="read-more-link">Read more</a>
     </div>
     
   </div>
