@@ -75,6 +75,15 @@
     </item>
     
     <item>
+      <title>Deadlock</title>
+      <link>https://tarynpivots.com/tags/deadlock/</link>
+      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/deadlock/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Development</title>
       <link>https://tarynpivots.com/tags/development/</link>
       <pubDate>Mon, 27 Aug 2018 15:00:00 +0000</pubDate>
@@ -107,6 +116,15 @@
       <pubDate>Tue, 14 Jan 2020 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/journey/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Locks</title>
+      <link>https://tarynpivots.com/tags/locks/</link>
+      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/locks/</guid>
       <description></description>
     </item>
     
@@ -170,24 +188,6 @@
       <pubDate>Mon, 02 Dec 2019 08:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/pass/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Pass Summit</title>
-      <link>https://tarynpivots.com/tags/pass-summit/</link>
-      <pubDate>Mon, 02 Dec 2019 08:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/pass-summit/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Patching</title>
-      <link>https://tarynpivots.com/tags/patching/</link>
-      <pubDate>Thu, 18 Jul 2019 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/patching/</guid>
       <description></description>
     </item>
     

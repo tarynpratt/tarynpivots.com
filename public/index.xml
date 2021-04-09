@@ -6,10 +6,115 @@
     <description>Recent content on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 18 Dec 2020 04:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 09 Apr 2021 04:00:00 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Fighting with Deadlocks</title>
+      <link>https://tarynpivots.com/post/2021/fighting-with-deadlocks/</link>
+      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2021/fighting-with-deadlocks/</guid>
+      
+        <description>
+
+&lt;p&gt;If you follow me on &lt;a href=&#34;https://twitter.com/tarynpivots&#34; target=&#34;_blank&#34;&gt;Twitter&lt;/a&gt;, then you might have noticed that I&amp;rsquo;ve been fighting a lot of fires lately. Between high CPU (several times &lt;a href=&#34;https://twitter.com/tarynpivots/status/1371869915053916167&#34; target=&#34;_blank&#34;&gt;1&lt;/a&gt;, &lt;a href=&#34;https://twitter.com/tarynpivots/status/1372282151220117504&#34; target=&#34;_blank&#34;&gt;2&lt;/a&gt;), &lt;a href=&#34;https://twitter.com/tarynpivots/status/1375473620034580480&#34; target=&#34;_blank&#34;&gt;blocking queries&lt;/a&gt;, a &lt;a href=&#34;https://twitter.com/tarynpivots/status/1375620062736871428&#34; target=&#34;_blank&#34;&gt;slow failover&lt;/a&gt;, and &lt;a href=&#34;https://twitter.com/tarynpivots/status/1373990159121752065&#34; target=&#34;_blank&#34;&gt;deadlocks&lt;/a&gt; there have been a ton of things that needed attention. Not all of these issues are interesting to people, but one of them might be&amp;hellip;the deadlocks. I’m going to go into details about what deadlocks we hit, why we hit them, and how we resolved them.&lt;/p&gt;
+
+&lt;h2 id=&#34;background&#34;&gt;Background&lt;/h2&gt;
+
+&lt;p&gt;A few years ago, we launched &lt;a href=&#34;https://stackoverflow.com/teams/&#34; target=&#34;_blank&#34;&gt;Stack Overflow for Teams&lt;/a&gt;, which allows you to have a private version of Stack Overflow to share knowledge. I haven&amp;rsquo;t written about the infrastructure of Teams, but my colleague, &lt;a href=&#34;https://twitter.com/deanward81&#34; target=&#34;_blank&#34;&gt;Dean Ward&lt;/a&gt;, gave a &lt;a href=&#34;https://www.youtube.com/watch?v=g-hZZjN_Cbg&#34; target=&#34;_blank&#34;&gt;presentation about how Stack Overflow for Teams was built&lt;/a&gt; - it&amp;rsquo;s good, go watch it.&lt;/p&gt;
+
+&lt;p&gt;Here&amp;rsquo;s a brief overview of what we have on the SQL Server side - we have a 3 server cluster for Teams (2 in NY, 1 in CO) that are using Always On Availability Groups. We use schemas to keep teams separated from each other, and we put 10,000 schemas in each database, so we have multiple databases with 10,000 schemas in each one.&lt;/p&gt;
+
+&lt;h3 id=&#34;managing-schemas&#34;&gt;Managing Schemas&lt;/h3&gt;
+
+&lt;p&gt;When we started Stack Overflow for Teams, we manually provisioned each new team (yeah, I know) - this meant someone ran a script to create the login, user, schema, tables, and then granted the necessary permissions for the schema user. Even though we joked about it, manually provisioning new teams wasn’t scalable and didn’t last long, so we came up with a process to pre-provision everything needed for a new team to start.&lt;/p&gt;
+
+&lt;p&gt;We never wanted to run into a race condition or incur the performance overhead with setting up a new team, so we pre-provisioned a set number of schemas that would be ready when someone signed up. The pre-provisioned teams would be already set up with&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Login&lt;/li&gt;
+&lt;li&gt;User&lt;/li&gt;
+&lt;li&gt;Schema&lt;/li&gt;
+&lt;li&gt;Permissions&lt;/li&gt;
+&lt;li&gt;Tables, Views, and any other database objects&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Initially, we had about 100 schemas ready to go, and then had a scheduled job that would check periodically to refresh our provisioned bucket and replenish it back to full. We realized very quickly that 100 schemas wasn’t enough because we constantly hit issues with the logins not being &lt;a rehf=&#34;https://www.tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/&#34; target=&#34;_blank&#34;&gt;available on the secondary replicas&lt;/a&gt;, so we decided to increase the provisioned pool to 500. For the last several years, a pool of 500 schemas worked great, until it didn’t.&lt;/p&gt;
+
+&lt;h2 id=&#34;the-launch-of-free-teams&#34;&gt;The Launch of Free Teams&lt;/h2&gt;
+
+&lt;p&gt;As expected, with the announcement that Stack Overflow for Teams is &lt;a href=&#34;https://meta.stackexchange.com/questions/362203/stack-overflow-for-teams-is-now-free-for-up-to-50-users-forever&#34; target=&#34;_blank&#34;&gt;free for up to 50 users&lt;/a&gt;, we saw an incredible spike in sign-ups. Along with the spike in sign-ups, I started to receive a huge increase in alerts about deadlocks on the primary SQL Server for Teams. In the two weeks it took us to resolve the deadlocks, we hit at least 200 deadlocks.&lt;/p&gt;
+
+&lt;h4 id=&#34;what-is-a-deadlock&#34;&gt;What Is A Deadlock?&lt;/h4&gt;
+
+&lt;p&gt;A deadlock occurs when two processes want access to the same resource. The first one has a lock on a resource, and the second process wants the same access, or vice versa. Since the processes are competing for the same resource, the result is a situation where one process needs to terminate so the other can continue.&lt;/p&gt;
+
+&lt;h3 id=&#34;time-to-investigate&#34;&gt;Time to Investigate&lt;/h3&gt;
+
+&lt;p&gt;Most people who manage a highly transactional database are probably familiar with deadlocks, or have seen them pop up every now and then. We had them in the past when provisioning schemas, but it was long ago and we thought the issue was over.&lt;/p&gt;
+
+&lt;p&gt;But, after the launch of free teams, I was receiving a deadlock email alert every few hours from &lt;a href=&#34;https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring&#34; target=&#34;_blank&#34;&gt;SQL Sentry&lt;/a&gt;. While these email alerts provided some details into the issue, I needed to dig in further to figure out what exactly was happening, and try to resolve it. Thankfully, I have a handful of tools at my disposal to help investigate what we were seeing.&lt;/p&gt;
+
+&lt;p&gt;Between SQL Sentry and Brent Ozar’s &lt;a href=&#34;https://www.brentozar.com/archive/2017/12/introducing-sp_blitzlock-troubleshooting-sql-server-deadlocks/&#34; target=&#34;_blank&#34;&gt;sp_BlitzLock&lt;/a&gt;, I was able to get more details on each deadlock, including what the victim was, what type of locks we were hitting, and the processes involved in each deadlock.&lt;/p&gt;
+
+&lt;p&gt;The query text of the victim was pretty much &lt;a href=&#34;https://twitter.com/tarynpivots/status/1374741995051122689&#34; target=&#34;_blank&#34;&gt;same each time&lt;/a&gt;. As you can see, it wasn&amp;rsquo;t very helpful, as the victim was always when another process was just trying to set the transaction level (or at least that’s all the text we ever captured):&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2021/deadlockvictim.png&#34; alt=&#34;Repeated deadlock victim&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The other query involved in the deadlock was also basically same each time:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span class=&#34;k&#34;&gt;GRANT&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;INSERT&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;UPDATE&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;DELETE&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ALTER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ON&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;SCHEMA&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;::[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;channel29630&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;TO&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;channel29630&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;p&gt;And the &lt;a href=&#34;https://twitter.com/tarynpivots/status/1374714148085362690&#34; target=&#34;_blank&#34;&gt;deadlock graph&lt;/a&gt; for each one was always the same, but it provided a critical piece of information that we needed - the lock type:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tarynpivots.com/image/2021/deadlockgraph.png&#34; alt=&#34;Deadlock graph&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The dreaded Sch-M lock. I knew about the evils of this lock from &lt;a href=&#34;https://michaeljswart.com/2013/04/the-sch-m-lock-is-evil/&#34; target=&#34;_blank&#34;&gt;Michael J Swart&lt;/a&gt;, but we had never faced it to this level before.&lt;/p&gt;
+
+&lt;p&gt;Every deadlock we hit was due to the permission &lt;code&gt;GRANT&lt;/code&gt; during provisioning. Even if the victim query was on a completely different schema, the Sch-M lock taken by the permission grant always won.&lt;/p&gt;
+
+&lt;h3 id=&#34;resolving-the-deadlocks&#34;&gt;Resolving the Deadlocks&lt;/h3&gt;
+
+&lt;p&gt;Now that we identified the cause of the deadlock, it was time to figure out how to stop them. We brainstormed several ideas on how to fix it.&lt;/p&gt;
+
+&lt;p&gt;The scheduled job to replenish the pool of pre-provisioned teams runs every 5 minutes, so first we thought what if we spaced out that process? That wouldn&amp;rsquo;t work because all it would do is punt the problem to the new timeframe, which might potentially make it worse since we&amp;rsquo;d need to provision more schemas at a time. So, instead of the 5 - 15 we were provisioning every 5 minutes, we might need to create 50 or more if we waited an hour.&lt;/p&gt;
+
+&lt;p&gt;We also thought about provisioning a larger number of schemas, and then replenishing the pool nightly when we have less traffic, but again realized that it was just punting the problem - not actually fixing it.&lt;/p&gt;
+
+&lt;p&gt;Finally, we discussed pre-provisioning an entire database. That might work.&lt;/p&gt;
+
+&lt;p&gt;As I mentioned earlier, we put 10,000 schemas in a database, so the thinking was, if we set up a new database and provisioned the whole database with what we needed to start a team, then we no longer would hit the deadlocks by granting the permissions every 5 minutes. By setting up all the permissions ahead of time, the scheduled job would still need the Sch-M lock, but it would be taking it on a database not yet in use, hopefully removing its impact and the deadlocks.&lt;/p&gt;
+
+&lt;p&gt;The plan was to change the order in which we provisioned the new teams. We would pre-provision a new database with 10,000 logins, users, schemas, and their permissions, and would still keep our current bucket of 500 provisioned schemas that have the tables, views, and other database objects (the ones ready to go when a new team is created). Once we got close to using all of the schemas in a database, the pre-provision process would kick off on the next database and set up the next 10,000 schemas, removing the chances of getting deadlocks.&lt;/p&gt;
+
+&lt;p&gt;Dean Ward spent several days refactoring the code for the provisioning and when we pushed it out, it was time to create &lt;a href=&#34;https://twitter.com/tarynpivots/status/1377279012049879041&#34; target=&#34;_blank&#34;&gt;all the schemas&lt;/a&gt; and see if the deadlocks went away.&lt;/p&gt;
+
+&lt;p&gt;It worked.&lt;/p&gt;
+
+&lt;p&gt;We resolved the deadlock by refactoring the process so we weren&amp;rsquo;t taking the Sch-M lock for the permission grant every 5 minutes. By granting all the permissions ahead of time, we no longer have to fight with other processes and we stopped getting deadlocks.&lt;/p&gt;
+
+&lt;h2 id=&#34;final-thoughts&#34;&gt;Final Thoughts&lt;/h2&gt;
+
+&lt;p&gt;Deadlocks are &amp;ldquo;fun&amp;rdquo; and can be complicated. This one was interesting because I had never seen a deadlock victim on setting the transaction isolation level, but once I saw the Sch-M lock it was clear we needed to do some refactoring of our process. Sch-M locks are definitely not fun, and if you need to take that lock on a heavily used database you might need to look at refactoring or even performing the work off hours.&lt;/p&gt;
+
+&lt;h3 id=&#34;side-note&#34;&gt;Side Note&lt;/h3&gt;
+
+&lt;p&gt;Oh, and while we did resolve the deadlocks, we also introduced &lt;a href=&#34;https://twitter.com/tarynpivots/status/1377783511399030784&#34; target=&#34;_blank&#34;&gt;an issue&lt;/a&gt; that none of us thought about until we started getting exceptions. The new refactored pre-provisioning process creates the login, user and schema, but when we move that schema to a provisioned state and we create the tables and database objects in the schema, we also change the password for the login. Our process to sync logins &lt;a href=&#34;https://www.tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/&#34; target=&#34;_blank&#34;&gt;across our replicas&lt;/a&gt; didn&amp;rsquo;t account for those password changes which resulted in login failures, so we had to quickly resolve that issue after the change.&lt;/p&gt;
+
+&lt;p&gt;And by the way, if you’re interested, go &lt;a href=&#34;https://stackoverflow.com/teams/create/free?utm_source=so-team&amp;utm_medium=referral&amp;utm_campaign=free&amp;utm_content=codeSW0&#34; target=&#34;_blank&#34;&gt;sign up for a team&lt;/a&gt;, it&amp;rsquo;s free and it won&amp;rsquo;t generate a deadlock.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>Syncing Logins Between Availability Group Replicas</title>
@@ -5713,28 +5818,6 @@ net start MSSQLSERVER /m&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
 &lt;p&gt;&lt;strong&gt;One note&lt;/strong&gt; about &lt;code&gt;GROUP_CONCAT()&lt;/code&gt;, MySQL has a default length on a system variable used for concatenation. The system variable is called &lt;a href=&#34;http://dev.mysql.com/doc/refman/5.0/en/server-system-variables.html#sysvar_group_concat_max_len&#34;&gt;&lt;code&gt;group_concat_max_len&lt;/code&gt;&lt;/a&gt; and the default value is 1024, which means if you have a string that will be longer that 1024, then you will need to alter this variable to allow for a longer string.&lt;/p&gt;
 
 &lt;p&gt;These are just a few ways that you can convert rows into columns using MySQL.&lt;/p&gt;
-</description>
-      
-    </item>
-    
-    <item>
-      <title>Did somebody say pivot?</title>
-      <link>https://tarynpivots.com/post/did-somebody-say-pivot/</link>
-      <pubDate>Fri, 09 Aug 2013 00:56:29 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/post/did-somebody-say-pivot/</guid>
-      
-        <description>&lt;p&gt;&lt;em&gt;Paging bluefeet, there is a &lt;code&gt;PIVOT&lt;/code&gt; question to be answered.&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;While that might seem like a joke, it has really happened, especially over on Stack Overflow. If you have seen any of my posts, then the chances are that I was answering a &lt;code&gt;PIVOT&lt;/code&gt; &lt;a href=&#34;http://stackoverflow.com/search?tab=votes&amp;amp;q=user%3a426671%20[pivot]%20or%20[pivot-table]%20or%20[crosstab]%20or%20[transpose]%20or%20[pivot-without-aggregate]%20or%20[unpivot]%20is%3aanswer&#34;&gt;question&lt;/a&gt; (or something similar). At this time of this post almost 20% of my total answers (over 3k) have been on pivot questions.&lt;/p&gt;
-
-&lt;p&gt;You might ask yourself, &lt;em&gt;why pivot?&lt;/em&gt; The simple answer is because I love them. I have heard the arguments,&lt;a href=&#34;http://michaeljswart.com/2011/06/forget-about-pivot/&#34;&gt;1&lt;/a&gt; &amp;ldquo;&lt;em&gt;don&amp;rsquo;t do this type of data transformation on a server do it in the application layer&lt;/em&gt;&amp;rdquo;, etc. but my feeling is if there is a way to do it then go for it.&lt;/p&gt;
-
-&lt;p&gt;While not every database has a &lt;code&gt;PIVOT&lt;/code&gt; function, I will answer or attempt to provide a solution on just about any RDBMS.&lt;/p&gt;
-
-&lt;p&gt;What&amp;rsquo;s the point of this post? My goal is to write a series of posts outlining different methods to &lt;code&gt;PIVOT&lt;/code&gt; data in a variety of databases. I probably won&amp;rsquo;t be able to add much more to what is already out there on this topic, but this will be my spin on pivoting because I love it so!!&lt;/p&gt;
-
-&lt;p&gt;First up will be MySQL&amp;hellip;Stay tuned.&lt;/p&gt;
 </description>
       
     </item>

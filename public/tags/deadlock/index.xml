@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Deadlock on Taryn Pratt - Pivots and other SQL fun</title>
+    <link>https://tarynpivots.com/tags/deadlock/</link>
+    <description>Recent content in Deadlock on Taryn Pratt - Pivots and other SQL fun</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 09 Apr 2021 04:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/deadlock/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Fighting with Deadlocks</title>
+      <link>https://tarynpivots.com/post/2021/fighting-with-deadlocks/</link>
+      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2021/fighting-with-deadlocks/</guid>
+      <description>If you follow me on Twitter, then you might have noticed that I&amp;rsquo;ve been fighting a lot of fires lately. Between high CPU (several times 1, 2), blocking queries, a slow failover, and deadlocks there have been a ton of things that needed attention. Not all of these issues are interesting to people, but one of them might be&amp;hellip;the deadlocks. I’m going to go into details about what deadlocks we hit, why we hit them, and how we resolved them.</description>
+    </item>
+    
+  </channel>
+</rss>
