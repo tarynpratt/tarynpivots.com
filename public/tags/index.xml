@@ -6,7 +6,7 @@
     <description>Recent content in Tags on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 18 Dec 2020 04:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,9 +14,18 @@
     <item>
       <title>Availability Group</title>
       <link>https://tarynpivots.com/tags/availability-group/</link>
-      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/availability-group/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Backup</title>
+      <link>https://tarynpivots.com/tags/backup/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/backup/</guid>
       <description></description>
     </item>
     
@@ -35,6 +44,15 @@
       <pubDate>Tue, 14 Jan 2020 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/career/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Checkdb</title>
+      <link>https://tarynpivots.com/tags/checkdb/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/checkdb/</guid>
       <description></description>
     </item>
     
@@ -131,7 +149,7 @@
     <item>
       <title>Maintenance</title>
       <link>https://tarynpivots.com/tags/maintenance/</link>
-      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/maintenance/</guid>
       <description></description>
@@ -170,24 +188,6 @@
       <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/outage/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Parallel Redo Flow Control</title>
-      <link>https://tarynpivots.com/tags/parallel-redo-flow-control/</link>
-      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/parallel-redo-flow-control/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Pass</title>
-      <link>https://tarynpivots.com/tags/pass/</link>
-      <pubDate>Mon, 02 Dec 2019 08:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/pass/</guid>
       <description></description>
     </item>
     

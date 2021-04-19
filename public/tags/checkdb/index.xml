@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Checkdb on Taryn Pratt - Pivots and other SQL fun</title>
+    <link>https://tarynpivots.com/tags/checkdb/</link>
+    <description>Recent content in Checkdb on Taryn Pratt - Pivots and other SQL fun</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://tarynpivots.com/tags/checkdb/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Testing Backups and Offloading CheckDB</title>
+      <link>https://tarynpivots.com/post/2021/testing-backups-offload-dbcc-checkdb/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2021/testing-backups-offload-dbcc-checkdb/</guid>
+      <description>While every DBA knows they need to backup all their databases, not all may realize the importance of testing those backups. Performing backups is pointless, if you&amp;rsquo;re unable to restore them.
+I wanted to restore our backups on a regular basis, so I set up a process to test them automatically, on a nightly basis.
+Background Early on when I started working on the SQL Servers at Stack Overflow, we were taking daily backups.</description>
+    </item>
+    
+  </channel>
+</rss>

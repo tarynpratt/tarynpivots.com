@@ -3,6 +3,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tarynpivots.com/post/2021/testing-backups-offload-dbcc-checkdb/</loc>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://tarynpivots.com/post/2021/fighting-with-deadlocks/</loc>
     <lastmod>2021-04-09T04:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -165,7 +172,14 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/availability-group/</loc>
-    <lastmod>2020-12-18T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/backup/</loc>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -186,6 +200,13 @@
   
   <url>
     <loc>https://tarynpivots.com/categories/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/checkdb/</loc>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -262,7 +283,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/maintenance/</loc>
-    <lastmod>2020-12-18T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -339,7 +360,7 @@
   
   <url>
     <loc>https://tarynpivots.com/post/</loc>
-    <lastmod>2021-04-09T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -361,6 +382,20 @@
   <url>
     <loc>https://tarynpivots.com/tags/readable-secondary/</loc>
     <lastmod>2020-12-18T04:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/restore/</loc>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://tarynpivots.com/tags/restore-testing/</loc>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -395,7 +430,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/sql/</loc>
-    <lastmod>2021-04-09T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -423,7 +458,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/sql-server/</loc>
-    <lastmod>2021-04-09T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -437,7 +472,7 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/stack-overflow/</loc>
-    <lastmod>2021-04-09T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
@@ -451,14 +486,14 @@
   
   <url>
     <loc>https://tarynpivots.com/tags/</loc>
-    <lastmod>2020-12-18T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://tarynpivots.com/</loc>
-    <lastmod>2021-04-09T04:00:00+00:00</lastmod>
+    <lastmod>2021-04-19T06:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0</priority>
   </url>
