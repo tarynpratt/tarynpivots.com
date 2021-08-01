@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Windows Server 2012 on Taryn Pratt - Pivots and other SQL fun</title>
+    <title>windows-server-2012 on Taryn Pratt - Pivots and other SQL fun</title>
     <link>https://tarynpivots.com/tags/windows-server-2012/</link>
-    <description>Recent content in Windows Server 2012 on Taryn Pratt - Pivots and other SQL fun</description>
+    <description>Recent content in windows-server-2012 on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate>
-    
-	<atom:link href="https://tarynpivots.com/tags/windows-server-2012/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Thu, 18 Jul 2019 06:00:38 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/windows-server-2012/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>How Stack Overflow upgraded from Windows Server 2012</title>
       <link>https://tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/</link>

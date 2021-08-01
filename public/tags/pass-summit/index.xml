@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Pass Summit on Taryn Pratt - Pivots and other SQL fun</title>
+    <title>pass-summit on Taryn Pratt - Pivots and other SQL fun</title>
     <link>https://tarynpivots.com/tags/pass-summit/</link>
-    <description>Recent content in Pass Summit on Taryn Pratt - Pivots and other SQL fun</description>
+    <description>Recent content in pass-summit on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 02 Dec 2019 08:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="https://tarynpivots.com/tags/pass-summit/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Mon, 02 Dec 2019 08:00:00 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/pass-summit/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Finally, My first PASS Summit</title>
       <link>https://tarynpivots.com/post/my-first-pass-summit/</link>

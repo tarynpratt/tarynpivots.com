@@ -35,7 +35,7 @@ Always On Availability Groups can support up to nine availability replicas, and 
 
 
 
-<meta name="generator" content="Hugo 0.47" />
+<meta name="generator" content="Hugo 0.86.1" />
 
 
 <link rel="canonical" href="https://tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/" />
@@ -64,21 +64,16 @@ Always On Availability Groups can support up to nine availability replicas, and 
 <meta property="og:description" content="I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;A sites, Jobs, and Stack Overflow for Teams. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.
 Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/" /><meta property="article:published_time" content="2020-12-18T04:00:00&#43;00:00"/>
-<meta property="article:modified_time" content="2020-12-18T04:00:00&#43;00:00"/>
+<meta property="og:url" content="https://tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-12-18T04:00:00+00:00" />
+<meta property="article:modified_time" content="2020-12-18T04:00:00+00:00" />
+
 <meta itemprop="name" content="Syncing Logins Between Availability Group Replicas">
 <meta itemprop="description" content="I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;A sites, Jobs, and Stack Overflow for Teams. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.
-Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary.">
-
-
-<meta itemprop="datePublished" content="2020-12-18T04:00:00&#43;00:00" />
-<meta itemprop="dateModified" content="2020-12-18T04:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="1631">
-
-
-
-<meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,maintenance,distributed-availability-group,availability-group,readable-secondary," />
-<meta name="twitter:card" content="summary"/>
+Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary."><meta itemprop="datePublished" content="2020-12-18T04:00:00+00:00" />
+<meta itemprop="dateModified" content="2020-12-18T04:00:00+00:00" />
+<meta itemprop="wordCount" content="1088">
+<meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,maintenance,distributed-availability-group,availability-group,readable-secondary," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Syncing Logins Between Availability Group Replicas"/>
 <meta name="twitter:description" content="I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;A sites, Jobs, and Stack Overflow for Teams. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.
 Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary."/>
@@ -310,8 +305,8 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2020-12-18 </span>
         
-        <span class="more-meta"> 1631 words </span>
-          <span class="more-meta"> 8 min read </span>
+        <span class="more-meta"> 1088 words </span>
+          <span class="more-meta"> 6 min read </span>
 
         
         
@@ -324,53 +319,39 @@ if (!doNotTrack) {
   <h2 class="post-toc-title">Table of Contents</h2>
   <div class="post-toc-content">
     <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#copying-logins-with-a-t-sql-script">Copying Logins with a T-SQL Script</a>
-<ul>
-<li><a href="#gather-existing-logins">Gather Existing Logins</a></li>
-<li><a href="#create-logins-on-replicas">Create Logins on Replicas</a></li>
-<li><a href="#drop-unused-logins-on-replicas">Drop Unused Logins on Replicas</a></li>
-<li><a href="#putting-the-pieces-together">Putting the Pieces Together</a></li>
-</ul></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#copying-logins-with-a-t-sql-script">Copying Logins with a T-SQL Script</a>
+      <ul>
+        <li><a href="#gather-existing-logins">Gather Existing Logins</a></li>
+        <li><a href="#create-logins-on-replicas">Create Logins on Replicas</a></li>
+        <li><a href="#drop-unused-logins-on-replicas">Drop Unused Logins on Replicas</a></li>
+        <li><a href="#putting-the-pieces-together">Putting the Pieces Together</a></li>
+      </ul>
+    </li>
+  </ul>
 </nav>
   </div>
 </div>
 
     
     <div class="post-content">
-      
-
-<p>I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher -  we use <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-ver15">Always On Availability Groups</a> at <a href="https://stackoverflow.com">Stack Overflow</a> on all of our main production servers running the network of public Q&amp;A sites, Jobs, and <a href="https://stackoverflow.com/teams">Stack Overflow for Teams</a>. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.</p>
-
+      <p>I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher -  we use <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-ver15">Always On Availability Groups</a> at <a href="https://stackoverflow.com">Stack Overflow</a> on all of our main production servers running the network of public Q&amp;A sites, Jobs, and <a href="https://stackoverflow.com/teams">Stack Overflow for Teams</a>. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.</p>
 <p>Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/active-secondaries-readable-secondary-replicas-always-on-availability-groups?view=sql-server-ver15">readable secondary</a>.</p>
-
 <p>Since we use readable secondaries in our environments, the application needs to connect to both the primary and the secondary servers with the same login. The catch is, logins don’t automatically sync across replicas.  If the logins don’t sync, the application won’t connect to a secondary, which results in login failures.</p>
-
 <h2 id="copying-logins-with-a-t-sql-script">Copying Logins with a T-SQL Script</h2>
-
-<p>Before you jump the gun and start criticizing my method, know that I’m aware there are other ways to do this, including using <a href="https://dbatools.io/keeping-availability-group-logins-in-sync-automatically/" target="_blank">dbatools</a>, but this method has been around since the early days of Stack Overflow and the Stack Exchange network (with some <a href="https://www.tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/" target="_blank">modifications</a>) and it works for our needs for now.</p>
-
+<p>Before you jump the gun and start criticizing my method, know that I’m aware there are other ways to do this, including using <!-- raw HTML omitted -->dbatools<!-- raw HTML omitted -->, but this method has been around since the early days of Stack Overflow and the Stack Exchange network (with some <!-- raw HTML omitted -->modifications<!-- raw HTML omitted -->) and it works for our needs for now.</p>
 <p>We don’t create new databases very often, but on <a href="https://stackoverflow.com/teams">Stack Overflow for Teams</a> we use schemas to keep customers separated from each other - i.e. every team has a login and user to allow it to query their data. While we pre-provision a set number of schemas, tables, and other database objects for teams, we want the logins to sync on a frequent basis to avoid login failures on the secondaries.  We have a job in place which syncs the logins via a SQL Server Agent job every 10 minutes for Stack Overflow for Teams. (We have a similar job for the public Q&amp;A sites that runs nightly.)</p>
-
 <p>The job needs to do several things:</p>
-
 <ol>
 <li>Get a list of the existing logins on the primary</li>
 <li>Create the logins on replica</li>
 <li>Drop any logins no longer being used i.e. teams that are deleted</li>
 </ol>
-
 <h3 id="gather-existing-logins">Gather Existing Logins</h3>
-
 <p>The first thing the job does is, create a temp table called <code>@logins</code> to store all the details needed from the primary. The table is pretty basic:</p>
-
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -379,21 +360,19 @@ if (!doNotTrack) {
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span> <span class="o">@</span><span class="n">logins</span> <span class="k">TABLE</span> 
-<span class="p">(</span>
-    <span class="n">SID</span> <span class="n">varbinary</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span> 
-    <span class="n">Login</span> <span class="n">sysname</span><span class="p">,</span> 
-    <span class="k">SQL</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">1024</span><span class="p">),</span> 
-    <span class="n">DefaultDB</span> <span class="n">sysname</span>
-<span class="p">);</span></code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> 
+</span><span class="w"></span><span class="p">(</span><span class="w">
+</span><span class="w">    </span><span class="n">SID</span><span class="w"> </span><span class="n">varbinary</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span><span class="w"> 
+</span><span class="w">    </span><span class="n">Login</span><span class="w"> </span><span class="n">sysname</span><span class="p">,</span><span class="w"> 
+</span><span class="w">    </span><span class="k">SQL</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w"> 
+</span><span class="w">    </span><span class="n">DefaultDB</span><span class="w"> </span><span class="n">sysname</span><span class="w">
+</span><span class="w"></span><span class="p">);</span></code></pre></td></tr></table>
 </div>
 </div>
-
-<p>The table is populated by connecting to the primary server using <a href="https://docs.microsoft.com/en-us/sql/t-sql/functions/openquery-transact-sql?view=sql-server-ver15" target="_blank"><code>OPENQUERY</code></a> (Eeek a linked server)</p>
-
+<p>The table is populated by connecting to the primary server using <!-- raw HTML omitted --><code>OPENQUERY</code><!-- raw HTML omitted --> (Eeek a linked server)</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -410,8 +389,8 @@ if (!doNotTrack) {
 </span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> <span class="o">*</span>
-<span class="k">FROM</span> <span class="n">OPENQUERY</span><span class="p">([</span><span class="k">SQL</span><span class="o">-</span><span class="n">AG</span><span class="p">],</span> <span class="s1">&#39;
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w">
+</span><span class="w"></span><span class="k">FROM</span><span class="w"> </span><span class="n">OPENQUERY</span><span class="p">([</span><span class="k">SQL</span><span class="o">-</span><span class="n">AG</span><span class="p">],</span><span class="w"> </span><span class="s1">&#39;
 </span><span class="s1">    SELECT p.sid sid_varbinary, p.name, p.default_database_name,
 </span><span class="s1">        sl.password_hash pwd_varbinary,
 </span><span class="s1">        CASE sl.is_policy_checked WHEN 1 THEN &#39;&#39;ON&#39;&#39; WHEN 0 THEN &#39;&#39;OFF&#39;&#39; ELSE NULL END is_policy_checked,
@@ -427,12 +406,10 @@ if (!doNotTrack) {
 </span><span class="s1">    ORDER BY p.name&#39;</span><span class="p">);</span></code></pre></td></tr></table>
 </div>
 </div>
-
-<p>and executing <a href="https://docs.microsoft.com/en-us/troubleshoot/sql/security/transfer-logins-passwords-between-instances" target="_blank">sp_hexadecimal</a> to get the SID and password which are then used to create a dynamic SQL string which is stored in the temp table.</p>
-
+<p>and executing <!-- raw HTML omitted -->sp_hexadecimal<!-- raw HTML omitted --> to get the SID and password which are then used to create a dynamic SQL string which is stored in the temp table.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -444,26 +421,23 @@ if (!doNotTrack) {
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">EXEC</span> <span class="n">sp_hexadecimal</span> <span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">PWD_string</span> <span class="k">OUT</span>
-<span class="k">EXEC</span> <span class="n">sp_hexadecimal</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">SID_string</span> <span class="k">OUT</span>
-
-<span class="k">SET</span> <span class="o">@</span><span class="n">sqlString</span> <span class="o">=</span> <span class="s1">&#39;CREATE LOGIN &#39;</span> <span class="o">+</span> <span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; WITH PASSWORD = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">PWD_string</span> 
-                    <span class="o">+</span> <span class="s1">&#39; HASHED, SID = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">SID_string</span> <span class="o">+</span> <span class="s1">&#39;, DEFAULT_DATABASE = [&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">defaultdb</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
-                    <span class="o">+</span> <span class="s1">&#39;, CHECK_POLICY = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">is_policy_checked</span>
-                    <span class="o">+</span> <span class="s1">&#39;, CHECK_EXPIRATION = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">is_expiration_checked</span>
-
-<span class="k">INSERT</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">logins</span> <span class="p">(</span><span class="n">SID</span><span class="p">,</span> <span class="n">Login</span><span class="p">,</span> <span class="k">SQL</span><span class="p">,</span> <span class="n">DefaultDB</span><span class="p">)</span> 
-<span class="k">VALUES</span> <span class="p">(</span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">name</span><span class="p">,</span> <span class="o">@</span><span class="n">sqlString</span><span class="p">,</span> <span class="o">@</span><span class="n">defaultdb</span><span class="p">);</span></code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">EXEC</span><span class="w"> </span><span class="n">sp_hexadecimal</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_string</span><span class="w"> </span><span class="k">OUT</span><span class="w">
+</span><span class="w"></span><span class="k">EXEC</span><span class="w"> </span><span class="n">sp_hexadecimal</span><span class="w"> </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">SID_string</span><span class="w"> </span><span class="k">OUT</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">SET</span><span class="w"> </span><span class="o">@</span><span class="n">sqlString</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;CREATE LOGIN &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39; WITH PASSWORD = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_string</span><span class="w"> 
+</span><span class="w">                    </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39; HASHED, SID = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">SID_string</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, DEFAULT_DATABASE = [&#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;]&#39;</span><span class="w">
+</span><span class="w">                    </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, CHECK_POLICY = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">is_policy_checked</span><span class="w">
+</span><span class="w">                    </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, CHECK_EXPIRATION = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">is_expiration_checked</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w"> </span><span class="p">(</span><span class="n">SID</span><span class="p">,</span><span class="w"> </span><span class="n">Login</span><span class="p">,</span><span class="w"> </span><span class="k">SQL</span><span class="p">,</span><span class="w"> </span><span class="n">DefaultDB</span><span class="p">)</span><span class="w"> 
+</span><span class="w"></span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">sqlString</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="p">);</span></code></pre></td></tr></table>
 </div>
 </div>
-
 <h3 id="create-logins-on-replicas">Create Logins on Replicas</h3>
-
 <p>Now that the table has all the logins from the primary, it’s time to create them locally. While it’s possible that we have only one login to sync, it’s more likely we have multiple.  Keeping this in mind, the script loops through the temp table and executes the dynamic SQL for each login that doesn’t already exist on the replica.</p>
-
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -490,41 +464,38 @@ if (!doNotTrack) {
 </span><span class="lnt">25
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span> <span class="o">@</span><span class="k">sql</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">1024</span><span class="p">),</span> <span class="o">@</span><span class="n">db</span> <span class="n">sysname</span><span class="p">,</span> <span class="o">@</span><span class="n">loginname</span> <span class="n">sysname</span><span class="p">;</span>
-<span class="k">DECLARE</span> <span class="n">login_cursor</span> <span class="k">CURSOR</span> <span class="k">FOR</span>
-    <span class="k">SELECT</span> <span class="k">SQL</span><span class="p">,</span> <span class="n">DefaultDB</span><span class="p">,</span> <span class="n">Login</span>
-    <span class="k">FROM</span> <span class="o">@</span><span class="n">logins</span>
-    <span class="k">WHERE</span> <span class="n">SID</span> <span class="k">NOT</span> <span class="k">IN</span> <span class="p">(</span><span class="k">SELECT</span> <span class="n">sid</span> 
-                        <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="p">)</span>
-        <span class="k">AND</span> <span class="k">EXISTS</span> <span class="p">(</span><span class="k">SELECT</span> <span class="mi">1</span> 
-                    <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">databases</span> 
-                    <span class="k">WHERE</span> <span class="n">name</span> <span class="o">=</span> <span class="n">DefaultDB</span><span class="p">)</span>
-        <span class="k">AND</span> <span class="n">Login</span> <span class="k">NOT</span> <span class="k">IN</span> <span class="p">(</span><span class="k">SELECT</span> <span class="n">name</span> 
-                            <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span> 
-                            <span class="k">WHERE</span> <span class="n">name</span> <span class="o">=</span> <span class="n">Login</span> 
-                                <span class="k">And</span> <span class="k">type</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span><span class="p">)</span>
-<span class="k">OPEN</span> <span class="n">login_cursor</span>
-
-<span class="c1">-- add new logins
-</span><span class="c1"></span><span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">login_cursor</span> <span class="k">INTO</span> <span class="o">@</span><span class="k">sql</span><span class="p">,</span> <span class="o">@</span><span class="n">db</span><span class="p">,</span> <span class="o">@</span><span class="n">loginname</span>
-<span class="n">WHILE</span> <span class="o">@@</span><span class="n">fetch_status</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="k">BEGIN</span>
-    <span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="k">sql</span><span class="p">);</span>
-    <span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">login_cursor</span> 
-        <span class="k">INTO</span> <span class="o">@</span><span class="k">sql</span><span class="p">,</span> <span class="o">@</span><span class="n">db</span><span class="p">,</span> <span class="o">@</span><span class="n">loginname</span>
-<span class="k">END</span>
-<span class="k">CLOSE</span> <span class="n">login_cursor</span>
-<span class="k">DEALLOCATE</span> <span class="n">login_cursor</span></code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span><span class="w"> </span><span class="o">@</span><span class="k">sql</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w"> </span><span class="o">@</span><span class="n">db</span><span class="w"> </span><span class="n">sysname</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">loginname</span><span class="w"> </span><span class="n">sysname</span><span class="p">;</span><span class="w">
+</span><span class="w"></span><span class="k">DECLARE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> </span><span class="k">CURSOR</span><span class="w"> </span><span class="k">FOR</span><span class="w">
+</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="k">SQL</span><span class="p">,</span><span class="w"> </span><span class="n">DefaultDB</span><span class="p">,</span><span class="w"> </span><span class="n">Login</span><span class="w">
+</span><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w">
+</span><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">SID</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">sid</span><span class="w"> 
+</span><span class="w">                        </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="p">)</span><span class="w">
+</span><span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> 
+</span><span class="w">                    </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">databases</span><span class="w"> 
+</span><span class="w">                    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DefaultDB</span><span class="p">)</span><span class="w">
+</span><span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="n">Login</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="w"> 
+</span><span class="w">                            </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="w"> 
+</span><span class="w">                            </span><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Login</span><span class="w"> 
+</span><span class="w">                                </span><span class="k">And</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;S&#39;</span><span class="p">)</span><span class="w">
+</span><span class="w"></span><span class="k">OPEN</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="c1">-- add new logins
+</span><span class="c1"></span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="k">sql</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">db</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">loginname</span><span class="w">
+</span><span class="w"></span><span class="n">WHILE</span><span class="w"> </span><span class="o">@@</span><span class="n">fetch_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w"></span><span class="k">BEGIN</span><span class="w">
+</span><span class="w">    </span><span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="k">sql</span><span class="p">);</span><span class="w">
+</span><span class="w">    </span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> 
+</span><span class="w">        </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="k">sql</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">db</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">loginname</span><span class="w">
+</span><span class="w"></span><span class="k">END</span><span class="w">
+</span><span class="w"></span><span class="k">CLOSE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w"></span><span class="k">DEALLOCATE</span><span class="w"> </span><span class="n">login_cursor</span></code></pre></td></tr></table>
 </div>
 </div>
-
 <h3 id="drop-unused-logins-on-replicas">Drop Unused Logins on Replicas</h3>
-
 <p>On the public Q&amp;A sites, like Stack Overflow, we don’t need to drop logins, but after running Stack Overflow for Teams for several months, we realized very quickly that we need to purge logins no longer being used. The last step of the job goes through the existing logins on the secondaries and deletes any that don’t exist on the primary. Using the original <code>@logins</code> temp table I can get a list of the logins to drop:</p>
-
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -541,46 +512,41 @@ if (!doNotTrack) {
 </span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> <span class="n">p</span><span class="p">.</span><span class="n">sid</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span>
-<span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span> <span class="n">p</span>
-<span class="k">JOIN</span> <span class="n">sys</span><span class="p">.</span><span class="n">syslogins</span> <span class="n">l</span> <span class="k">ON</span> <span class="n">l</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span>
-<span class="k">JOIN</span> <span class="n">sys</span><span class="p">.</span><span class="n">sql_logins</span> <span class="n">sl</span> <span class="k">ON</span> <span class="n">l</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">sl</span><span class="p">.</span><span class="n">name</span>
-<span class="k">WHERE</span> <span class="n">p</span><span class="p">.</span><span class="k">type</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
-  <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span> <span class="o">&lt;&gt;</span> <span class="s1">&#39;sa&#39;</span>
-  <span class="k">AND</span> <span class="n">l</span><span class="p">.</span><span class="n">denylogin</span> <span class="o">=</span> <span class="mi">0</span>
-  <span class="k">AND</span> <span class="n">l</span><span class="p">.</span><span class="n">hasaccess</span> <span class="o">=</span> <span class="mi">1</span>
-  <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">is_disabled</span> <span class="o">=</span> <span class="mi">0</span>
-  <span class="k">AND</span> <span class="k">NOT</span> <span class="k">EXISTS</span> <span class="p">(</span><span class="k">SELECT</span> <span class="mi">1</span>
-                  <span class="k">FROM</span> <span class="o">@</span><span class="n">logins</span> <span class="n">cl</span>
-                  <span class="k">WHERE</span> <span class="n">p</span><span class="p">.</span><span class="n">sid</span> <span class="o">=</span> <span class="n">cl</span><span class="p">.</span><span class="n">sid</span>
-                    <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">cl</span><span class="p">.</span><span class="n">Login</span>
-                    <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span> <span class="o">=</span> <span class="n">cl</span><span class="p">.</span><span class="n">DefaultDB</span><span class="p">)</span>
-<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span></code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">sid</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span><span class="w">
+</span><span class="w"></span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="w"> </span><span class="n">p</span><span class="w">
+</span><span class="w"></span><span class="k">JOIN</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">syslogins</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w">
+</span><span class="w"></span><span class="k">JOIN</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">sql_logins</span><span class="w"> </span><span class="n">sl</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">name</span><span class="w">
+</span><span class="w"></span><span class="k">WHERE</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;S&#39;</span><span class="w">
+</span><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="s1">&#39;sa&#39;</span><span class="w">
+</span><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">denylogin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">hasaccess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">is_disabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="w">                  </span><span class="k">FROM</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w"> </span><span class="n">cl</span><span class="w">
+</span><span class="w">                  </span><span class="k">WHERE</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">sid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cl</span><span class="p">.</span><span class="n">sid</span><span class="w">
+</span><span class="w">                    </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cl</span><span class="p">.</span><span class="n">Login</span><span class="w">
+</span><span class="w">                    </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cl</span><span class="p">.</span><span class="n">DefaultDB</span><span class="p">)</span><span class="w">
+</span><span class="w"></span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span></code></pre></td></tr></table>
 </div>
 </div>
-
 <p>then it creates a dynamic SQL string which gets executed cleaning up the unused logins.</p>
-
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SET</span> <span class="o">@</span><span class="n">drop_sqlString</span> <span class="o">=</span> <span class="s1">&#39;DROP LOGIN &#39;</span> <span class="o">+</span> <span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;; &#39;</span>
-<span class="c1">--print @drop_sqlString
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SET</span><span class="w"> </span><span class="o">@</span><span class="n">drop_sqlString</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;DROP LOGIN &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;; &#39;</span><span class="w">
+</span><span class="w"></span><span class="c1">--print @drop_sqlString
 </span><span class="c1"></span><span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="n">drop_sqlString</span><span class="p">);</span></code></pre></td></tr></table>
 </div>
 </div>
-
 <h3 id="putting-the-pieces-together">Putting the Pieces Together</h3>
-
 <p>Both the create and delete of the logins are done in various loops, in other words cursors. The full script is below:</p>
-
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -698,27 +664,27 @@ if (!doNotTrack) {
 </span><span class="lnt">116
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span> <span class="o">@</span><span class="n">name</span> <span class="n">sysname</span><span class="p">,</span>
-    <span class="o">@</span><span class="n">PWD_varbinary</span> <span class="n">varbinary</span> <span class="p">(</span><span class="mi">256</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">PWD_string</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">514</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">SID_varbinary</span> <span class="n">varbinary</span> <span class="p">(</span><span class="mi">85</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">SID_string</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">514</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">sqlString</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">1024</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">is_policy_checked</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">3</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">is_expiration_checked</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">3</span><span class="p">),</span>
-    <span class="o">@</span><span class="n">defaultdb</span> <span class="n">sysname</span><span class="p">;</span>
-
-<span class="k">DECLARE</span> <span class="o">@</span><span class="n">logins</span> <span class="k">TABLE</span> 
-<span class="p">(</span>
-    <span class="n">SID</span> <span class="n">varbinary</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span> 
-    <span class="n">Login</span> <span class="n">sysname</span><span class="p">,</span> 
-    <span class="k">SQL</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">1024</span><span class="p">),</span> 
-    <span class="n">DefaultDB</span> <span class="n">sysname</span>
-<span class="p">);</span>
-
-<span class="k">DECLARE</span> <span class="n">login_cursor</span> <span class="k">CURSOR</span> <span class="k">FOR</span>
-    <span class="k">SELECT</span> <span class="o">*</span>
-    <span class="k">FROM</span> <span class="n">OPENQUERY</span><span class="p">([</span><span class="k">SQL</span><span class="o">-</span><span class="n">AG</span><span class="p">],</span> <span class="s1">&#39;
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DECLARE</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="w"> </span><span class="n">sysname</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">PWD_varbinary</span><span class="w"> </span><span class="n">varbinary</span><span class="w"> </span><span class="p">(</span><span class="mi">256</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">PWD_string</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">514</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="w"> </span><span class="n">varbinary</span><span class="w"> </span><span class="p">(</span><span class="mi">85</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">SID_string</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">514</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">sqlString</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">is_policy_checked</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">is_expiration_checked</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="o">@</span><span class="n">defaultdb</span><span class="w"> </span><span class="n">sysname</span><span class="p">;</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">DECLARE</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> 
+</span><span class="w"></span><span class="p">(</span><span class="w">
+</span><span class="w">    </span><span class="n">SID</span><span class="w"> </span><span class="n">varbinary</span><span class="p">(</span><span class="mi">256</span><span class="p">),</span><span class="w"> 
+</span><span class="w">    </span><span class="n">Login</span><span class="w"> </span><span class="n">sysname</span><span class="p">,</span><span class="w"> 
+</span><span class="w">    </span><span class="k">SQL</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w"> 
+</span><span class="w">    </span><span class="n">DefaultDB</span><span class="w"> </span><span class="n">sysname</span><span class="w">
+</span><span class="w"></span><span class="p">);</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">DECLARE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> </span><span class="k">CURSOR</span><span class="w"> </span><span class="k">FOR</span><span class="w">
+</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w">
+</span><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">OPENQUERY</span><span class="p">([</span><span class="k">SQL</span><span class="o">-</span><span class="n">AG</span><span class="p">],</span><span class="w"> </span><span class="s1">&#39;
 </span><span class="s1">        SELECT p.sid, p.name, p.default_database_name,
 </span><span class="s1">            sl.password_hash pwd_varbinary,
 </span><span class="s1">            CASE sl.is_policy_checked WHEN 1 THEN &#39;&#39;ON&#39;&#39; WHEN 0 THEN &#39;&#39;OFF&#39;&#39; ELSE NULL END is_policy_checked,
@@ -731,93 +697,92 @@ if (!doNotTrack) {
 </span><span class="s1">        AND l.denylogin = 0
 </span><span class="s1">        AND l.hasaccess = 1
 </span><span class="s1">        AND p.is_disabled = 0
-</span><span class="s1">        ORDER BY p.name&#39;</span><span class="p">)</span>
-<span class="k">OPEN</span> <span class="n">login_cursor</span>
-
-<span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">login_cursor</span> 
-    <span class="k">INTO</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">name</span><span class="p">,</span> <span class="o">@</span><span class="n">defaultdb</span><span class="p">,</span> <span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">is_policy_checked</span><span class="p">,</span> <span class="o">@</span><span class="n">is_expiration_checked</span>
-<span class="n">WHILE</span> <span class="o">@@</span><span class="n">fetch_status</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="k">BEGIN</span>
-    <span class="k">EXEC</span> <span class="n">sp_hexadecimal</span> <span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">PWD_string</span> <span class="k">OUT</span>
-    <span class="k">EXEC</span> <span class="n">sp_hexadecimal</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">SID_string</span> <span class="k">OUT</span>
-
-    <span class="k">SET</span> <span class="o">@</span><span class="n">sqlString</span> <span class="o">=</span> <span class="s1">&#39;CREATE LOGIN &#39;</span> <span class="o">+</span> <span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; WITH PASSWORD = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">PWD_string</span> 
-                        <span class="o">+</span> <span class="s1">&#39; HASHED, SID = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">SID_string</span> <span class="o">+</span> <span class="s1">&#39;, DEFAULT_DATABASE = [&#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">defaultdb</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
-                        <span class="o">+</span> <span class="s1">&#39;, CHECK_POLICY = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">is_policy_checked</span>
-                        <span class="o">+</span> <span class="s1">&#39;, CHECK_EXPIRATION = &#39;</span> <span class="o">+</span> <span class="o">@</span><span class="n">is_expiration_checked</span>
-
-    <span class="k">INSERT</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">logins</span> <span class="p">(</span><span class="n">SID</span><span class="p">,</span> <span class="n">Login</span><span class="p">,</span> <span class="k">SQL</span><span class="p">,</span> <span class="n">DefaultDB</span><span class="p">)</span> 
-    <span class="k">VALUES</span> <span class="p">(</span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">name</span><span class="p">,</span> <span class="o">@</span><span class="n">sqlString</span><span class="p">,</span> <span class="o">@</span><span class="n">defaultdb</span><span class="p">);</span>
-
-    <span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">login_cursor</span> 
-        <span class="k">INTO</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">name</span><span class="p">,</span> <span class="o">@</span><span class="n">defaultdb</span><span class="p">,</span> <span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">is_policy_checked</span><span class="p">,</span> <span class="o">@</span><span class="n">is_expiration_checked</span>
-<span class="k">END</span>
-<span class="k">CLOSE</span> <span class="n">login_cursor</span>
-<span class="k">DEALLOCATE</span> <span class="n">login_cursor</span>
-
-<span class="k">DECLARE</span> <span class="o">@</span><span class="k">sql</span> <span class="nb">varchar</span> <span class="p">(</span><span class="mi">1024</span><span class="p">),</span> <span class="o">@</span><span class="n">db</span> <span class="n">sysname</span><span class="p">,</span> <span class="o">@</span><span class="n">loginname</span> <span class="n">sysname</span><span class="p">;</span>
-<span class="k">DECLARE</span> <span class="n">login_cursor</span> <span class="k">CURSOR</span> <span class="k">FOR</span>
-    <span class="k">SELECT</span> <span class="k">SQL</span><span class="p">,</span> <span class="n">DefaultDB</span><span class="p">,</span> <span class="n">Login</span>
-    <span class="k">FROM</span> <span class="o">@</span><span class="n">logins</span>
-    <span class="k">WHERE</span> <span class="n">SID</span> <span class="k">NOT</span> <span class="k">IN</span> <span class="p">(</span><span class="k">SELECT</span> <span class="n">sid</span> 
-                        <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="p">)</span>
-        <span class="k">AND</span> <span class="k">EXISTS</span> <span class="p">(</span><span class="k">SELECT</span> <span class="mi">1</span> 
-                    <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">databases</span> 
-                    <span class="k">WHERE</span> <span class="n">name</span> <span class="o">=</span> <span class="n">DefaultDB</span><span class="p">)</span>
-        <span class="k">AND</span> <span class="n">Login</span> <span class="k">NOT</span> <span class="k">IN</span> <span class="p">(</span><span class="k">SELECT</span> <span class="n">name</span> 
-                            <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span> 
-                            <span class="k">WHERE</span> <span class="n">name</span> <span class="o">=</span> <span class="n">Login</span> 
-                                <span class="k">And</span> <span class="k">type</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span><span class="p">)</span>
-<span class="k">OPEN</span> <span class="n">login_cursor</span>
-
-<span class="c1">-- add new logins
-</span><span class="c1"></span><span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">login_cursor</span> <span class="k">INTO</span> <span class="o">@</span><span class="k">sql</span><span class="p">,</span> <span class="o">@</span><span class="n">db</span><span class="p">,</span> <span class="o">@</span><span class="n">loginname</span>
-<span class="n">WHILE</span> <span class="o">@@</span><span class="n">fetch_status</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="k">BEGIN</span>
-    <span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="k">sql</span><span class="p">);</span>
-    <span class="c1">--print @sql
-</span><span class="c1"></span>    <span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">login_cursor</span> 
-        <span class="k">INTO</span> <span class="o">@</span><span class="k">sql</span><span class="p">,</span> <span class="o">@</span><span class="n">db</span><span class="p">,</span> <span class="o">@</span><span class="n">loginname</span>
-<span class="k">END</span>
-<span class="k">CLOSE</span> <span class="n">login_cursor</span>
-<span class="k">DEALLOCATE</span> <span class="n">login_cursor</span>
-
-<span class="c1">-- drop logins that are no longer being used
-</span><span class="c1"></span><span class="k">DECLARE</span> <span class="o">@</span><span class="n">drop_sqlString</span> <span class="n">nvarchar</span><span class="p">(</span><span class="k">max</span><span class="p">)</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
-<span class="k">DECLARE</span> <span class="n">drop_login_cursor</span> <span class="k">CURSOR</span> <span class="k">FOR</span>
-    <span class="c1">-- logins on current server that don&#39;t exist on the primary
-</span><span class="c1"></span>    <span class="k">SELECT</span> <span class="n">p</span><span class="p">.</span><span class="n">sid</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span>
-    <span class="k">FROM</span> <span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span> <span class="n">p</span>
-    <span class="k">JOIN</span> <span class="n">sys</span><span class="p">.</span><span class="n">syslogins</span> <span class="n">l</span> <span class="k">ON</span> <span class="n">l</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span>
-    <span class="k">JOIN</span> <span class="n">sys</span><span class="p">.</span><span class="n">sql_logins</span> <span class="n">sl</span> <span class="k">ON</span> <span class="n">l</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">sl</span><span class="p">.</span><span class="n">name</span>
-    <span class="k">WHERE</span> <span class="n">p</span><span class="p">.</span><span class="k">type</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
-       <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span> <span class="o">&lt;&gt;</span> <span class="s1">&#39;sa&#39;</span>
-       <span class="k">AND</span> <span class="n">l</span><span class="p">.</span><span class="n">denylogin</span> <span class="o">=</span> <span class="mi">0</span>
-       <span class="k">AND</span> <span class="n">l</span><span class="p">.</span><span class="n">hasaccess</span> <span class="o">=</span> <span class="mi">1</span>
-       <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">is_disabled</span> <span class="o">=</span> <span class="mi">0</span>
-       <span class="k">AND</span> <span class="k">NOT</span> <span class="k">EXISTS</span> <span class="p">(</span><span class="k">SELECT</span> <span class="mi">1</span>
-                        <span class="k">FROM</span> <span class="o">@</span><span class="n">logins</span> <span class="n">cl</span>
-                        <span class="k">WHERE</span> <span class="n">p</span><span class="p">.</span><span class="n">sid</span> <span class="o">=</span> <span class="n">cl</span><span class="p">.</span><span class="n">sid</span>
-                          <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">cl</span><span class="p">.</span><span class="n">Login</span>
-                          <span class="k">AND</span> <span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span> <span class="o">=</span> <span class="n">cl</span><span class="p">.</span><span class="n">DefaultDB</span><span class="p">)</span>
-	<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">p</span><span class="p">.</span><span class="n">name</span>
-<span class="k">OPEN</span> <span class="n">drop_login_cursor</span>
-<span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">drop_login_cursor</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">name</span><span class="p">,</span> <span class="o">@</span><span class="n">defaultdb</span>
-<span class="n">WHILE</span> <span class="o">@@</span><span class="n">fetch_status</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="k">BEGIN</span>
-
-    <span class="k">SET</span> <span class="o">@</span><span class="n">drop_sqlString</span> <span class="o">=</span> <span class="s1">&#39;DROP LOGIN &#39;</span> <span class="o">+</span> <span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;; &#39;</span>
-	<span class="c1">--print @drop_sqlString
-</span><span class="c1"></span>	<span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="n">drop_sqlString</span><span class="p">);</span>
-	
-    <span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> <span class="n">drop_login_cursor</span> <span class="k">INTO</span> <span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span> <span class="o">@</span><span class="n">name</span><span class="p">,</span> <span class="o">@</span><span class="n">defaultdb</span>
-<span class="k">END</span>
-<span class="k">CLOSE</span> <span class="n">drop_login_cursor</span>
-<span class="k">DEALLOCATE</span> <span class="n">drop_login_cursor</span></code></pre></td></tr></table>
+</span><span class="s1">        ORDER BY p.name&#39;</span><span class="p">)</span><span class="w">
+</span><span class="w"></span><span class="k">OPEN</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> 
+</span><span class="w">    </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">is_policy_checked</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">is_expiration_checked</span><span class="w">
+</span><span class="w"></span><span class="n">WHILE</span><span class="w"> </span><span class="o">@@</span><span class="n">fetch_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w"></span><span class="k">BEGIN</span><span class="w">
+</span><span class="w">    </span><span class="k">EXEC</span><span class="w"> </span><span class="n">sp_hexadecimal</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_string</span><span class="w"> </span><span class="k">OUT</span><span class="w">
+</span><span class="w">    </span><span class="k">EXEC</span><span class="w"> </span><span class="n">sp_hexadecimal</span><span class="w"> </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">SID_string</span><span class="w"> </span><span class="k">OUT</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">SET</span><span class="w"> </span><span class="o">@</span><span class="n">sqlString</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;CREATE LOGIN &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39; WITH PASSWORD = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_string</span><span class="w"> 
+</span><span class="w">                        </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39; HASHED, SID = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">SID_string</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, DEFAULT_DATABASE = [&#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;]&#39;</span><span class="w">
+</span><span class="w">                        </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, CHECK_POLICY = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">is_policy_checked</span><span class="w">
+</span><span class="w">                        </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;, CHECK_EXPIRATION = &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">is_expiration_checked</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w"> </span><span class="p">(</span><span class="n">SID</span><span class="p">,</span><span class="w"> </span><span class="n">Login</span><span class="p">,</span><span class="w"> </span><span class="k">SQL</span><span class="p">,</span><span class="w"> </span><span class="n">DefaultDB</span><span class="p">)</span><span class="w"> 
+</span><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">sqlString</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="p">);</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> 
+</span><span class="w">        </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">PWD_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">is_policy_checked</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">is_expiration_checked</span><span class="w">
+</span><span class="w"></span><span class="k">END</span><span class="w">
+</span><span class="w"></span><span class="k">CLOSE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w"></span><span class="k">DEALLOCATE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">DECLARE</span><span class="w"> </span><span class="o">@</span><span class="k">sql</span><span class="w"> </span><span class="nb">varchar</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span><span class="w"> </span><span class="o">@</span><span class="n">db</span><span class="w"> </span><span class="n">sysname</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">loginname</span><span class="w"> </span><span class="n">sysname</span><span class="p">;</span><span class="w">
+</span><span class="w"></span><span class="k">DECLARE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> </span><span class="k">CURSOR</span><span class="w"> </span><span class="k">FOR</span><span class="w">
+</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="k">SQL</span><span class="p">,</span><span class="w"> </span><span class="n">DefaultDB</span><span class="p">,</span><span class="w"> </span><span class="n">Login</span><span class="w">
+</span><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w">
+</span><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">SID</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">sid</span><span class="w"> 
+</span><span class="w">                        </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="p">)</span><span class="w">
+</span><span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> 
+</span><span class="w">                    </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">databases</span><span class="w"> 
+</span><span class="w">                    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DefaultDB</span><span class="p">)</span><span class="w">
+</span><span class="w">        </span><span class="k">AND</span><span class="w"> </span><span class="n">Login</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="w"> 
+</span><span class="w">                            </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="w"> 
+</span><span class="w">                            </span><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Login</span><span class="w"> 
+</span><span class="w">                                </span><span class="k">And</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;S&#39;</span><span class="p">)</span><span class="w">
+</span><span class="w"></span><span class="k">OPEN</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="c1">-- add new logins
+</span><span class="c1"></span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="k">sql</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">db</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">loginname</span><span class="w">
+</span><span class="w"></span><span class="n">WHILE</span><span class="w"> </span><span class="o">@@</span><span class="n">fetch_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w"></span><span class="k">BEGIN</span><span class="w">
+</span><span class="w">    </span><span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="k">sql</span><span class="p">);</span><span class="w">
+</span><span class="w">    </span><span class="c1">--print @sql
+</span><span class="c1"></span><span class="w">    </span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">login_cursor</span><span class="w"> 
+</span><span class="w">        </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="k">sql</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">db</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">loginname</span><span class="w">
+</span><span class="w"></span><span class="k">END</span><span class="w">
+</span><span class="w"></span><span class="k">CLOSE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w"></span><span class="k">DEALLOCATE</span><span class="w"> </span><span class="n">login_cursor</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="c1">-- drop logins that are no longer being used
+</span><span class="c1"></span><span class="k">DECLARE</span><span class="w"> </span><span class="o">@</span><span class="n">drop_sqlString</span><span class="w"> </span><span class="n">nvarchar</span><span class="p">(</span><span class="k">max</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">;</span><span class="w">
+</span><span class="w"></span><span class="k">DECLARE</span><span class="w"> </span><span class="n">drop_login_cursor</span><span class="w"> </span><span class="k">CURSOR</span><span class="w"> </span><span class="k">FOR</span><span class="w">
+</span><span class="w">    </span><span class="c1">-- logins on current server that don&#39;t exist on the primary
+</span><span class="c1"></span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">sid</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span><span class="w">
+</span><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">server_principals</span><span class="w"> </span><span class="n">p</span><span class="w">
+</span><span class="w">    </span><span class="k">JOIN</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">syslogins</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w">
+</span><span class="w">    </span><span class="k">JOIN</span><span class="w"> </span><span class="n">sys</span><span class="p">.</span><span class="n">sql_logins</span><span class="w"> </span><span class="n">sl</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">name</span><span class="w">
+</span><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;S&#39;</span><span class="w">
+</span><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="s1">&#39;sa&#39;</span><span class="w">
+</span><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">denylogin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">hasaccess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">is_disabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="w">                        </span><span class="k">FROM</span><span class="w"> </span><span class="o">@</span><span class="n">logins</span><span class="w"> </span><span class="n">cl</span><span class="w">
+</span><span class="w">                        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">sid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cl</span><span class="p">.</span><span class="n">sid</span><span class="w">
+</span><span class="w">                          </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cl</span><span class="p">.</span><span class="n">Login</span><span class="w">
+</span><span class="w">                          </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">default_database_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cl</span><span class="p">.</span><span class="n">DefaultDB</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w">
+</span><span class="w"></span><span class="k">OPEN</span><span class="w"> </span><span class="n">drop_login_cursor</span><span class="w">
+</span><span class="w"></span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">drop_login_cursor</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="w">
+</span><span class="w"></span><span class="n">WHILE</span><span class="w"> </span><span class="o">@@</span><span class="n">fetch_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w">
+</span><span class="w"></span><span class="k">BEGIN</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span><span class="k">SET</span><span class="w"> </span><span class="o">@</span><span class="n">drop_sqlString</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;DROP LOGIN &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">QUOTENAME</span><span class="p">(</span><span class="o">@</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;; &#39;</span><span class="w">
+</span><span class="w">	</span><span class="c1">--print @drop_sqlString
+</span><span class="c1"></span><span class="w">	</span><span class="k">EXEC</span><span class="p">(</span><span class="o">@</span><span class="n">drop_sqlString</span><span class="p">);</span><span class="w">
+</span><span class="w">	
+</span><span class="w">    </span><span class="k">FETCH</span><span class="w"> </span><span class="k">NEXT</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">drop_login_cursor</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="o">@</span><span class="n">SID_varbinary</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">@</span><span class="n">defaultdb</span><span class="w">
+</span><span class="w"></span><span class="k">END</span><span class="w">
+</span><span class="w"></span><span class="k">CLOSE</span><span class="w"> </span><span class="n">drop_login_cursor</span><span class="w">
+</span><span class="w"></span><span class="k">DEALLOCATE</span><span class="w"> </span><span class="n">drop_login_cursor</span></code></pre></td></tr></table>
 </div>
 </div>
-
-<p>As I said, this might not be the way you would do this, but this works for us and keeps the logins synced across all of our replicas which minimizes login failures. I’ve uploaded the <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/SyncLogins" target="_blank">full script</a> to GitHub, if you&rsquo;re interested in it.</p>
+<p>As I said, this might not be the way you would do this, but this works for us and keeps the logins synced across all of our replicas which minimizes login failures. I’ve uploaded the <!-- raw HTML omitted -->full script<!-- raw HTML omitted --> to GitHub, if you&rsquo;re interested in it.</p>
 
     </div>
 

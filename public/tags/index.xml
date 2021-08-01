@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on Taryn Pratt - Pivots and other SQL fun</title>
@@ -6,13 +6,9 @@
     <description>Recent content in Tags on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Availability Group</title>
+      <title>availability-group</title>
       <link>https://tarynpivots.com/tags/availability-group/</link>
       <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
       
@@ -21,7 +17,7 @@
     </item>
     
     <item>
-      <title>Backup</title>
+      <title>backup</title>
       <link>https://tarynpivots.com/tags/backup/</link>
       <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
       
@@ -30,25 +26,7 @@
     </item>
     
     <item>
-      <title>Bug</title>
-      <link>https://tarynpivots.com/tags/bug/</link>
-      <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/bug/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Career</title>
-      <link>https://tarynpivots.com/tags/career/</link>
-      <pubDate>Tue, 14 Jan 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/career/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Checkdb</title>
+      <title>checkdb</title>
       <link>https://tarynpivots.com/tags/checkdb/</link>
       <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
       
@@ -57,97 +35,7 @@
     </item>
     
     <item>
-      <title>Clustered Columnstore</title>
-      <link>https://tarynpivots.com/tags/clustered-columnstore/</link>
-      <pubDate>Mon, 20 Jul 2020 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/clustered-columnstore/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Crosstab</title>
-      <link>https://tarynpivots.com/tags/crosstab/</link>
-      <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/crosstab/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Data</title>
-      <link>https://tarynpivots.com/tags/data/</link>
-      <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/data/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Data Migration</title>
-      <link>https://tarynpivots.com/tags/data-migration/</link>
-      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/data-migration/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Deadlock</title>
-      <link>https://tarynpivots.com/tags/deadlock/</link>
-      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/deadlock/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Development</title>
-      <link>https://tarynpivots.com/tags/development/</link>
-      <pubDate>Mon, 27 Aug 2018 15:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/development/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Distributed Availability Group</title>
-      <link>https://tarynpivots.com/tags/distributed-availability-group/</link>
-      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/distributed-availability-group/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Failover</title>
-      <link>https://tarynpivots.com/tags/failover/</link>
-      <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/failover/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Journey</title>
-      <link>https://tarynpivots.com/tags/journey/</link>
-      <pubDate>Tue, 14 Jan 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/journey/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Locks</title>
-      <link>https://tarynpivots.com/tags/locks/</link>
-      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/locks/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Maintenance</title>
+      <title>maintenance</title>
       <link>https://tarynpivots.com/tags/maintenance/</link>
       <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
       
@@ -156,7 +44,97 @@
     </item>
     
     <item>
-      <title>Monitoring</title>
+      <title>restore</title>
+      <link>https://tarynpivots.com/tags/restore/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/restore/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>restore-testing</title>
+      <link>https://tarynpivots.com/tags/restore-testing/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/restore-testing/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>sql</title>
+      <link>https://tarynpivots.com/tags/sql/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/sql/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>sql-server</title>
+      <link>https://tarynpivots.com/tags/sql-server/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/sql-server/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>stack-overflow</title>
+      <link>https://tarynpivots.com/tags/stack-overflow/</link>
+      <pubDate>Mon, 19 Apr 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/stack-overflow/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>deadlock</title>
+      <link>https://tarynpivots.com/tags/deadlock/</link>
+      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/deadlock/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>locks</title>
+      <link>https://tarynpivots.com/tags/locks/</link>
+      <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/locks/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>distributed-availability-group</title>
+      <link>https://tarynpivots.com/tags/distributed-availability-group/</link>
+      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/distributed-availability-group/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>readable-secondary</title>
+      <link>https://tarynpivots.com/tags/readable-secondary/</link>
+      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/readable-secondary/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>sql-server-2019</title>
+      <link>https://tarynpivots.com/tags/sql-server-2019/</link>
+      <pubDate>Fri, 18 Dec 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/sql-server-2019/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>monitoring</title>
       <link>https://tarynpivots.com/tags/monitoring/</link>
       <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
       
@@ -165,7 +143,25 @@
     </item>
     
     <item>
-      <title>Monitoring Tools</title>
+      <title>performance-tuning</title>
+      <link>https://tarynpivots.com/tags/performance-tuning/</link>
+      <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/performance-tuning/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>powershell</title>
+      <link>https://tarynpivots.com/tags/powershell/</link>
+      <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/powershell/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>monitoring-tools</title>
       <link>https://tarynpivots.com/tags/monitoring-tools/</link>
       <pubDate>Thu, 15 Oct 2020 04:00:00 +0000</pubDate>
       
@@ -174,20 +170,20 @@
     </item>
     
     <item>
-      <title>Mysql</title>
-      <link>https://tarynpivots.com/tags/mysql/</link>
-      <pubDate>Sun, 18 Jan 2015 19:00:38 +0000</pubDate>
+      <title>data-migration</title>
+      <link>https://tarynpivots.com/tags/data-migration/</link>
+      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
       
-      <guid>https://tarynpivots.com/tags/mysql/</guid>
+      <guid>https://tarynpivots.com/tags/data-migration/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>Outage</title>
-      <link>https://tarynpivots.com/tags/outage/</link>
-      <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
+      <title>projects</title>
+      <link>https://tarynpivots.com/tags/projects/</link>
+      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
       
-      <guid>https://tarynpivots.com/tags/outage/</guid>
+      <guid>https://tarynpivots.com/tags/projects/</guid>
       <description></description>
     </item>
     

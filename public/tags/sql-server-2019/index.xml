@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Sql Server 2019 on Taryn Pratt - Pivots and other SQL fun</title>
+    <title>sql-server-2019 on Taryn Pratt - Pivots and other SQL fun</title>
     <link>https://tarynpivots.com/tags/sql-server-2019/</link>
-    <description>Recent content in Sql Server 2019 on Taryn Pratt - Pivots and other SQL fun</description>
+    <description>Recent content in sql-server-2019 on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 18 Dec 2020 04:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="https://tarynpivots.com/tags/sql-server-2019/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Fri, 18 Dec 2020 04:00:00 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/sql-server-2019/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Syncing Logins Between Availability Group Replicas</title>
       <link>https://tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/</link>
@@ -38,7 +34,7 @@ However, if you really don&amp;rsquo;t want to read it, here&amp;rsquo;s a quick
       <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
-      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
+      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
     </item>
     
     <item>

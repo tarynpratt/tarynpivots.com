@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Sql on Taryn Pratt - Pivots and other SQL fun</title>
+    <title>sql on Taryn Pratt - Pivots and other SQL fun</title>
     <link>https://tarynpivots.com/tags/sql/</link>
-    <description>Recent content in Sql on Taryn Pratt - Pivots and other SQL fun</description>
+    <description>Recent content in sql on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="https://tarynpivots.com/tags/sql/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/sql/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Testing Backups and Offloading CheckDB</title>
       <link>https://tarynpivots.com/post/2021/testing-backups-offload-dbcc-checkdb/</link>
@@ -28,7 +24,7 @@ Background Early on when I started working on the SQL Servers at Stack Overflow,
       <pubDate>Fri, 09 Apr 2021 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/2021/fighting-with-deadlocks/</guid>
-      <description>If you follow me on Twitter, then you might have noticed that I&amp;rsquo;ve been fighting a lot of fires lately. Between high CPU (several times 1, 2), blocking queries, a slow failover, and deadlocks there have been a ton of things that needed attention. Not all of these issues are interesting to people, but one of them might be&amp;hellip;the deadlocks. I’m going to go into details about what deadlocks we hit, why we hit them, and how we resolved them.</description>
+      <description>If you follow me on Twitter, then you might have noticed that I&amp;rsquo;ve been fighting a lot of fires lately. Between high CPU (several times 1, 2), blocking queries, a slow failover, and deadlocksthere have been a ton of things that needed attention. Not all of these issues are interesting to people, but one of them might be&amp;hellip;the deadlocks. I’m going to go into details about what deadlocks we hit, why we hit them, and how we resolved them.</description>
     </item>
     
     <item>
@@ -58,7 +54,7 @@ Always On Availability Groups can support up to nine availability replicas, and 
       <guid>https://tarynpivots.com/post/2020/my-sql-server-toolbox/</guid>
       <description>I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&amp;rsquo;ll also do my best to keep it updated as things change.
 The current list of both free and 3rd party paid tools is below:
-Free Tools  Opserver - Stack Exchange&amp;rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers</description>
+Free Tools   Opserver- Stack Exchange&amp;rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers</description>
     </item>
     
     <item>
@@ -87,7 +83,7 @@ However, if you really don&amp;rsquo;t want to read it, here&amp;rsquo;s a quick
       <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
-      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
+      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
     </item>
     
     <item>
@@ -115,7 +111,7 @@ A Little Background The servers I upgraded were the three SQL Servers that run S
       <pubDate>Wed, 15 Jan 2020 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/perils-querying-sql-replica-under-load/</guid>
-      <description>Last week at Stack Overflow we had an internal hack-a-thon, or as we call it, a make-a-thon. I was on the bug-bashing team, which is the team that attempts to fix smallish bugs we haven’t gotten around to fixing, due to other time-constraints. I was tagged to investigate a bug about duplicate badges being awarded because it looked to possibly be an easy fix in SQL. At first glance it looked simple enough, but once I started digging in, I figured out very quickly it wouldn’t be.</description>
+      <description>Last week at Stack Overflow we had an internal hack-a-thon, or as we call it, a make-a-thon. I was on the bug-bashing team, which is the team that attempts to fix smallish bugs we haven’t gotten around to fixing, due to other time-constraints. I was tagged to investigate a bugabout duplicate badges being awarded because it looked to possibly be an easy fix in SQL. At first glance it looked simple enough, but once I started digging in, I figured out very quickly it wouldn’t be.</description>
     </item>
     
     <item>
@@ -124,8 +120,8 @@ A Little Background The servers I upgraded were the three SQL Servers that run S
       <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</guid>
-      <description>In late June 2019, June 26th to be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
-The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped it before an actual outage occurred.</description>
+      <description>In late June 2019, June 26thto be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
+The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped itbefore an actual outage occurred.</description>
     </item>
     
     <item>
@@ -158,8 +154,8 @@ Last year, when we upgraded to SQL Server 2017 we didn&amp;rsquo;t make any chan
       <pubDate>Wed, 07 Nov 2018 19:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</guid>
-      <description>This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
-A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place &amp;mdash; the majority were at some level of SQL Server 2016, each with a different CU or SP installed.</description>
+      <description>This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed.</description>
     </item>
     
     <item>
@@ -189,7 +185,7 @@ A quick background, when I became the DBA at Stack Overflow, we had various vers
       <description>I have answered a lot of MySQL pivot questions over on Stack Overflow and a few over on Database Administrators and have learned some things about how to transform data in MySQL.
 Unfortunately, MySQL does not have PIVOT function, so in order to rotate data from rows into columns you will have to use a CASE expression along with an aggregate function.
 Let&amp;rsquo;s set up some sample data.
-1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46  create table products ( prod_id int not null, prod_name varchar(50) not null, primary key (prod_id) ); insert into products (prod_id, prod\name) values (1, &amp;#39;Shoes&amp;#39;), (2, &amp;#39;Pants&amp;#39;), (3, &amp;#39;Shirt&amp;#39;); create table reps ( rep_id int not null, rep_name varchar(50) not null, primary key (rep_id) ); insert into reps (rep_id, rep_name) values (1, &amp;#39;John&amp;#39;), (2, &amp;#39;Sally&amp;#39;), (3, &amp;#39;Joe&amp;#39;), (4, &amp;#39;Bob&amp;#39;); create table sales ( prod_id INT NOT NULL, rep_id INT NOT NULL, sale_date datetime not null, quantity int not null, PRIMARY KEY (prod_id, rep_id, sale_date), FOREIGN KEY (prod_id) REFERENCES products(prod_id), FOREIGN KEY (rep_id) REFERENCES reps(rep_id) ); insert into sales (prod_id, rep_id, sale_date, quantity) values (1, 1, &amp;#39;2013-05-16&amp;#39;, 20), (1, 1, &amp;#39;2013-06-19&amp;#39;, 2), (2, 1, &amp;#39;2013-07-03&amp;#39;, 5), (3, 1, &amp;#39;2013-08-22&amp;#39;, 27), (3, 2, &amp;#39;2013-06-27&amp;#39;, 500), (3, 2, &amp;#39;2013-01-07&amp;#39;, 150), (1, 2, &amp;#39;2013-05-01&amp;#39;, 89), (2, 2, &amp;#39;2013-02-14&amp;#39;, 23), (1, 3, &amp;#39;2013-01-29&amp;#39;, 19), (3, 3, &amp;#39;2013-03-06&amp;#39;, 13), (2, 3, &amp;#39;2013-04-18&amp;#39;, 1), (2, 3, &amp;#39;2013-08-03&amp;#39;, 78), (2, 3, &amp;#39;2013-07-22&amp;#39;, 69);   We can easily query the rep, sales, and product data by joining the tables:</description>
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46  createtableproducts(prod_idintnotnull,prod_namevarchar(50)notnull,primarykey(prod_id));insertintoproducts(prod_id,prod\name)values(1,&amp;#39;Shoes&amp;#39;),(2,&amp;#39;Pants&amp;#39;),(3,&amp;#39;Shirt&amp;#39;);createtablereps(rep_idintnotnull,rep_namevarchar(50)notnull,primarykey(rep_id));insertintoreps(rep_id,rep_name)values(1,&amp;#39;John&amp;#39;),(2,&amp;#39;Sally&amp;#39;),(3,&amp;#39;Joe&amp;#39;),(4,&amp;#39;Bob&amp;#39;);createtablesales(prod_idINTNOTNULL,rep_idINTNOTNULL,sale_datedatetimenotnull,quantityintnotnull,PRIMARYKEY(prod_id,rep_id,sale_date),FOREIGNKEY(prod_id)REFERENCESproducts(prod_id),FOREIGNKEY(rep_id)REFERENCESreps(rep_id));insertintosales(prod_id,rep_id,sale_date,quantity)values(1,1,&amp;#39;2013-05-16&amp;#39;,20),(1,1,&amp;#39;2013-06-19&amp;#39;,2),(2,1,&amp;#39;2013-07-03&amp;#39;,5),(3,1,&amp;#39;2013-08-22&amp;#39;,27),(3,2,&amp;#39;2013-06-27&amp;#39;,500),(3,2,&amp;#39;2013-01-07&amp;#39;,150),(1,2,&amp;#39;2013-05-01&amp;#39;,89),(2,2,&amp;#39;2013-02-14&amp;#39;,23),(1,3,&amp;#39;2013-01-29&amp;#39;,19),(3,3,&amp;#39;2013-03-06&amp;#39;,13),(2,3,&amp;#39;2013-04-18&amp;#39;,1),(2,3,&amp;#39;2013-08-03&amp;#39;,78),(2,3,&amp;#39;2013-07-22&amp;#39;,69);   We can easily query the rep, sales, and product data by joining the tables:</description>
     </item>
     
     <item>
