@@ -7,18 +7,15 @@ excerpt: "T-SQL Tuesday #122: Dealing with Impostor Syndrome"
 ---
 
 
-<img src="/image/2020/T-SQL-Tuesday-Logo.jpg" width="300" height="300" style="float:right" />
-
-
 [![T-SQL Tuesday Logo](/image/2020/T-SQL-Tuesday-Logo.jpg#floatright)](https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/)
 
 
-This month's T-SQL Tuesday is hosted by <a href="https://twitter.com/JonShaulis" target="_blank">Jon Shaulis</a>, who has asked that we talk about <a href="https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/" target="_blank">impostor syndrome</a>. This subject is close to my heart, as I have dealt with it throughout my career. 
+This month's T-SQL Tuesday is hosted by [Jon Shaulis](https://twitter.com/JonShaulis), who has asked that we talk about [impostor syndrome](https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/). This subject is close to my heart, as I have dealt with it throughout my career. 
 
 
 I didn't study computer science or engineering in college. I never even took a computer class. I sort of just fell into working as a web developer because I had [someone tell me they wouldn’t hire me due to lack of experience](/post/ch-ch-ch-changes-are-afoot/). 
 
-Early in my career, I was a web developer, an MS Access developer, and a C#/WinForms Software Engineer, and I never knew what I was doing in any of those roles. For all of them, I used books, blogs, and <a href="http://stackoverflow.com/" target="_blank">Stack Overflow</a> to learn what I needed, in order to complete some of my day to day tasks. I did whatever it took to get the job done, and learned everything I could in the process. Each day I hoped people wouldn’t realize I didn’t really know what I was doing. 
+Early in my career, I was a web developer, an MS Access developer, and a C#/WinForms Software Engineer, and I never knew what I was doing in any of those roles. For all of them, I used books, blogs, and [Stack Overflow](http://stackoverflow.com/) to learn what I needed, in order to complete some of my day to day tasks. I did whatever it took to get the job done, and learned everything I could in the process. Each day I hoped people wouldn’t realize I didn’t really know what I was doing. 
 
 Eventually, I found my niche. I loved working with databases and writing SQL. I worked as a Database Developer/DBA for quite a few years and then took a break from it, but always knew I’d go back. After a two year hiatus, I went back as the DBA at Stack Overflow. 
 

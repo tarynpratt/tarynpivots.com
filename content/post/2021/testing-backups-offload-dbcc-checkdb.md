@@ -16,7 +16,7 @@ Early on when I started working on the SQL Servers at Stack Overflow, we were ta
  
 Now, you might be wondering why I'd run `CHECKDB` on the backup after I restore it and asking yourself "aren't you supposed to run `CHECKDB` on the SQL Server you take a backup on?"
  
-Yes, technically many people suggest you do that, but we don't,  because while we take full backups on the primary replica in our <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-ver15" target="_blank">Always On Availability Groups</a>, we don't have maintenance windows, and running `CHECKDB` on a very busy production SQL Server like we have for Stack Overflow can cause issues (ask me how I know). We can't easily run a full `CHECKDB` in production, so since I was going to be restoring the backups to make sure they worked, I might as well run `CHECKDB `on it to verify everything.
+Yes, technically many people suggest you do that, but we don't,  because while we take full backups on the primary replica in our [Always On Availability Groups](https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-ver15), we don't have maintenance windows, and running `CHECKDB` on a very busy production SQL Server like we have for Stack Overflow can cause issues (ask me how I know). We can't easily run a full `CHECKDB` in production, so since I was going to be restoring the backups to make sure they worked, I might as well run `CHECKDB `on it to verify everything.
 
 ## Automating the Testing
 
@@ -36,7 +36,7 @@ Now that I had the answer to the questions above, it was time to create a proces
 
 1. Automatically add or remove databases that need testing 
 2. Restore the our backups on a separate server
-3. Run <a href="https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?redirectedfrom=MSDN&view=sql-server-ver15" target="_blank">`DBCC CHECKDB`</a> on the backup after being restored
+3. Run [`DBCC CHECKDB`](https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?redirectedfrom=MSDN&view=sql-server-ver15) on the backup after being restored
 
 
 ### Maintaining a List of Databases to Test
@@ -163,7 +163,7 @@ BEGIN
 END
 {{< / highlight >}}
 
-This procedure uses <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/xp-cmdshell-transact-sql?view=sql-server-ver15" target="_blank">xp_cmdshell</a> to get the list of files in the backup directory, then adds new databases that are missing from the current list, and removes databases that haven't had a new .bak file in the last seven days. Finally, we have a scheduled job that executes this stored procedure nightly to keep the table of `DatabasesToRestore` up to date. 
+This procedure uses [xp_cmdshell](https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/xp-cmdshell-transact-sql?view=sql-server-ver15) to get the list of files in the backup directory, then adds new databases that are missing from the current list, and removes databases that haven't had a new .bak file in the last seven days. Finally, we have a scheduled job that executes this stored procedure nightly to keep the table of `DatabasesToRestore` up to date. 
 
 ### Restoring Database Backups
 
@@ -533,7 +533,7 @@ In this stored procedure I do a couple of things, run `CHECKDB` and then validat
 
 To get this entire process done, I have two SQL Agent jobs running - one to update the list of the `DatabasesToRestore` via `spUpdateDatabasesToRestore` and one that executes the Backup and Restore Testing procedure (`spBackupRestoreTesting`). 
 
-I've added all these scripts to <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/BackupRestoreTesting" target="_blank">GitHub</a>, feel free to peruse them that way or tell me how terrible they are. 
+I've added all these scripts to [GitHub](https://github.com/tarynpratt/misc_sql_scripts/tree/master/BackupRestoreTesting), feel free to peruse them that way or tell me how terrible they are. 
 
 ## Final Thoughts
 

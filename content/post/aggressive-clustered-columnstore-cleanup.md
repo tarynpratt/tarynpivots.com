@@ -6,7 +6,7 @@ tags: [sql, sql-server, stack-overflow, sql-server-2019, server-upgrade, mainten
 excerpt: Hitting an unusual clustered columnstore cleanup issue after upgrading to SQL Server 2019
 ---
 
-In late March 2020, we upgraded our production SQL Servers to <a href="https://www.microsoft.com/en-us/sql-server/sql-server-2019" target="_blank">SQL Server 2019</a> with CU3. After finishing the upgrade, we hit an issue with <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014" target=”_blank”>clustered columnstore</a> that we hadn't experienced in the previous version of SQL, SQL Server 2017. The issue also wasn't something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience. 
+In late March 2020, we upgraded our production SQL Servers to [SQL Server 2019](https://www.microsoft.com/en-us/sql-server/sql-server-2019) with CU3. After finishing the upgrade, we hit an issue with [clustered columnstore](https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014) that we hadn't experienced in the previous version of SQL, SQL Server 2017. The issue also wasn't something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience. 
 
 ## Background
 
@@ -18,17 +18,17 @@ There were various driving forces for it, but in early February we needed to pur
 - general cleanup/removal of old events we no longer needed to maintain
 - ease of GDPR compliance processing
 
-We, or I should say <a href="https://twitter.com/marcgravell" target="_blank">Marc Gravell</a>, deleted approximately 8 billion rows across 912 tables in the database. By doing this, we gained back drive space and removed data we no longer needed to keep. 
+We, or I should say [Marc Gravell](https://twitter.com/marcgravell), deleted approximately 8 billion rows across 912 tables in the database. By doing this, we gained back drive space and removed data we no longer needed to keep. 
 
 After performing the deletions, we did some of the recommended maintenance on columnstore indexes. While many of the smaller tables were rebuilt, a handful of tables (11 total) weren't rebuilt due to their size. Since we don’t have maintenance windows, it would be high-impact to attempt these rebuilds on a very active production environment. 
 
-The plan was to perform these table rebuilds after upgrading to 2019. SQL Server 2019 added the ability <a href="http://www.nikoport.com/2018/06/21/columnstore-indexes-part-123-clustered-columnstore-index-online-rebuild/" target="_blank">to rebuild clustered columnstore indexes online</a> and that feature was one of the main reasons we wanted to upgrade. 
+The plan was to perform these table rebuilds after upgrading to 2019. SQL Server 2019 added the ability [to rebuild clustered columnstore indexes online](http://www.nikoport.com/2018/06/21/columnstore-indexes-part-123-clustered-columnstore-index-online-rebuild/) and that feature was one of the main reasons we wanted to upgrade. 
 
 ## Upgrade Day 
 
 I'm not going to cover our full upgrade to 2019 - that will hopefully be a later post. At this point, let's just assume everything went as planned and this is picking up after the main failovers of the servers that run Stack Overflow and the rest of the public network. 
 
-After we finished the failovers for our public production servers, there was some behind the scenes work that needed to be done. This included patching and upgrading the former primary servers, and a failover of our reporting servers. The reporting cluster is a member of several <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-ver15" target="_blank">distributed availability groups</a>. When we're doing upgrades, we move the primary server from New York (NY-RPTSQL01) to Colorado (CO-RPTSQL01). Once all the upstream SQL Servers are upgraded, there's one last failover to get the primary back to NY-RPTSQL01. I'm specifically mentioning these servers because they receive data from PRIZM, so they are impacted by any activity in that database.
+After we finished the failovers for our public production servers, there was some behind the scenes work that needed to be done. This included patching and upgrading the former primary servers, and a failover of our reporting servers. The reporting cluster is a member of several [distributed availability groups](https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-ver15). When we're doing upgrades, we move the primary server from New York (NY-RPTSQL01) to Colorado (CO-RPTSQL01). Once all the upstream SQL Servers are upgraded, there's one last failover to get the primary back to NY-RPTSQL01. I'm specifically mentioning these servers because they receive data from PRIZM, so they are impacted by any activity in that database.
 
 ## Transaction Logs Exponentially Growing
 
@@ -40,7 +40,7 @@ Normally large transaction logs might raise my eyebrows, but I wouldn't be super
 
 If you're not familiar with availability groups, the transaction logs from the primary server need to be written to the secondary servers. This same thing happens with distributed availability groups, but at a larger scale. In this case the transaction logs for the databases, including PRIZM which is on our primary server for Stack Overflow, needed to be flushed to the reporting cluster. 
 
-As the logs were increasing in PRIZM, they needed to be written to the reporting servers and CO-RPTSQL01 had a huge `log send queue`, and NY-RPTSQL01 had a huge `recovery queue`. Both of those are defined in the <a href="https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2012/ff878356(v=sql.110)" target="_blank">Microsoft docs</a>, but I’ve included the definitions below:
+As the logs were increasing in PRIZM, they needed to be written to the reporting servers and CO-RPTSQL01 had a huge `log send queue`, and NY-RPTSQL01 had a huge `recovery queue`. Both of those are defined in the [Microsoft docs](https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2012/ff878356(v=sql.110)), but I’ve included the definitions below:
 
 - **Log send queue** - Amount of log records in the log files of the primary database, in kilobytes, that has not yet been sent to the secondary replica. This value is sent to the secondary replica from the primary replica. Queue size does not include FILESTREAM files that are sent to a secondary.
 - **Recovery queue** - Amount of log records in the log files of the secondary replica that has not yet been redone.
@@ -53,9 +53,9 @@ When I first noticed the `log send queue` size, it was about 90GB. Within just a
 
 We knew normal traffic wasn't causing the increase. We also knew there wasn’t a delete job that would have triggered the massive growth of transaction logs, especially at the rate we were seeing. Now it was time to try and figure out what was causing the rapid growth.
 
-I looked at our instance of <a href="https://github.com/opserver/Opserver" target="_blank">OpServer</a> to see if it reported any queries running against PRIZM. Nothing. 
+I looked at our instance of [OpServer](https://github.com/opserver/Opserver) to see if it reported any queries running against PRIZM. Nothing. 
 
-I executed <a href="http://whoisactive.com/" target="_blank">`sp_whoisactive`</a>. Nothing. 
+I executed [`sp_whoisactive`](http://whoisactive.com/). Nothing. 
 
 From what I was seeing it appeared "something" was crawling through our CCI tables and processing "something". Like all the hand-wavy "something was doing something"? Yeah me too. We didn't know what was happening and I was frantically trying to get it to stop. 
 
@@ -83,7 +83,7 @@ FROM    @Table
 WHERE DBName = 'PRIZM'
 {{< / highlight >}}
 
-The output of `sp_who2` was repeatedly showing `GHOST CLEANUP` and `CREATE INDEX`. Over and over and over again. To be clear, I’m not a clustered columnstore expert, I know enough to be able to maintain them as needed. I went to <a href="https://twitter.com/tarynpivots/status/1243984519314558976" target="_blank">Twitter</a> and mentioned what I was seeing. I was advised by <a href="https://twitter.com/sqL_handLe/status/1243988928484511746" target="_blank">@sqL_handLe</a> to try trace flag 661 which disables the ghost record removal process, and by Joe Obbish via <a href="https://twitter.com/erikdarlingdata/status/1244005847140884480”" target="_blank">Erik Darling</a> to enable trace flag 634 to disable the tuple mover background task.
+The output of `sp_who2` was repeatedly showing `GHOST CLEANUP` and `CREATE INDEX`. Over and over and over again. To be clear, I’m not a clustered columnstore expert, I know enough to be able to maintain them as needed. I went to [Twitter](https://twitter.com/tarynpivots/status/1243984519314558976) and mentioned what I was seeing. I was advised by [@sqL_handLe](https://twitter.com/sqL_handLe/status/1243988928484511746) to try trace flag 661 which disables the ghost record removal process, and by Joe Obbish via [Erik Darling](https://twitter.com/erikdarlingdata/status/1244005847140884480) to enable trace flag 634 to disable the tuple mover background task.
 
 Initially, we enabled trace flag 634, but the logs continued to grow. We disabled trace flag 634. Then we enabled trace flag 661, and the logs continued to grow, so we disabled it. Finally, we tried enabling both of the trace flags. The big jumps stopped, but we now had about 400GB of logs that needed to be written to the reporting cluster before we could perform the failover. 
 
@@ -99,9 +99,9 @@ A brief side note, before we enabled the trace flags we were getting lots of exc
 
 The next morning we still had logs that were being written to the reporting cluster, 195GB to be exact. Yes I know that as ridiculously high still, but we have throughput issues between our two datacenters (that’s a whole different story). Due to the size of the recovery queue that meant no failover until that flushed. 
 
-We heard back from support, so it was time to investigate. They requested that we take a full dump file, which is pretty difficult since we have 1.5TB of memory on the Stack Overflow SQL Server and the C: drive isn't large enough to capture that, so we went with a smaller filtered dump and 3 minidumps. That meant <a href="https://twitter.com/tarynpivots/status/1244257820905627653" target="_blank">another public outage</a>, but we needed the files for them. 
+We heard back from support, so it was time to investigate. They requested that we take a full dump file, which is pretty difficult since we have 1.5TB of memory on the Stack Overflow SQL Server and the C: drive isn't large enough to capture that, so we went with a smaller filtered dump and 3 minidumps. That meant [another public outage](https://twitter.com/tarynpivots/status/1244257820905627653), but we needed the files for them. 
 
-When we took the dump files, we disabled both trace flags (634 and 661), during the <a href="https://twitter.com/tarynpivots/status/1244408854768578561" target="_blank">10 minutes the trace flags were off, the transaction logs increased another 25-30GB</a>.
+When we took the dump files, we disabled both trace flags (634 and 661), during the [10 minutes the trace flags were off, the transaction logs increased another 25-30GB](https://twitter.com/tarynpivots/status/1244408854768578561).
 
 ### We’re Being Haunted by Ghosts
 

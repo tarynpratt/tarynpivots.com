@@ -69,7 +69,7 @@
 <meta itemprop="name" content="Deploying My SQL Server Maintenance Scripts">
 <meta itemprop="description" content="In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment."><meta itemprop="datePublished" content="2020-10-16T04:00:00+00:00" />
 <meta itemprop="dateModified" content="2020-10-16T04:00:00+00:00" />
-<meta itemprop="wordCount" content="1252">
+<meta itemprop="wordCount" content="1255">
 <meta itemprop="keywords" content="sql,sql-server,stack-overflow,performance-tuning,monitoring,maintenance,powershell," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Deploying My SQL Server Maintenance Scripts"/>
 <meta name="twitter:description" content="In my previous post, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment."/>
@@ -301,7 +301,7 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2020-10-16 </span>
         
-        <span class="more-meta"> 1252 words </span>
+        <span class="more-meta"> 1255 words </span>
           <span class="more-meta"> 6 min read </span>
 
         
@@ -334,7 +334,7 @@ if (!doNotTrack) {
     <div class="post-content">
       <p>In my <a href="https://www.tarynpivots.com/post/2020/my-sql-server-toolbox/">previous post</a>, I listed out the tools I use with SQL Server. Some of the tools are SQL scripts that need to be deployed to each server. If you have 1-2 SQL Servers, manually deploying scripts might not be bad, but ideally you don&rsquo;t want to manually deploy anything, so I wrote a little script that allow me to install the SQL scripts in my toolbox to any environment.</p>
 <h2 id="background">Background</h2>
-<p>When I started as the DBA at Stack Overflow, our SQL Servers were kind of a mess (sorry to those who maintained them before me, but they were). Many of the servers hadn&rsquo;t been patched in a long time, and we had different versions of various SQL scripts like, <!-- raw HTML omitted -->sp_whoisactive<!-- raw HTML omitted --> and Brent Ozar&rsquo;s <!-- raw HTML omitted -->First Reponder Kit<!-- raw HTML omitted -->,  everywhere. Since the SQL Servers were now my responsibility I wanted everything in order. I decided that one of my first tasks would be to create a simple process to deploy the same scripts everwhere.</p>
+<p>When I started as the DBA at Stack Overflow, our SQL Servers were kind of a mess (sorry to those who maintained them before me, but they were). Many of the servers hadn&rsquo;t been patched in a long time, and we had different versions of various SQL scripts like, <a href="http://whoisactive.com/">sp_whoisactive</a> and Brent Ozar&rsquo;s <a href="https://www.brentozar.com/responder/">First Reponder Kit</a>,  everywhere. Since the SQL Servers were now my responsibility I wanted everything in order. I decided that one of my first tasks would be to create a simple process to deploy the same scripts everwhere.</p>
 <h2 id="my-little-deploying-scripts-project">My Little Deploying Scripts Project</h2>
 <p>When I started the project, I had already decided what maintenance tools I wanted to install across our environments - these are most of the SQL scripts in my toolbox - I just needed to figure out how I was going to get them on our 30 servers at the same time.</p>
 <p>After several years away from SQL Server and PowerShell, I needed to get my feet wet again, so I decided to write a very basic process that would do the following:</p>
@@ -348,7 +348,7 @@ if (!doNotTrack) {
 <p>Once the files were in the location, I would just loop through them and execute each one. Step 1 done.</p>
 <h3 id="gathering-the-list-of-sql-servers">Gathering the List of SQL Servers</h3>
 <p>Step 2 in the project was to get a list of all the SQL Servers I wanted the tools on. Easy enough, right? But then I needed a way to parse that list in PowerShell. I wasn&rsquo;t exact sure how I wanted to do this.</p>
-<p>I looked at some of the other tools being used at Stack Overflow for ideas. The SRE team uses <!-- raw HTML omitted -->puppet<!-- raw HTML omitted --> to deploy to our infrastructure, and puppet uses JSON files to store key-value pairs. I wondered if I could do the same for this tiny little project.</p>
+<p>I looked at some of the other tools being used at Stack Overflow for ideas. The SRE team uses <a href="https://puppet.com/">puppet</a> to deploy to our infrastructure, and puppet uses JSON files to store key-value pairs. I wondered if I could do the same for this tiny little project.</p>
 <p>After several failed attempts at getting the JSON right, I was able to use the following format to store the info about the SQL Servers I wanted to deploy to:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -399,7 +399,7 @@ if (!doNotTrack) {
 </div>
 </div>
 <p>In the config.json file, I&rsquo;m storing the <code>ScriptDirectory</code> which is the path I put all of the .sql files to install. Next, it contains an array of the list of servers. Within the array, I&rsquo;m storing the <code>name</code> of the server and then the <code>type</code> of the server. The <code>name</code> is pretty self-explanatory, just include each server name and you&rsquo;re done.</p>
-<p>The <code>type</code> might seem slightly odd since these are all SQL Servers, but there was a reason I needed this. We have some servers protected by different firewalls, for example the servers that hold the Stack Overflow and the Stack Exchange network of databases are in a totally different zone, than the servers for <!-- raw HTML omitted -->Stack Overflow for Teams<!-- raw HTML omitted -->. My PowerShell script would need to be able to distinguish between the multiple firewalls, so I used this as the identifier.</p>
+<p>The <code>type</code> might seem slightly odd since these are all SQL Servers, but there was a reason I needed this. We have some servers protected by different firewalls, for example the servers that hold the Stack Overflow and the Stack Exchange network of databases are in a totally different zone, than the servers for <a href="https://stackoverflow.com/teams">Stack Overflow for Teams</a>. My PowerShell script would need to be able to distinguish between the multiple firewalls, so I used this as the identifier.</p>
 <p>Now that I had a way to get all the servers to push to Step 2 was done.</p>
 <h3 id="my-little-powershell-script">My Little PowerShell Script</h3>
 <p>The last part of the project was to put all the pieces together and write the PowerShell script to deploy everything automatically. I wrote the script to accept a couple of parameters:</p>
@@ -550,7 +550,7 @@ if (!doNotTrack) {
 </div>
 </div>
 <p>And it will deploy to all servers with <code>zone1_servers</code> as their type.</p>
-<p>I&rsquo;ve uploaded the code to <!-- raw HTML omitted -->a repo in GitHub<!-- raw HTML omitted --> if anyone would find it useful.</p>
+<p>I&rsquo;ve uploaded the code to <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/DeployMaintenanceScripts">a repo in GitHub</a> if anyone would find it useful.</p>
 <h3 id="next-steps">Next Steps</h3>
 <p>Since I rarely need to make changes to the scripts, I don&rsquo;t have this currently setup in our CI/CD to deploy automatically when I push changes to GitHub. I could, and might at some point, then I wouldn&rsquo;t have to manually deploy via an automated script.</p>
 <p>While this works for me, what do you use to deploy maintenance scripts to all your SQL Servers? Do you have a homegrown process or a 3rd party tool?</p>

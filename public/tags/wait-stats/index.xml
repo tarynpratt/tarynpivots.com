@@ -13,8 +13,8 @@
       <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</guid>
-      <description>In late June 2019, June 26thto be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
-The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped itbefore an actual outage occurred.</description>
+      <description>In late June 2019, June 26th to be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
+The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped it before an actual outage occurred.</description>
     </item>
     
   </channel>

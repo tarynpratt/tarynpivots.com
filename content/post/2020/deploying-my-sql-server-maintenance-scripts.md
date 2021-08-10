@@ -10,7 +10,7 @@ In my [previous post](https://www.tarynpivots.com/post/2020/my-sql-server-toolbo
 
 ## Background
 
-When I started as the DBA at Stack Overflow, our SQL Servers were kind of a mess (sorry to those who maintained them before me, but they were). Many of the servers hadn't been patched in a long time, and we had different versions of various SQL scripts like, <a href="http://whoisactive.com/" target="_blank">sp_whoisactive</a> and Brent Ozar's <a href="https://www.brentozar.com/responder/" target="_blank">First Reponder Kit</a>,  everywhere. Since the SQL Servers were now my responsibility I wanted everything in order. I decided that one of my first tasks would be to create a simple process to deploy the same scripts everwhere. 
+When I started as the DBA at Stack Overflow, our SQL Servers were kind of a mess (sorry to those who maintained them before me, but they were). Many of the servers hadn't been patched in a long time, and we had different versions of various SQL scripts like, [sp_whoisactive](http://whoisactive.com/) and Brent Ozar's [First Reponder Kit](https://www.brentozar.com/responder/),  everywhere. Since the SQL Servers were now my responsibility I wanted everything in order. I decided that one of my first tasks would be to create a simple process to deploy the same scripts everwhere. 
 
 ## My Little Deploying Scripts Project
 
@@ -32,7 +32,7 @@ Once the files were in the location, I would just loop through them and execute 
 
 Step 2 in the project was to get a list of all the SQL Servers I wanted the tools on. Easy enough, right? But then I needed a way to parse that list in PowerShell. I wasn't exact sure how I wanted to do this. 
 
-I looked at some of the other tools being used at Stack Overflow for ideas. The SRE team uses <a href="https://puppet.com/" target="_blank">puppet</a> to deploy to our infrastructure, and puppet uses JSON files to store key-value pairs. I wondered if I could do the same for this tiny little project. 
+I looked at some of the other tools being used at Stack Overflow for ideas. The SRE team uses [puppet](https://puppet.com/) to deploy to our infrastructure, and puppet uses JSON files to store key-value pairs. I wondered if I could do the same for this tiny little project. 
 
 After several failed attempts at getting the JSON right, I was able to use the following format to store the info about the SQL Servers I wanted to deploy to:
 
@@ -62,7 +62,7 @@ After several failed attempts at getting the JSON right, I was able to use the f
 
 In the config.json file, I'm storing the `ScriptDirectory` which is the path I put all of the .sql files to install. Next, it contains an array of the list of servers. Within the array, I'm storing the `name` of the server and then the `type` of the server. The `name` is pretty self-explanatory, just include each server name and you're done. 
 
-The `type` might seem slightly odd since these are all SQL Servers, but there was a reason I needed this. We have some servers protected by different firewalls, for example the servers that hold the Stack Overflow and the Stack Exchange network of databases are in a totally different zone, than the servers for <a href="https://stackoverflow.com/teams" target="_blank">Stack Overflow for Teams</a>. My PowerShell script would need to be able to distinguish between the multiple firewalls, so I used this as the identifier.
+The `type` might seem slightly odd since these are all SQL Servers, but there was a reason I needed this. We have some servers protected by different firewalls, for example the servers that hold the Stack Overflow and the Stack Exchange network of databases are in a totally different zone, than the servers for [Stack Overflow for Teams](https://stackoverflow.com/teams). My PowerShell script would need to be able to distinguish between the multiple firewalls, so I used this as the identifier.
 
 Now that I had a way to get all the servers to push to Step 2 was done. 
 
@@ -155,7 +155,7 @@ If I want to deploy to a specific set of servers, I can run:
 
 And it will deploy to all servers with `zone1_servers` as their type. 
 
-I've uploaded the code to <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/DeployMaintenanceScripts" target="_blank">a repo in GitHub</a> if anyone would find it useful. 
+I've uploaded the code to [a repo in GitHub](https://github.com/tarynpratt/misc_sql_scripts/tree/master/DeployMaintenanceScripts) if anyone would find it useful. 
 
 ### Next Steps
 

@@ -24,7 +24,7 @@
       <guid>https://tarynpivots.com/post/2020/my-sql-server-toolbox/</guid>
       <description>I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&amp;rsquo;ll also do my best to keep it updated as things change.
 The current list of both free and 3rd party paid tools is below:
-Free Tools   Opserver- Stack Exchange&amp;rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers</description>
+Free Tools   Opserver - Stack Exchange&amp;rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers</description>
     </item>
     
   </channel>

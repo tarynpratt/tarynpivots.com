@@ -6,13 +6,13 @@ tags: [sql, sql-server, stack-overflow, availability-group, data-migration, powe
 excerpt: Moving 40TB of data - table by table to a new database, then using an availability group to migrate it to a new server.
 ---
 
-Initially, I wasn’t sure whether to write about this migration project, but when I randomly asked <a href="https://twitter.com/tarynpivots/status/1234966141526671360" target="_blank">if people would be interested</a>, the response was overwhelming. This was a long, kind of boring, very repetitive, and at times incredibly frustrating project, but I learned a lot, and maybe someone else will learn from this too. There may be far better ways to move this amount of data. In the path I went down, there was a huge amount of juggling that had to take place  (I’ll explain that later). Thankfully, I’m a decent juggler.
+Initially, I wasn’t sure whether to write about this migration project, but when I randomly asked [if people would be interested](https://twitter.com/tarynpivots/status/1234966141526671360), the response was overwhelming. This was a long, kind of boring, very repetitive, and at times incredibly frustrating project, but I learned a lot, and maybe someone else will learn from this too. There may be far better ways to move this amount of data. In the path I went down, there was a huge amount of juggling that had to take place  (I’ll explain that later). Thankfully, I’m a decent juggler.
 
 While most people are probably interested in what we do with our primary SQL Servers (the servers that run Stack Overflow and the Stack Exchange network of sites), this post isn’t about those servers. This post is about what I called a miscellaneous server in a [previous post](https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/) - more specifically, it’s about the migration of our traffic log data.
 
 ## Background
 
-Our HAProxy<sup>1</sup> logs aka traffic logs, are currently stored on two SQL Servers, one in New York, and one in Colorado. While we store a minimal summary of the traffic data, we have a lot of it. At the beginning of 2019, we had about 4.5 years of data, totaling about 38TB. The database was initially designed to have a single table for each day. This meant that at the start of 2019 we had approximately 1600 tables in a single database with multiple database files (due to the <a href="https://docs.microsoft.com/en-us/sql/sql-server/maximum-capacity-specifications-for-sql-server?view=sql-server-ver15" target="_blank">16TB size limit of data files</a>). Each table had a <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-overview?view=sql-server-ver15" target="_blank">clustered columnstore index</a>, which held anywhere from 100-400 million rows in it.
+Our HAProxy<sup>1</sup> logs aka traffic logs, are currently stored on two SQL Servers, one in New York, and one in Colorado. While we store a minimal summary of the traffic data, we have a lot of it. At the beginning of 2019, we had about 4.5 years of data, totaling about 38TB. The database was initially designed to have a single table for each day. This meant that at the start of 2019 we had approximately 1600 tables in a single database with multiple database files (due to the [16TB size limit of data files](https://docs.microsoft.com/en-us/sql/sql-server/maximum-capacity-specifications-for-sql-server?view=sql-server-ver15)). Each table had a [clustered columnstore index](https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-overview?view=sql-server-ver15), which held anywhere from 100-400 million rows in it.
  
 I had to move the data from their existing daily tables into a new structure — one table for each month. This needed to be completed on both the NY and CO servers, and the data was stored on spinny drives (Eeek). No matter what, it was going to be painful and slow.
 
@@ -27,7 +27,7 @@ I fully expected the process to take months, and it did &mdash; after hitting de
 
 <hr />
  
-<sup>1 </sup>Note: If you're interested, my colleague, Nick Craver (<a href="https://nickcraver.com/" target="_blank">b</a> | <a href="https://twitter.com/Nick_Craver/" target="_blank">t</a>), wrote extensively about our monitoring on his blog and gave an <a href="https://nickcraver.com/blog/2018/11/29/stack-overflow-how-we-do-monitoring/#logs-haproxy" target="_blank">overview of our HAProxy usage</a>.
+<sup>1 </sup>Note: If you're interested, my colleague, Nick Craver ([b](https://nickcraver.com/) | [t](https://twitter.com/Nick_Craver/)), wrote extensively about our monitoring on his blog and gave an [overview of our HAProxy usage](https://nickcraver.com/blog/2018/11/29/stack-overflow-how-we-do-monitoring/#logs-haproxy).
 
 
 ### Things to Remember
@@ -309,8 +309,7 @@ public string GetDestTableName(DateTime dt) => $"HAProxyLogs_{dt:yyyy_MM}";
  
 Ideally, this was going to be as simple as kicking off the LINQPad script, and letting it run in the background looping through all the tables. I thought I wouldn’t have to worry about it, but things are never really that easy.
 
-I started the migration in Colorado, on January 14, 2019 (yes, I know the exact date). Pulling millions of rows of data from spinny drives, and then inserting it back into new tables on those same spinny drives was slow. By day 2, 
- <a href="https://twitter.com/tarynpivots/status/1085225095168065536" target="_blank">knew this was going to be painful</a>. My original plan was to run the migration in Colorado first, then in New York. However, once I saw how slow each table was taking, I decided to run them simultaneously. About a week later, I kicked off the New York data migration. 
+I started the migration in Colorado, on January 14, 2019 (yes, I know the exact date). Pulling millions of rows of data from spinny drives, and then inserting it back into new tables on those same spinny drives was slow. By day 2, [knew this was going to be painful](https://twitter.com/tarynpivots/status/1085225095168065536). My original plan was to run the migration in Colorado first, then in New York. However, once I saw how slow each table was taking, I decided to run them simultaneously. About a week later, I kicked off the New York data migration. 
 
 
 ## Data Migration Issues
@@ -323,7 +322,7 @@ The first issue was with the C# script. The script periodically timed-out when q
  
 ### Random Script Errors
  
-Next, I ran into an issue, where the script would continue to the next table, aka day, if there was an error. That was terrible because we wanted the data to be <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-query-performance?view=sql-server-ver15" target="_blank">inserted in date order</a>, for the clustered columnstore index. If the script errored and moved on to the next day, cleanup would need to be done for the day that didn’t finish. At that point, I’d have to start the process over for that particular day. 
+Next, I ran into an issue, where the script would continue to the next table, aka day, if there was an error. That was terrible because we wanted the data to be [inserted in date order](https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-query-performance?view=sql-server-ver15), for the clustered columnstore index. If the script errored and moved on to the next day, cleanup would need to be done for the day that didn’t finish. At that point, I’d have to start the process over for that particular day. 
 
 You might be wondering what I mean by "cleanup". 
 
@@ -595,7 +594,7 @@ It took about 2-2.5 hours to insert each old table into the new table. By the mi
 - 1332 tables left to migrate in New York
 - and 782 tables left in Colorado
  
-At the rate it was going, I knew <a href="https://twitter.com/tarynpivots/status/1098695568140906496" target="_blank">it was going to take months to complete</a>. 
+At the rate it was going, I knew [it was going to take months to complete](https://twitter.com/tarynpivots/status/1098695568140906496). 
  
 I went back to the drawing board to figure out some way to move the data faster. Obviously, I wanted to follow the same steps - insert old data, verify the row count matches, move to the next day, repeat - I used the C# script as my model - I mean it worked, it was just a little slow. I tried a bunch of different things, none were blazingly fast:
  
@@ -889,7 +888,7 @@ While the PowerShell script wasn’t perfect, and I still hit issues with timeou
  
 ## Continuous Issues of No Free Disk Space
 
-When your servers are already limited in free space and you have to move 40TB of data around on the same server, it becomes a little like <a href="https://en.wikipedia.org/wiki/Whac-A-Mole" target="_blank">whack-a-mole</a> to get things moved. I had to get creative to free up space while continuing to move all the data to the new format. 
+When your servers are already limited in free space and you have to move 40TB of data around on the same server, it becomes a little like [whack-a-mole](https://en.wikipedia.org/wiki/Whac-A-Mole) to get things moved. I had to get creative to free up space while continuing to move all the data to the new format. 
 
 
 ### Deleting and Shrinking
@@ -904,7 +903,7 @@ After moving each month, I would do a final validation, then it was time for som
 
 I say sort of, because I was just moving data on the same drives. We changed formats from daily tables to monthly tables, and while we got better compression in the new tables, there weren’t huge gains in free space. We had the same number of rows of data stored in fewer tables, which meant less bits in the long run, but in order to gain back the space allocated to the old data files, I had to shrink them.
 
-<img src="/image/2020/scales.png" width="300" height="300" style="float:right" alt="Balancing Scales" />
+![Balancing Scales](/image/2020/scales.png#floatright)
  
 As I moved the data from the old files, I was increasing the size of the new data files. This was all being done on the E: drive that was 85-90% full, which I mentioned above. I was constantly trying to keep the used disk space in check. 
 
@@ -933,7 +932,7 @@ alter database tempdb
  
 By moving `tempdb` we had minimal downtime and I gained approximately 122GB in free space. While that gave me a little more room to shrink the old data files, it still wasn’t quite working as I wanted, so it was back to the drawing board. 
  
-Trying to shrink the files in huge chunks of 300GB or more was too much, it was slow and resulted in blocking of the inserts into the old database. I found a <a href="https://medium.com/@anna.f/shrink-oversized-data-files-in-microsoft-sql-server-53fb640f893e" target="_blank">solution that seemed promising</a> and would involve shrinking the files in much smaller bits in a loop, so I figured I’d try it. It took a little bit of poking to get the <a href="https://twitter.com/tarynpivots/status/1095430853507788802"target="_blank">right number to shrink in every execution</a>, but I eventually ended up using something similar to this:
+Trying to shrink the files in huge chunks of 300GB or more was too much, it was slow and resulted in blocking of the inserts into the old database. I found a [solution that seemed promising](https://medium.com/@anna.f/shrink-oversized-data-files-in-microsoft-sql-server-53fb640f893e) and would involve shrinking the files in much smaller bits in a loop, so I figured I’d try it. It took a little bit of poking to get the [right number to shrink in every execution](https://twitter.com/tarynpivots/status/1095430853507788802), but I eventually ended up using something similar to this:
  
 {{< highlight sql>}}
 declare @from int                             
@@ -997,17 +996,18 @@ Was this ideal? No. Was it a pain? Yes. But again, it moved the entire project f
 
 In early May 2019, I was still plugging away at migrating data. At this point, I was back to where I started - copying data from the old database on the spinny drives, inserting it into the new database, deleting the old data, and then shrinking the files all on the same drives.
 
-<img src="/image/2020/edrive_slowness.png" width="500" height="500" style="float:right"  alt="Read/Write Stats of Spinny Drives"/>
+![Read/Write Stats of Spinny Drives](/image/2020/edrive_slowness.png#floatright)
 
-After months of doing this, I was seeing a noticeable slowdown in the process. The read/write delays on the drives had increased since January. The <a href="https://twitter.com/tarynpivots/status/1126581287471407104" target="_blank">average delays</a> of reads were over 100 milliseconds and about 80 milliseconds for writes.
 
-The <a href="https://twitter.com/tarynpivots/status/1131620681794240513" target="_blank">overall response time</a> was terrible. 
+After months of doing this, I was seeing a noticeable slowdown in the process. The read/write delays on the drives had increased since January. The [average delays](https://twitter.com/tarynpivots/status/1126581287471407104) of reads were over 100 milliseconds and about 80 milliseconds for writes.
 
-I was struggling with <a href="https://twitter.com/tarynpivots/status/1130566711088799744" target="_blank">`PAGEIOLATCH_SH` waits</a> as I was trying to insert data into the new tables. 
+The [overall response time](https://twitter.com/tarynpivots/status/1131620681794240513) was terrible. 
 
-We had been using the spinny drives for years, and I had been hitting them non-stop for about 4 months. I was <a href="https://twitter.com/tarynpivots/status/1127320396619890688" target="_blank">very worried the drives were going to fail</a> before I was done migrating all of the data.
+I was struggling with [`PAGEIOLATCH_SH` waits](https://twitter.com/tarynpivots/status/1130566711088799744) as I was trying to insert data into the new tables. 
 
-Thankfully, they didn't. I eventually was able to move all of the old data over to the new database. It only <a href="https://twitter.com/tarynpivots/status/1144251803820810241" target="_blank">took 6 months to complete</a>.
+We had been using the spinny drives for years, and I had been hitting them non-stop for about 4 months. I was [very worried the drives were going to fail](https://twitter.com/tarynpivots/status/1127320396619890688) before I was done migrating all of the data.
+
+Thankfully, they didn't. I eventually was able to move all of the old data over to the new database. It only [took 6 months to complete](https://twitter.com/tarynpivots/status/1144251803820810241).
 
 ![Traffic Logs Done](/image/2020/traffliclog_tables.jpg)
 
@@ -1025,11 +1025,11 @@ After lots of fussing with the Windows Server install, I eventually got installe
 
 ### Backup and Restore Failure
 
-The most obvious way to move a database from the old server to the new server is, of course, to take a backup and then restore it. So, that’s what <a href="https://twitter.com/tarynpivots/status/1182779767621181440" target="_blank">I did</a>, or I should say, tried to do. I say tried because when I took the backup, I set the script to write it out on the new server, but unfortunately, <a href="https://twitter.com/tarynpivots/status/1184804705844613125" target="_blank">the backup took most of the space</a> which meant I couldn’t restore it. It was a bit of a <a href="https://en.wikipedia.org/wiki/Facepalm#:~:text=A%20facepalm%20is%20the%20physical,in%20contact%20with%20the%20face." target="_blank">facepalm moment</a>.
+The most obvious way to move a database from the old server to the new server is, of course, to take a backup and then restore it. So, that’s what [I did](https://twitter.com/tarynpivots/status/1182779767621181440), or I should say, tried to do. I say tried because when I took the backup, I set the script to write it out on the new server, but unfortunately, [the backup took most of the space](https://twitter.com/tarynpivots/status/1184804705844613125) which meant I couldn’t restore it. It was a bit of a [facepalm moment](https://en.wikipedia.org/wiki/Facepalm#:~:text=A%20facepalm%20is%20the%20physical,in%20contact%20with%20the%20face).
 
 We're a very lean shop when it comes to hardware, and this is by far our largest chunk of data we have to store, so there wasn’t a place anywhere on the network to store a 33-38TB full backup temporarily, while it was being restored to a server.
 
-Time for more <a href="https://twitter.com/tarynpivots/status/1184893381308084226" target="_blank">juggling</a>. 
+Time for more [juggling](https://twitter.com/tarynpivots/status/1184893381308084226). 
 
 ### Copying Tables...Again
 
@@ -1037,31 +1037,32 @@ Since I wasn’t able to take a backup and restore it, I was back to square one,
 
 I would be moving from server to server within the same datacenter and rack, so I wanted to see how fast it would be to use various methods to bulk insert the data from the old database to the new one. I tried:
 
-<img src="/image/2020/slow_migrations.jpg" width="300" height="300" style="float:right; padding: 20px;" alt="Slow Migration Time" />
+![Slow Migration Time](/image/2020/slow_migrations.jpg#floatright)
 
-- <a href="https://twitter.com/tarynpivots/status/1185194987488567297" target="_blank">PowerShell method</a> - took <a href="https://twitter.com/tarynpivots/status/1185304145361637377" target="_blank">36 hours</a> to move one table with 4 billion rows
+
+- [PowerShell method](https://twitter.com/tarynpivots/status/1185194987488567297) - took [36 hours](https://twitter.com/tarynpivots/status/1185304145361637377) to move one table with 4 billion rows
 - SSIS version - took 2.5 days to move the same table
-- <a href="https://docs.microsoft.com/en-us/sql/t-sql/functions/openrowset-transact-sql?view=sql-server-ver15" target="_blank">`OPENROWSET`</a> - took 16 hours to move 650 million rows
+- [`OPENROWSET`](https://docs.microsoft.com/en-us/sql/t-sql/functions/openrowset-transact-sql?view=sql-server-ver15) - took 16 hours to move 650 million rows
 
-PowerShell was the winner when it came to speed, but Nick Craver wasn’t convinced. He decided to try it. He wrote a little LINQPad script and after running it <a href="https://twitter.com/Nick_Craver/status/1186456942400737281" target="_blank">he finally believed me that moving this much data sucked</a>. 
+PowerShell was the winner when it came to speed, but Nick Craver wasn’t convinced. He decided to try it. He wrote a little LINQPad script and after running it [he finally believed me that moving this much data sucked](https://twitter.com/Nick_Craver/status/1186456942400737281). 
 
-At this point, <a href="https://twitter.com/tarynpivots/status/1186465114754445313" target="_blank">I was devastated</a> because it looked like I was going to have to migrate everything for a second time. 
+At this point, [I was devastated](https://twitter.com/tarynpivots/status/1186465114754445313) because it looked like I was going to have to migrate everything for a second time. 
 
 ### Time to Try an Availability Group
 
-I really, really, really did not want to move hundreds of tables again, so I threw out the idea of using an <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/overview-of-always-on-availability-groups-sql-server?view=sql-server-ver15" target="_blank">availability group</a> to <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatically-initialize-always-on-availability-group?view=sql-server-ver15" target="_blank">automatically seed the databases</a> to the new servers. We already have AGs throughout our infrastructure, so I was familiar with using them, but I was unsure if it would successfully work for a database of this size. 
+I really, really, really did not want to move hundreds of tables again, so I threw out the idea of using an [availability group](https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/overview-of-always-on-availability-groups-sql-server?view=sql-server-ver15) to [automatically seed the databases](https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatically-initialize-always-on-availability-group?view=sql-server-ver15) to the new servers. We already have AGs throughout our infrastructure, so I was familiar with using them, but I was unsure if it would successfully work for a database of this size. 
 
-Before starting, I pinged <a href="https://www.seangallardy.com/" target="_blank">Sean Gallardy</a> and asked if he thought it was possible to automatically seed a database of between 30-40TB - he guessed it'd be slow but possible, maybe taking 1-3 days. I was 100% ok with waiting 1-3 days, if it saved me months of moving tables again. 
+Before starting, I pinged [Sean Gallardy](https://www.seangallardy.com/) and asked if he thought it was possible to automatically seed a database of between 30-40TB - he guessed it'd be slow but possible, maybe taking 1-3 days. I was 100% ok with waiting 1-3 days, if it saved me months of moving tables again. 
 
 I decided to spin up the availability group on the Colorado server first, and if it was successful, I'd move to New York. In order to set this up, I would need to go through all these steps:
 
 - Set up new Windows Failover Cluster with the two servers
-- Take another backup, as I couldn't use the first one because the database was in <a href="https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/recovery-models-sql-server?view=sql-server-ver15" target="_blank">simple recovery instead of full</a>. This meant waiting another <a href="https://twitter.com/tarynpivots/status/1186819184249856000" target="_blank">11.5 hours</a> for the backup of the 33TB database in Colorado to finish
+- Take another backup, as I couldn't use the first one because the database was in [simple recovery instead of full](https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/recovery-models-sql-server?view=sql-server-ver15). This meant waiting another [11.5 hours](https://twitter.com/tarynpivots/status/1186819184249856000) for the backup of the 33TB database in Colorado to finish
 - Set up the AG and fingers crossed let it seed
 - Initiate failover to the new server
 - Destroy AG and shutdown old server
 
-After backup in Colorado finished, I realized that we might have a small problem when trying to autoseed. The <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatically-initialize-always-on-availability-group?view=sql-server-ver15" target="_blank">docs explain</a>:
+After backup in Colorado finished, I realized that we might have a small problem when trying to autoseed. The [docs explain](ttps://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatically-initialize-always-on-availability-group?view=sql-server-ver15):
 
 > Automatic seeding requires that the data and log file paths are the same on every SQL Server instance participating in the availability group
 
@@ -1079,27 +1080,29 @@ modify file(name= TrafficLogs_log, filename = 'E:\Data\TrafficLogs_log.ldf');
 
 By changing the assigned letter to the drive, I also had to move `tempdb` to the new drive, but once all that was done it was time to try setting up the availability group.
 
-I spun up the temporary AG in Colorado, waited and watched SQL Server. I was constantly checking both DMVs `sys.dm_hadr_automatic_seeding` and `sys.dm_hadr_physical_seeding_stats` to see the <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatically-initialize-always-on-availability-group?view=sql-server-ver15#monitor-automatic-seeding-availability-group" target="_blank">status of the seeding process</a>. I was concerned it would fail and we'd be back to the drawing board. After about 6 hours, it looked like we had seeded about 17TB of the database. 
+I spun up the temporary AG in Colorado, waited and watched SQL Server. I was constantly checking both DMVs `sys.dm_hadr_automatic_seeding` and `sys.dm_hadr_physical_seeding_stats` to see the [status of the seeding process](https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/automatically-initialize-always-on-availability-group?view=sql-server-ver15#monitor-automatic-seeding-availability-group). I was concerned it would fail and we'd be back to the drawing board. After about 6 hours, it looked like we had seeded about 17TB of the database. 
 
 We also could see from our SignalFX monitoring of network traffic that something was happening. The SignalFX chart below shows we were averaging about 150 - 180 Mb/sec of traffic to a box that wasn't being used by anything except for the database seeding. 
 
-<img src="/image/2020/co_log_transfer_inprogress.png" width="720" height="360" style="padding: 20px;" alt="Network Traffic Flowing" />
+![Network Traffic Flowing](/image/2020/co_log_transfer_inprogress.png)
 
 By the next morning, the seeding had finished and we had a database with all the tables on the new Colorado server. Progress!!
 
-<img src="/image/2020/opserver_seeding_co.png" width="720" height="360" style="padding: 20px;" alt="We have tables" />
+![We have tables](/image/2020/opserver_seeding_co.png)
 
-Before initiating the failover, I ran a <a href="https://twitter.com/tarynpivots/status/1187516892170223616" target="_blank">`DBCC CHECKDB`</a> on the new server aka the secondary in the availability group to be sure the database was in a good state, and after <a href="https://twitter.com/tarynpivots/status/1187690141940244480" target="_blank">22 hours</a> it completed with no issues reported.  
+Before initiating the failover, I ran a [`DBCC CHECKDB`](https://twitter.com/tarynpivots/status/1187516892170223616) on the new server aka the secondary in the availability group to be sure the database was in a good state, and after [22 hours](https://twitter.com/tarynpivots/status/1187690141940244480) it completed with no issues reported.  
 
 It was time for the failover. I was a little nervous about doing it, but we were ecstatic, shocked, and impressed (all-in-one) that it worked.
 
-While all of this work was happening in Colorado, I kicked off <a href="https://twitter.com/tarynpivots/status/1187179353425113089" target="_blank">the process on the New York server</a> since the database was  larger, and I knew it was going to take a long time. After taking <a href="https://twitter.com/tarynpivots/status/1187736811675668480" target="_blank">41 hours to backup the 40TB database</a>, I was ready to follow all the same steps on the New York server. I set up the cluster, availability group, seeded the database, ran a very long `DBCC CHECKDB`, and finished with a successful failover. 
+While all of this work was happening in Colorado, I kicked off [the process on the New York server](https://twitter.com/tarynpivots/status/1187179353425113089) since the database was  larger, and I knew it was going to take a long time. After taking [41 hours to backup the 40TB database](https://twitter.com/tarynpivots/status/1187736811675668480), I was ready to follow all the same steps on the New York server. I set up the cluster, availability group, seeded the database, ran a very long `DBCC CHECKDB`, and finished with a successful failover. 
 
 The hardest parts were done, but it wasn't quite time to celebrate. I still had some final work to do. 
 
 ### Final Cleanup
 
-<img src="/image/2020/fireworks.jpg" width="360" height="120" style="float:right; padding: 20px;" alt="Celebration Fireworks" />
+
+![Celebration Fireworks](/image/2020/fireworks.jpg#floatright)
+
 
 We finally had the new servers in place with the databases, but we didn’t have the new traffic log data flowing to the new servers quite yet. The service that sends the traffic logs (Traffic Processing Service aka TPS) was still pointing to the old database. This was done purposely, to not interrupt any of the teams using the data. The idea was, once the servers were in place, we could side-by-side release the new version to push data in both places for a period of time (by sending syslog traffic from HAProxy to both servers). This would allow teams to port their processes to the new database and table structures in a gradual way.
 
@@ -1107,7 +1110,7 @@ The week after the failover, we released the new traffic processing service and 
 
 ## Final Thoughts
 
-During my time as the DBA at Stack Overflow, I’ve had the opportunity to work on various large projects  (some documented <a href="https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/" target="_blank">here</a> and <a href="https://www.tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/" target="_blank">here</a>), but none have taken as long as this one. This took <a href="https://twitter.com/tarynpivots/status/1191458709630672896" target="_blank">about 11 months</a> with all of the moving, validating, deleting, and juggling space.
+During my time as the DBA at Stack Overflow, I’ve had the opportunity to work on various large projects  (some documented [here](https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/) and [here](https://www.tarynpivots.com/post/how-stack-overflow-upgraded-from-windows-2012/)), but none have taken as long as this one. This took [about 11 months](https://twitter.com/tarynpivots/status/1191458709630672896) with all of the moving, validating, deleting, and juggling space.
 
 I honestly love taking on these big projects. Planning the entire thing, and taking it from start to finish is extremely gratifying. Even though I automated the majority of the work, this project was incredibly frustrating and I definitely don’t want to do it again anytime soon (unless I have plenty of drive space and don’t  have to juggle things for 11 months). This project was challenging in many ways, and considering I had to do the same work on two servers it was doubly challenging. In the end, I was very relieved to successfully use an availability group to seed the databases to the new servers, and finally be done with moving all the things.
 

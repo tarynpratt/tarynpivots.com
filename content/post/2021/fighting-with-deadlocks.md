@@ -6,11 +6,11 @@ tags: [sql, sql-server, stack-overflow, deadlock, locks]
 excerpt: Fighting a Sch-M lock in deadlocks
 ---
 
-If you follow me on <a href="https://twitter.com/tarynpivots" target="_blank">Twitter</a>, then you might have noticed that I've been fighting a lot of fires lately. Between high CPU (several times <a href="https://twitter.com/tarynpivots/status/1371869915053916167" target="_blank">1</a>, <a href="https://twitter.com/tarynpivots/status/1372282151220117504" target="_blank">2</a>), <a href="https://twitter.com/tarynpivots/status/1375473620034580480" target="_blank">blocking queries</a>, a <a href="https://twitter.com/tarynpivots/status/1375620062736871428" target="_blank">slow failover</a>, and <a href="https://twitter.com/tarynpivots/status/1373990159121752065" target="_blank">deadlocks</a> there have been a ton of things that needed attention. Not all of these issues are interesting to people, but one of them might be...the deadlocks. I’m going to go into details about what deadlocks we hit, why we hit them, and how we resolved them. 
+If you follow me on [Twitter](https://twitter.com/tarynpivots), then you might have noticed that I've been fighting a lot of fires lately. Between high CPU (several times [1](https://twitter.com/tarynpivots/status/1371869915053916167), [2](https://twitter.com/tarynpivots/status/1372282151220117504)), [blocking queries](https://twitter.com/tarynpivots/status/1375473620034580480), a [slow failover](https://twitter.com/tarynpivots/status/1375620062736871428), and [deadlocks](https://twitter.com/tarynpivots/status/1373990159121752065) there have been a ton of things that needed attention. Not all of these issues are interesting to people, but one of them might be...the deadlocks. I’m going to go into details about what deadlocks we hit, why we hit them, and how we resolved them. 
 
 ## Background
 
-A few years ago, we launched <a href="https://stackoverflow.com/teams/" target="_blank">Stack Overflow for Teams</a>, which allows you to have a private version of Stack Overflow to share knowledge. I haven't written about the infrastructure of Teams, but my colleague, <a href="https://twitter.com/deanward81" target="_blank">Dean Ward</a>, gave a <a href="https://www.youtube.com/watch?v=g-hZZjN_Cbg" target="_blank">presentation about how Stack Overflow for Teams was built</a> - it's good, go watch it. 
+A few years ago, we launched [Stack Overflow for Teams](https://stackoverflow.com/teams/), which allows you to have a private version of Stack Overflow to share knowledge. I haven't written about the infrastructure of Teams, but my colleague, [Dean Ward](https://twitter.com/deanward81), gave a [presentation about how Stack Overflow for Teams was built](https://www.youtube.com/watch?v=g-hZZjN_Cbg) - it's good, go watch it. 
 
 Here's a brief overview of what we have on the SQL Server side - we have a 3 server cluster for Teams (2 in NY, 1 in CO) that are using Always On Availability Groups. We use schemas to keep teams separated from each other, and we put 10,000 schemas in each database, so we have multiple databases with 10,000 schemas in each one. 
 
@@ -26,11 +26,11 @@ We never wanted to run into a race condition or incur the performance overhead w
 - Permissions
 - Tables, Views, and any other database objects
 
-Initially, we had about 100 schemas ready to go, and then had a scheduled job that would check periodically to refresh our provisioned bucket and replenish it back to full. We realized very quickly that 100 schemas wasn’t enough because we constantly hit issues with the logins not being <a rehf="https://www.tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/" target="_blank">available on the secondary replicas</a>, so we decided to increase the provisioned pool to 500. For the last several years, a pool of 500 schemas worked great, until it didn’t.
+Initially, we had about 100 schemas ready to go, and then had a scheduled job that would check periodically to refresh our provisioned bucket and replenish it back to full. We realized very quickly that 100 schemas wasn’t enough because we constantly hit issues with the logins not being [available on the secondary replicas](https://www.tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/), so we decided to increase the provisioned pool to 500. For the last several years, a pool of 500 schemas worked great, until it didn’t.
 
 ## The Launch of Free Teams
 
-As expected, with the announcement that Stack Overflow for Teams is <a href="https://meta.stackexchange.com/questions/362203/stack-overflow-for-teams-is-now-free-for-up-to-50-users-forever" target="_blank">free for up to 50 users</a>, we saw an incredible spike in sign-ups. Along with the spike in sign-ups, I started to receive a huge increase in alerts about deadlocks on the primary SQL Server for Teams. In the two weeks it took us to resolve the deadlocks, we hit at least 200 deadlocks. 
+As expected, with the announcement that Stack Overflow for Teams is [free for up to 50 users](https://meta.stackexchange.com/questions/362203/stack-overflow-for-teams-is-now-free-for-up-to-50-users-forever), we saw an incredible spike in sign-ups. Along with the spike in sign-ups, I started to receive a huge increase in alerts about deadlocks on the primary SQL Server for Teams. In the two weeks it took us to resolve the deadlocks, we hit at least 200 deadlocks. 
 
 #### What Is A Deadlock?
 
@@ -40,11 +40,11 @@ A deadlock occurs when two processes want access to the same resource. The first
 
 Most people who manage a highly transactional database are probably familiar with deadlocks, or have seen them pop up every now and then. We had them in the past when provisioning schemas, but it was long ago and we thought the issue was over. 
 
-But, after the launch of free teams, I was receiving a deadlock email alert every few hours from <a href="https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring" target="_blank">SQL Sentry</a>. While these email alerts provided some details into the issue, I needed to dig in further to figure out what exactly was happening, and try to resolve it. Thankfully, I have a handful of tools at my disposal to help investigate what we were seeing.  
+But, after the launch of free teams, I was receiving a deadlock email alert every few hours from [SQL Sentry](https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring). While these email alerts provided some details into the issue, I needed to dig in further to figure out what exactly was happening, and try to resolve it. Thankfully, I have a handful of tools at my disposal to help investigate what we were seeing.  
 
-Between SQL Sentry and Brent Ozar’s <a href="https://www.brentozar.com/archive/2017/12/introducing-sp_blitzlock-troubleshooting-sql-server-deadlocks/" target="_blank">sp_BlitzLock</a>, I was able to get more details on each deadlock, including what the victim was, what type of locks we were hitting, and the processes involved in each deadlock. 
+Between SQL Sentry and Brent Ozar’s [sp_BlitzLock](https://www.brentozar.com/archive/2017/12/introducing-sp_blitzlock-troubleshooting-sql-server-deadlocks/), I was able to get more details on each deadlock, including what the victim was, what type of locks we were hitting, and the processes involved in each deadlock. 
 
-The query text of the victim was pretty much <a href="https://twitter.com/tarynpivots/status/1374741995051122689" target="_blank">same each time</a>. As you can see, it wasn't very helpful, as the victim was always when another process was just trying to set the transaction level (or at least that’s all the text we ever captured):
+The query text of the victim was pretty much [same each time](https://twitter.com/tarynpivots/status/1374741995051122689). As you can see, it wasn't very helpful, as the victim was always when another process was just trying to set the transaction level (or at least that’s all the text we ever captured):
 
 ![Repeated deadlock victim](/image/2021/deadlockvictim.png)
 
@@ -54,11 +54,11 @@ The other query involved in the deadlock was also basically same each time:
 GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON SCHEMA::[channel29630] TO [channel29630]
 {{< / highlight >}}
 
-And the <a href="https://twitter.com/tarynpivots/status/1374714148085362690" target="_blank">deadlock graph</a> for each one was always the same, but it provided a critical piece of information that we needed - the lock type:
+And the [deadlock graph](https://twitter.com/tarynpivots/status/1374714148085362690) for each one was always the same, but it provided a critical piece of information that we needed - the lock type:
 
 ![Deadlock graph](/image/2021/deadlockgraph.png)
 
-The dreaded Sch-M lock. I knew about the evils of this lock from <a href="https://michaeljswart.com/2013/04/the-sch-m-lock-is-evil/" target="_blank">Michael J Swart</a>, but we had never faced it to this level before. 
+The dreaded Sch-M lock. I knew about the evils of this lock from [Michael J Swart](https://michaeljswart.com/2013/04/the-sch-m-lock-is-evil/), but we had never faced it to this level before. 
 
 Every deadlock we hit was due to the permission `GRANT` during provisioning. Even if the victim query was on a completely different schema, the Sch-M lock taken by the permission grant always won. 
 
@@ -76,7 +76,7 @@ As I mentioned earlier, we put 10,000 schemas in a database, so the thinking was
 
 The plan was to change the order in which we provisioned the new teams. We would pre-provision a new database with 10,000 logins, users, schemas, and their permissions, and would still keep our current bucket of 500 provisioned schemas that have the tables, views, and other database objects (the ones ready to go when a new team is created). Once we got close to using all of the schemas in a database, the pre-provision process would kick off on the next database and set up the next 10,000 schemas, removing the chances of getting deadlocks. 
 
-Dean Ward spent several days refactoring the code for the provisioning and when we pushed it out, it was time to create <a href="https://twitter.com/tarynpivots/status/1377279012049879041" target="_blank">all the schemas</a> and see if the deadlocks went away. 
+Dean Ward spent several days refactoring the code for the provisioning and when we pushed it out, it was time to create [all the schemas](https://twitter.com/tarynpivots/status/1377279012049879041) and see if the deadlocks went away. 
 
 It worked. 
 
@@ -88,8 +88,8 @@ Deadlocks are "fun" and can be complicated. This one was interesting because I h
 
 ### Side Note
 
-Oh, and while we did resolve the deadlocks, we also introduced <a href="https://twitter.com/tarynpivots/status/1377783511399030784" target="_blank">an issue</a> that none of us thought about until we started getting exceptions. The new refactored pre-provisioning process creates the login, user and schema, but when we move that schema to a provisioned state and we create the tables and database objects in the schema, we also change the password for the login. Our process to sync logins <a href="https://www.tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/" target="_blank">across our replicas</a> didn't account for those password changes which resulted in login failures, so we had to quickly resolve that issue after the change.
+Oh, and while we did resolve the deadlocks, we also introduced [an issue](https://twitter.com/tarynpivots/status/1377783511399030784) that none of us thought about until we started getting exceptions. The new refactored pre-provisioning process creates the login, user and schema, but when we move that schema to a provisioned state and we create the tables and database objects in the schema, we also change the password for the login. Our process to sync logins [across our replicas](https://www.tarynpivots.com/post/2020/syncing-logins-between-availablity-group-replicas/) didn't account for those password changes which resulted in login failures, so we had to quickly resolve that issue after the change.
 
-And by the way, if you’re interested, go <a href="https://stackoverflow.com/teams/create/free?utm_source=so-team&utm_medium=referral&utm_campaign=free&utm_content=codeSW0" target="_blank">sign up for a team</a>, it's free and it won't generate a deadlock. 
+And by the way, if you’re interested, go [sign up for a team](https://stackoverflow.com/teams/create/free?utm_source=so-team&utm_medium=referral&utm_campaign=free&utm_content=codeSW0), it's free and it won't generate a deadlock. 
 
 

@@ -63,7 +63,7 @@ However, if you really don&amp;rsquo;t want to read it, here&amp;rsquo;s a quick
       <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
-      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
+      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
     </item>
     
     <item>
@@ -91,8 +91,8 @@ A Little Background The servers I upgraded were the three SQL Servers that run S
       <pubDate>Mon, 09 Dec 2019 06:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/parallel-redo-flow-control-waits-and-availability-groups/</guid>
-      <description>In late June 2019, June 26thto be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
-The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped itbefore an actual outage occurred.</description>
+      <description>In late June 2019, June 26th to be exact, we experienced an outage on Stack Overflow for about 11 minutes. It&amp;rsquo;s not unusual that we had an outage. They happen. Not often, but they do still happen. This one, however, was a little different because it was caused by a maintenance job that was running on our primary SQL Server for Stack Overflow.
+The job that caused it was something I&amp;rsquo;d noticed about a month prior, but had stopped it before an actual outage occurred.</description>
     </item>
     
     <item>
@@ -111,7 +111,7 @@ Last year, when we upgraded to SQL Server 2017 we didn&amp;rsquo;t make any chan
       <pubDate>Wed, 07 Nov 2018 19:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</guid>
-      <description>This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+      <description>This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
 A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed.</description>
     </item>
     

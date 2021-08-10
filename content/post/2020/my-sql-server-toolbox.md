@@ -12,9 +12,9 @@ The current list of both free and 3rd party paid tools is below:
 
 ## Free Tools
 
-- <a href="https://github.com/opserver/Opserver" target="_blank">Opserver</a> - Stack Exchange's Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers 
+- [Opserver](https://github.com/opserver/Opserver) - Stack Exchange's Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers 
 
-- Brent Ozar's <a href="https://www.brentozar.com/responder/" target="_blank">First Reponder Kit</a>. This is filled with lots of goodies to help you understand what's going on with your server. Currently we install these scripts from the kit:
+- Brent Ozar's [First Reponder Kit](https://www.brentozar.com/responder/). This is filled with lots of goodies to help you understand what's going on with your server. Currently we install these scripts from the kit:
 
     - sp_Blitz.sql
     - sp_BlitzCache.sql
@@ -23,11 +23,11 @@ The current list of both free and 3rd party paid tools is below:
     - sp_BlitzLock.sql
     - sp_BlitzQueryStore.sql
 
-- Adam Machanic's <a href="http://whoisactive.com/" target="_blank">sp_whoisactive</a> - this is similar to executing `sp_who2` but provides a more detailed look at what is happening on your server
+- Adam Machanic's [sp_whoisactive](http://whoisactive.com/) - this is similar to executing `sp_who2` but provides a more detailed look at what is happening on your server
 
-- <a href="https://support.microsoft.com/en-us/help/918992/how-to-transfer-logins-and-passwords-between-instances-of-sql-server" target="_blank">sp_hexadecimal and sp_help_revlogin</a> to transfer logins between instances of SQL Server
+- [sp_hexadecimal and sp_help_revlogin](https://support.microsoft.com/en-us/help/918992/how-to-transfer-logins-and-passwords-between-instances-of-sql-server) to transfer logins between instances of SQL Server
 
-- Ola Hallengren's <a href="https://ola.hallengren.com/" target="_blank">SQL Server Maintenance Solution</a> for Backups, Integrity Checks, and Index and Statistics Maintenance. We don't use the entire package of scripts, but we currently use:
+- Ola Hallengren's [SQL Server Maintenance Solution](https://ola.hallengren.com/) for Backups, Integrity Checks, and Index and Statistics Maintenance. We don't use the entire package of scripts, but we currently use:
 
     - DatabaseIntegrityCheck.sql 
     - IndexOptimize.sql 
@@ -35,23 +35,23 @@ The current list of both free and 3rd party paid tools is below:
     - CommandLog.sql 
     - DatabaseBackup.sql - we use a modified version of this script everywhere
 
-- <a href="https://dbatools.io/" target="_blank">dbatools</a> PowerShell modules 
+- [dbatools](https://dbatools.io/) PowerShell modules 
 
-- Erik Darling's <a href="https://github.com/erikdarlingdata/DarlingData" target="_blank">SQL Server Troubleshooting Scripts</a> - additional tools to help you identify and troubleshoot problems with your SQL Servers
+- Erik Darling's [SQL Server Troubleshooting Scripts](https://github.com/erikdarlingdata/DarlingData) - additional tools to help you identify and troubleshoot problems with your SQL Servers
 
 - Columnstore Maintenance Scripts from a few places:
 
-    - Joe Obbish's <a href="https://github.com/jobbish-sql/SQL-Server-Multi-Thread" target="_blank">cci_maintenance</a>
-    - Nike Neugebauer's <a href="https://github.com/NikoNeugebauer/CISL" target="_blank">Columnstore Indexes Scripts Library</a> 
+    - Joe Obbish's [cci_maintenance](https://github.com/jobbish-sql/SQL-Server-Multi-Thread)
+    - Nike Neugebauer's [Columnstore Indexes Scripts Library](https://github.com/NikoNeugebauer/CISL)
 
 
 ## 3rd Party Tools
 
-- SentryOne <a href="https://www.sentryone.com/plan-explorer" target="_blank">Plan Explorer</a> - this is a great tool to review execution plans. I find it far easier to review execution plans in Plan Explorer than in SQL Server Management Studio
+- SentryOne [Plan Explorer](https://www.sentryone.com/plan-explorer) - this is a great tool to review execution plans. I find it far easier to review execution plans in Plan Explorer than in SQL Server Management Studio
 
-- SentryOne <a href="https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring" target="_blank">SQL Sentry</a> monitors all of our SQL Servers and provides excellent details on performance and insight into specific queries that might be running during various CPU spikes or other periods of concern
+- SentryOne [SQL Sentry](https://www.sentryone.com/products/sentryone-platform/sql-sentry/sql-server-performance-monitoring) monitors all of our SQL Servers and provides excellent details on performance and insight into specific queries that might be running during various CPU spikes or other periods of concern
 
-- ApexSQL <a href="https://www.apexsql.com/sql-tools-script.aspx" target="_blank">SQL script generation</a> - there are times we need to rebase our SQL migrations and this tool is a great way to script out all objects and data 
+- ApexSQL [SQL script generation](https://www.apexsql.com/sql-tools-script.aspx) - there are times we need to rebase our SQL migrations and this tool is a great way to script out all objects and data 
 
 
 All the SQL scripts get deployed via process that I wrote. I'll share how I do that in my next post. 

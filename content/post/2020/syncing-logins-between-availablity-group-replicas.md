@@ -14,7 +14,7 @@ Since we use readable secondaries in our environments, the application needs to 
 
 ## Copying Logins with a T-SQL Script 
 
-Before you jump the gun and start criticizing my method, know that I’m aware there are other ways to do this, including using <a href="https://dbatools.io/keeping-availability-group-logins-in-sync-automatically/" target="_blank">dbatools</a>, but this method has been around since the early days of Stack Overflow and the Stack Exchange network (with some <a href="https://www.tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/" target="_blank">modifications</a>) and it works for our needs for now.
+Before you jump the gun and start criticizing my method, know that I’m aware there are other ways to do this, including using [dbatools](https://dbatools.io/keeping-availability-group-logins-in-sync-automatically/), but this method has been around since the early days of Stack Overflow and the Stack Exchange network (with some [modifications](https://www.tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/)) and it works for our needs for now.
 
 We don’t create new databases very often, but on [Stack Overflow for Teams](https://stackoverflow.com/teams) we use schemas to keep customers separated from each other - i.e. every team has a login and user to allow it to query their data. While we pre-provision a set number of schemas, tables, and other database objects for teams, we want the logins to sync on a frequent basis to avoid login failures on the secondaries.  We have a job in place which syncs the logins via a SQL Server Agent job every 10 minutes for Stack Overflow for Teams. (We have a similar job for the public Q&A sites that runs nightly.)
 
@@ -38,7 +38,7 @@ DECLARE @logins TABLE
 );
 {{< / highlight >}}
 
-The table is populated by connecting to the primary server using <a href="https://docs.microsoft.com/en-us/sql/t-sql/functions/openquery-transact-sql?view=sql-server-ver15" target="_blank">`OPENQUERY`</a> (Eeek a linked server) 
+The table is populated by connecting to the primary server using [`OPENQUERY`](https://docs.microsoft.com/en-us/sql/t-sql/functions/openquery-transact-sql?view=sql-server-ver15) (Eeek a linked server) 
 
 {{< highlight sql>}}
 SELECT *
@@ -58,7 +58,7 @@ FROM OPENQUERY([SQL-AG], '
     ORDER BY p.name');
 {{< / highlight >}}
 
-and executing <a href="https://docs.microsoft.com/en-us/troubleshoot/sql/security/transfer-logins-passwords-between-instances" target="_blank">sp_hexadecimal</a> to get the SID and password which are then used to create a dynamic SQL string which is stored in the temp table.
+and executing [sp_hexadecimal](https://docs.microsoft.com/en-us/troubleshoot/sql/security/transfer-logins-passwords-between-instances) to get the SID and password which are then used to create a dynamic SQL string which is stored in the temp table.
 
 {{< highlight sql>}}
 EXEC sp_hexadecimal @PWD_varbinary, @PWD_string OUT
@@ -260,4 +260,4 @@ DEALLOCATE drop_login_cursor
 {{< / highlight >}}
 
 
-As I said, this might not be the way you would do this, but this works for us and keeps the logins synced across all of our replicas which minimizes login failures. I’ve uploaded the <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/SyncLogins" target="_blank">full script</a> to GitHub, if you're interested in it. 
+As I said, this might not be the way you would do this, but this works for us and keeps the logins synced across all of our replicas which minimizes login failures. I’ve uploaded the [full script](https://github.com/tarynpratt/misc_sql_scripts/tree/master/SyncLogins) to GitHub, if you're interested in it. 

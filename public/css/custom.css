@@ -151,4 +151,5 @@ div .highlight {
 img[src$='#floatright']
 {
 	float:right;
+    padding: 20px;
 }

@@ -34,7 +34,7 @@ However, if you really don&amp;rsquo;t want to read it, here&amp;rsquo;s a quick
       <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
-      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
+      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
     </item>
     
     <item>

@@ -72,7 +72,7 @@ Always On Availability Groups can support up to nine availability replicas, and 
 <meta itemprop="description" content="I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;A sites, Jobs, and Stack Overflow for Teams. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.
 Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a readable secondary."><meta itemprop="datePublished" content="2020-12-18T04:00:00+00:00" />
 <meta itemprop="dateModified" content="2020-12-18T04:00:00+00:00" />
-<meta itemprop="wordCount" content="1088">
+<meta itemprop="wordCount" content="1091">
 <meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,maintenance,distributed-availability-group,availability-group,readable-secondary," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Syncing Logins Between Availability Group Replicas"/>
 <meta name="twitter:description" content="I mentioned this in a few previous posts, but for for those who may have missed it or forgotten, here’s a quick refresher - we use Always On Availability Groups at Stack Overflow on all of our main production servers running the network of public Q&amp;A sites, Jobs, and Stack Overflow for Teams. It&rsquo;s a great way to implement disaster recovery for a SQL Server environment.
@@ -305,7 +305,7 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2020-12-18 </span>
         
-        <span class="more-meta"> 1088 words </span>
+        <span class="more-meta"> 1091 words </span>
           <span class="more-meta"> 6 min read </span>
 
         
@@ -339,7 +339,7 @@ if (!doNotTrack) {
 <p>Always On Availability Groups can support up to nine availability replicas, and while we don’t use anywhere near that many replicas in each of our clusters, we do have 2 replicas per cluster (3 servers total), with the replicas being used as a <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/active-secondaries-readable-secondary-replicas-always-on-availability-groups?view=sql-server-ver15">readable secondary</a>.</p>
 <p>Since we use readable secondaries in our environments, the application needs to connect to both the primary and the secondary servers with the same login. The catch is, logins don’t automatically sync across replicas.  If the logins don’t sync, the application won’t connect to a secondary, which results in login failures.</p>
 <h2 id="copying-logins-with-a-t-sql-script">Copying Logins with a T-SQL Script</h2>
-<p>Before you jump the gun and start criticizing my method, know that I’m aware there are other ways to do this, including using <!-- raw HTML omitted -->dbatools<!-- raw HTML omitted -->, but this method has been around since the early days of Stack Overflow and the Stack Exchange network (with some <!-- raw HTML omitted -->modifications<!-- raw HTML omitted -->) and it works for our needs for now.</p>
+<p>Before you jump the gun and start criticizing my method, know that I’m aware there are other ways to do this, including using <a href="https://dbatools.io/keeping-availability-group-logins-in-sync-automatically/">dbatools</a>, but this method has been around since the early days of Stack Overflow and the Stack Exchange network (with some <a href="https://www.tarynpivots.com/post/system-view-gotcha-with-sql-server-2019/">modifications</a>) and it works for our needs for now.</p>
 <p>We don’t create new databases very often, but on <a href="https://stackoverflow.com/teams">Stack Overflow for Teams</a> we use schemas to keep customers separated from each other - i.e. every team has a login and user to allow it to query their data. While we pre-provision a set number of schemas, tables, and other database objects for teams, we want the logins to sync on a frequent basis to avoid login failures on the secondaries.  We have a job in place which syncs the logins via a SQL Server Agent job every 10 minutes for Stack Overflow for Teams. (We have a similar job for the public Q&amp;A sites that runs nightly.)</p>
 <p>The job needs to do several things:</p>
 <ol>
@@ -369,7 +369,7 @@ if (!doNotTrack) {
 </span><span class="w"></span><span class="p">);</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>The table is populated by connecting to the primary server using <!-- raw HTML omitted --><code>OPENQUERY</code><!-- raw HTML omitted --> (Eeek a linked server)</p>
+<p>The table is populated by connecting to the primary server using <a href="https://docs.microsoft.com/en-us/sql/t-sql/functions/openquery-transact-sql?view=sql-server-ver15"><code>OPENQUERY</code></a> (Eeek a linked server)</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -406,7 +406,7 @@ if (!doNotTrack) {
 </span><span class="s1">    ORDER BY p.name&#39;</span><span class="p">);</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>and executing <!-- raw HTML omitted -->sp_hexadecimal<!-- raw HTML omitted --> to get the SID and password which are then used to create a dynamic SQL string which is stored in the temp table.</p>
+<p>and executing <a href="https://docs.microsoft.com/en-us/troubleshoot/sql/security/transfer-logins-passwords-between-instances">sp_hexadecimal</a> to get the SID and password which are then used to create a dynamic SQL string which is stored in the temp table.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -782,7 +782,7 @@ if (!doNotTrack) {
 </span><span class="w"></span><span class="k">DEALLOCATE</span><span class="w"> </span><span class="n">drop_login_cursor</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>As I said, this might not be the way you would do this, but this works for us and keeps the logins synced across all of our replicas which minimizes login failures. I’ve uploaded the <!-- raw HTML omitted -->full script<!-- raw HTML omitted --> to GitHub, if you&rsquo;re interested in it.</p>
+<p>As I said, this might not be the way you would do this, but this works for us and keeps the logins synced across all of our replicas which minimizes login failures. I’ve uploaded the <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/SyncLogins">full script</a> to GitHub, if you&rsquo;re interested in it.</p>
 
     </div>
 

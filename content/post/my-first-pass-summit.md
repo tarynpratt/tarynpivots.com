@@ -28,7 +28,7 @@ The week before PASS, I sat down and filled out my schedule which was a bit chal
 
 ## First Timer Buddy Program
 
-I saw mentions of the Buddy Program and wasn't sure if I was going to sign up, but I'm glad I did. For those who don't know, the Buddy program at PASS Summit pairs you with someone who has been to the conference before, and they offer suggestions on events and sessions to attend. If you're lucky and if time allows, you'll meet them and have a familiar face in the thousands of people. I was lucky to get paired with <a href="https://twitter.com/sqlatspeed" target="_blank">Matt Gordon</a>. Matt reached out a couple of weeks before the Summit and suggested a couple of sessions, then the week of the conference we met and had lunch together as a group. It was great to meet other first-timers in a smaller setting. 
+I saw mentions of the Buddy Program and wasn't sure if I was going to sign up, but I'm glad I did. For those who don't know, the Buddy program at PASS Summit pairs you with someone who has been to the conference before, and they offer suggestions on events and sessions to attend. If you're lucky and if time allows, you'll meet them and have a familiar face in the thousands of people. I was lucky to get paired with [Matt Gordon](https://twitter.com/sqlatspeed). Matt reached out a couple of weeks before the Summit and suggested a couple of sessions, then the week of the conference we met and had lunch together as a group. It was great to meet other first-timers in a smaller setting. 
 
 ## WIT Reception
 
@@ -39,11 +39,11 @@ The WIT happy hour overlapped with the First Timers Welcome Reception. Since I w
 
 ## Day One
 
-### <a href = "https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92582" target="_blank">Performance Tuning Azure SQL Databases</a> with David Maxwell
+### [Performance Tuning Azure SQL Databases](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92582) with David Maxwell
 
 At this time, we only use physical SQL Servers in our datacenters. As a result, I don't have a lot of hands-on experience with Azure SQL, so I figured I would take the opportunity to learn a bit while at PASS. I started with a how to performance tune Azure SQL databases. This session was really good to hear about some of the differences in on-prem and Azure SQL and how you tackle performance issues using Extended Events and Automating Tuning. 
 
-### <a href="https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=98848" target="_blank">Improving Availability in SQL Server and Azure SQL Database with Accelerated Database Recovery and Resumable Operations</a> with Pam Lahoud
+### [Improving Availability in SQL Server and Azure SQL Database with Accelerated Database Recovery and Resumable Operations](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=98848) with Pam Lahoud
 
 This session showed off one of the new features of SQL Server 2019 that I'm excited to test in our environments, Accelerated Database Recovery. It allows the databases to recover faster from long-running transactions that were aborted and are rolling back. 
 
@@ -56,25 +56,25 @@ The session also covered Resumable Index Operations which allows an index rebuil
 
 ### Keynote with Tarah Wheeler - Cybersecurity is Everyone's Problem
 
-There is no doubt this was one of my favorite sessions of the conference. <a href="https://twitter.com/tarah" target="_blank">Tarah Wheeler</a> is an expert in cybersecurity and an author. She talked about the conflict between cybersecurity and data science - the struggle between keeping or purging data in the age of three internets - the European Union (EU and GDPR), China, and then the rest of the world. Since data is constantly growing, how do you satisfy the need to delete data under different regulatory requirements. The problem is huge and is going to keep compounding as we continue to store data. The question she posed in this slide captures how complicated the situation is.
+There is no doubt this was one of my favorite sessions of the conference. [Tarah Wheeler](https://twitter.com/tarah) is an expert in cybersecurity and an author. She talked about the conflict between cybersecurity and data science - the struggle between keeping or purging data in the age of three internets - the European Union (EU and GDPR), China, and then the rest of the world. Since data is constantly growing, how do you satisfy the need to delete data under different regulatory requirements. The problem is huge and is going to keep compounding as we continue to store data. The question she posed in this slide captures how complicated the situation is.
 
 ![Asking the tough questions](/image/2019/keynote_tarahwheeler.jpg)
 
 The Keynote was incredible on every level and hands down, it was the best thing I attended all week.
 
-### <a href="https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92589" target="_blank">Columnstore Indexes in 2017-2019</a> with Niko Neugebauer
+### [Columnstore Indexes in 2017-2019](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92589) with Niko Neugebauer
 
 I have read many of Niko's blog posts on Clustered Columnstore, so getting the opportunity to see him talk about them in person was a no brainer. 
 
 Within just a few minutes, I thought, "hey that might be our problem." The biggest lightbulb moment in this session was how dictionary size and memory pressure can break row groups in ways that are potentially unexpected. As soon as I heard this, I knew what I was going to investigate it when I was back in the office. This session was great because I had takeaways that I could possibly use or research immediately.
 
-### <a href="https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=90954" target="_blank">Azure SQL Database - Lessons Learned from the Trenches</a> with Jose Manuel Jurado Diaz and Roberto Cavalcanti
+### [Azure SQL Database - Lessons Learned from the Trenches](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=90954) with Jose Manuel Jurado Diaz and Roberto Cavalcanti
 
 I also loved this session. The speakers went through different scenarios that customers have hit while using Azure SQL Databases. 
 
 Seeing different tips and tricks to look for when performance tuning in that environment gave me a lot to think about for future work in the cloud. Things as simple as an implicit conversion can perform significantly different on Azure SQL Database once you hit an increase in data that an old cached plan can no longer handle. 
 
-### <a href="https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=91912" target="_blank">Improving Columnstore Load Scalability on Large Servers</a> with Joe Obbish
+### [Improving Columnstore Load Scalability on Large Servers](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=91912) with Joe Obbish
 
 I had heard there were 180 slides for this session and was sure my head would be spinning from the amount of information. Instead of being overwhelmed by it, Joe did a great job of going over how to optimize loading millions of rows of data into a clustered columnstore table in just 6 minutes.
 
@@ -84,11 +84,11 @@ Besides watching how to performance tune huge data loads into clustered columnst
 
 ## Day Three
 
-### <a href="https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92529" target="_blank">Batch Execution Mode on Rowstore Indexes</a> with Niko Neugebauer</h4>
+### [Batch Execution Mode on Rowstore Indexes](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92529) with Niko Neugebauer</h4>
 
 This session included some great demos on the new feature in SQL Server 2019, Batch Execution Mode on traditional rowstore indexes. I'm not sure how much benefit we will get with this in our environment, but I'm curious to get SQL Server 2019 installed on more servers to see if we do. 
 
-### <a href="https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92528" target="_blank">Deep Dive into Blocking and Deadlocks Troubleshooting</a> with Dmitri Korotkevitch
+### [Deep Dive into Blocking and Deadlocks Troubleshooting](https://www.pass.org/summit/2019/Learn/SessionDetails.aspx?sid=92528) with Dmitri Korotkevitch
 
 Blocking and Deadlocks every DBAs nemesis. At our scale, I fight with them a lot, so having the chance to attend a session about troubleshooting was a must. Even though I have experience with dealing with both blocking and deadlocks, it was a great overview on why they occur, and how best to troubleshoot them. This was a solid session to attend. 
 

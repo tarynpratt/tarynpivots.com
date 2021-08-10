@@ -72,7 +72,7 @@ A Little Background The servers I upgraded were the three SQL Servers that run S
 <meta itemprop="description" content="In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
 A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams."><meta itemprop="datePublished" content="2020-02-21T06:00:38+00:00" />
 <meta itemprop="dateModified" content="2020-02-21T06:00:38+00:00" />
-<meta itemprop="wordCount" content="1140">
+<meta itemprop="wordCount" content="1146">
 <meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,server-upgrade,maintenance,projects," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="A gotcha when upgrading to SQL Server 2019"/>
 <meta name="twitter:description" content="In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
@@ -305,7 +305,7 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2020-02-21 </span>
         
-        <span class="more-meta"> 1140 words </span>
+        <span class="more-meta"> 1146 words </span>
           <span class="more-meta"> 6 min read </span>
 
         
@@ -335,14 +335,14 @@ if (!doNotTrack) {
 
     
     <div class="post-content">
-      <p>In my <a href="https://www.tarynpivots.com/post/recovering-lost-linked-servers/">last post</a>, I mentioned that I started the process of upgrading Stack Overflow to <!-- raw HTML omitted -->SQL Server 2019<!-- raw HTML omitted -->. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.</p>
+      <p>In my <a href="https://www.tarynpivots.com/post/recovering-lost-linked-servers/">last post</a>, I mentioned that I started the process of upgrading Stack Overflow to <a href="https://docs.microsoft.com/en-us/sql/sql-server/what-s-new-in-sql-server-ver15?view=sql-server-ver15">SQL Server 2019</a>. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.</p>
 <h2 id="a-little-background">A Little Background</h2>
-<p>The servers I upgraded were the three SQL Servers that run <!-- raw HTML omitted -->Stack Overflow for Teams<!-- raw HTML omitted -->. For those not familiar with our setup, we use <!-- raw HTML omitted -->availability groups<!-- raw HTML omitted --> (AGs) across all of our main SQL Servers. This allows us to use the primary server for read/writes, and use the secondaries for a lot of the read-only traffic. Since we utilize both the primary and secondaries for read purposes, logins need to be the same across all of the servers in the AGs. In order to keep the logins in sync, we have a job that periodically runs on each server and creates new logins using dynamic SQL.</p>
+<p>The servers I upgraded were the three SQL Servers that run <a href="https://stackoverflow.com/teams">Stack Overflow for Teams</a>. For those not familiar with our setup, we use <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/overview-of-always-on-availability-groups-sql-server?view=sql-server-ver15">availability groups</a> (AGs) across all of our main SQL Servers. This allows us to use the primary server for read/writes, and use the secondaries for a lot of the read-only traffic. Since we utilize both the primary and secondaries for read purposes, logins need to be the same across all of the servers in the AGs. In order to keep the logins in sync, we have a job that periodically runs on each server and creates new logins using dynamic SQL.</p>
 <h2 id="upgrade-day">Upgrade Day</h2>
-<p>Since I previously upgraded our servers to <a href="https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/">SQL Server 2017</a>, I knew what to expect as I moved through the cluster. Once I started with the secondary servers the databases would <!-- raw HTML omitted -->not be accessible<!-- raw HTML omitted --> until the failover was complete. After upgrading a secondary, I would see this if I tried to access a database:</p>
+<p>Since I previously upgraded our servers to <a href="https://www.tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/">SQL Server 2017</a>, I knew what to expect as I moved through the cluster. Once I started with the secondary servers the databases would <a href="https://twitter.com/tarynpivots/status/1227676918083772416">not be accessible</a> until the failover was complete. After upgrading a secondary, I would see this if I tried to access a database:</p>
 <p><img src="/image/2020/database_unavailable.jpg" alt="Database not accessible"></p>
 <p>This also meant that any of the jobs touching the databases would fail, so I disabled SQL Agent jobs to minimize noisy alerts to my email. After the upgrade and failover, I&rsquo;d enable all the jobs and be on my merry way.</p>
-<p>The upgrade of both secondary servers went totally as planned, without any issues. The evening rolled around and despite <!-- raw HTML omitted -->Nick Craver&rsquo;s popcorn<!-- raw HTML omitted -->, the failover was successful, and we <!-- raw HTML omitted -->finally had SQL Server 2019<!-- raw HTML omitted --> running in production.</p>
+<p>The upgrade of both secondary servers went totally as planned, without any issues. The evening rolled around and despite <a href="https://twitter.com/Nick_Craver/status/1229933221565038592">Nick Craver&rsquo;s popcorn</a>, the failover was successful, and we <a href="https://twitter.com/tarynpivots/status/1229936342471036928">finally had SQL Server 2019</a> running in production.</p>
 <p>I upgraded the last server in the cluster (the former primary), and did some other clean-up tasks, including enabling all the SQL Agent jobs, before calling it a night. Once the jobs were enabled I started getting emails that one was failing — the Login Replication job.</p>
 <p>Something&rsquo;s broken - time to investigate.</p>
 <h3 id="the-failing-job">The Failing Job</h3>
@@ -357,7 +357,7 @@ if (!doNotTrack) {
 <p>The code for the login replication basically does the following via a cursor (yeah, I know, but it works&hellip;normally):</p>
 <ol>
 <li>Select from the primary via <code>OPENQUERY</code> to query the logins and passwords</li>
-<li>Using <!-- raw HTML omitted --><code>sp_hexadecimal</code><!-- raw HTML omitted --> convert the <code>varbinary</code> password to a <code>string</code> value</li>
+<li>Using <a href="https://support.microsoft.com/en-us/help/918992/how-to-transfer-logins-and-passwords-between-instances-of-sql-server"><code>sp_hexadecimal</code></a> convert the <code>varbinary</code> password to a <code>string</code> value</li>
 <li>Create a string to be executed, i.e. dynamic SQL that runs a <code>CREATE LOGIN</code></li>
 </ol>
 <p>I have trimmed the code because it&rsquo;s long, but the key parts query the login and password.</p>
@@ -429,7 +429,7 @@ if (!doNotTrack) {
 <p>Great, so now what?</p>
 <h3 id="the-fix">The Fix</h3>
 <p>We couldn&rsquo;t just stop replicating the logins across all servers, due to our usage of the secondaries, and we needed to do this automatically on a regular interval. We had to figure out a solution. Thankfully the fix was easy.</p>
-<p>After seeing that the <code>null</code> value of the password was coming from <code>sys.syslogins</code>, and since we were already querying <!-- raw HTML omitted --><code>sys.sql_logins</code><!-- raw HTML omitted --> we could easily replace:</p>
+<p>After seeing that the <code>null</code> value of the password was coming from <code>sys.syslogins</code>, and since we were already querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-sql-logins-transact-sql?view=sql-server-ver15"><code>sys.sql_logins</code></a> we could easily replace:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -447,7 +447,7 @@ if (!doNotTrack) {
 <pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="n">sl</span><span class="p">.</span><span class="n">password_hash</span><span class="w"> </span><span class="n">pwd_varbinary</span><span class="p">,</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>from <code>sys.sql_logins</code> (h/t to <!-- raw HTML omitted -->Nick Craver<!-- raw HTML omitted -->). With this one change to the query, the new <code>SELECT</code> statement was:</p>
+<p>from <code>sys.sql_logins</code> (h/t to <a href="https://twitter.com/Nick_Craver">Nick Craver</a>). With this one change to the query, the new <code>SELECT</code> statement was:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -487,9 +487,9 @@ if (!doNotTrack) {
 <p>Once it was updated, the job successfully ran, and our logins were replicating again without issue. Now, I really called it a night.</p>
 <h2 id="ok-but-what-was-the-gotcha">Ok, but what was the gotcha?</h2>
 <p>Remember I said that this was working fine on SQL Server 2017?</p>
-<p>When we started looking for solutions, I looked up the Microsoft Docs for <!-- raw HTML omitted --><code>sys.syslogins</code><!-- raw HTML omitted --> and right at the top of the doc it says:</p>
+<p>When we started looking for solutions, I looked up the Microsoft Docs for <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-compatibility-views/sys-syslogins-transact-sql?view=sql-server-ver15"><code>sys.syslogins</code></a> and right at the top of the doc it says:</p>
 <blockquote>
-<p>This SQL Server 2000 system table is included as a view for backward compatibility. We recommend that you use the current SQL Server system views instead. To find the equivalent system view or views, see <!-- raw HTML omitted -->Mapping System Tables to System Views (Transact-SQL)<!-- raw HTML omitted -->. This feature will be removed in a future version of Microsoft SQL Server. Avoid using this feature in new development work, and plan to modify applications that currently use this feature.</p>
+<p>This SQL Server 2000 system table is included as a view for backward compatibility. We recommend that you use the current SQL Server system views instead. To find the equivalent system view or views, see <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-tables/mapping-system-tables-to-system-views-transact-sql?view=sql-server-ver15">Mapping System Tables to System Views (Transact-SQL)</a>. This feature will be removed in a future version of Microsoft SQL Server. Avoid using this feature in new development work, and plan to modify applications that currently use this feature.</p>
 </blockquote>
 <p>The doc shows the description and value of <code>password</code>:</p>
 <table>

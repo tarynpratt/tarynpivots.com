@@ -75,7 +75,7 @@ However, if you really don&rsquo;t want to read it, here&rsquo;s a quick recap o
 Overview I suggest reading my other post first, it&rsquo;ll only take a few minutes. I&rsquo;ll wait&hellip;
 However, if you really don&rsquo;t want to read it, here&rsquo;s a quick recap on the initial issue."><meta itemprop="datePublished" content="2020-07-20T04:00:00+00:00" />
 <meta itemprop="dateModified" content="2020-07-20T04:00:00+00:00" />
-<meta itemprop="wordCount" content="1912">
+<meta itemprop="wordCount" content="1915">
 <meta itemprop="keywords" content="sql,sql-server,sql-server-2019,server-upgrade,maintenance,clustered-columnstore,tuple-mover," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="SQL Server 2019 Tuple Mover Behavior Change"/>
 <meta name="twitter:description" content="This is a follow-up to my post about an issue with clustered columnstore, when upgrading from SQL Server 2017 to SQL Server 2019. After extensive testing and working with support, I wanted to share some information about a change in SQL Server 2019 that might impact others.
@@ -309,7 +309,7 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2020-07-20 </span>
         
-        <span class="more-meta"> 1912 words </span>
+        <span class="more-meta"> 1915 words </span>
           <span class="more-meta"> 9 min read </span>
 
         
@@ -344,12 +344,12 @@ if (!doNotTrack) {
 
     
     <div class="post-content">
-      <p>This is a follow-up to <!-- raw HTML omitted -->my post about an issue with clustered columnstore<!-- raw HTML omitted -->, when upgrading from SQL Server 2017 to SQL Server 2019. After extensive testing and working with support, I wanted to share some information about a change in SQL Server 2019 that might impact others.</p>
+      <p>This is a follow-up to <a href="https://www.tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/">my post about an issue with clustered columnstore</a>, when upgrading from SQL Server 2017 to SQL Server 2019. After extensive testing and working with support, I wanted to share some information about a change in SQL Server 2019 that might impact others.</p>
 <h2 id="overview">Overview</h2>
-<p>I suggest reading <!-- raw HTML omitted -->my other post first<!-- raw HTML omitted -->, it&rsquo;ll only take a few minutes. I&rsquo;ll wait&hellip;</p>
+<p>I suggest reading <a href="https://www.tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/">my other post first</a>, it&rsquo;ll only take a few minutes. I&rsquo;ll wait&hellip;</p>
 <p>However, if you really don&rsquo;t want to read it, here&rsquo;s a quick recap on the initial issue.</p>
-<p>In early February 2020, a lot of data was deleted from some <!-- raw HTML omitted -->clustered columnstore indexes<!-- raw HTML omitted --> in our PRIZM database. Some of the tables were rebuilt, but 11 tables weren&rsquo;t since we don&rsquo;t have maintenance windows, and that would involve downtime. The rebuilds would happen once we upgraded to SQL Server 2019, to take advantage of the ability to rebuild those columnstore indexes online.</p>
-<p>The day we upgraded to SQL Server 2019, there was rapid growth of the transaction logs for PRIZM. The only way to get the growth to stop, was to enable both <!-- raw HTML omitted -->trace flags 634 and 661<!-- raw HTML omitted -->.</p>
+<p>In early February 2020, a lot of data was deleted from some <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014">clustered columnstore indexes</a> in our PRIZM database. Some of the tables were rebuilt, but 11 tables weren&rsquo;t since we don&rsquo;t have maintenance windows, and that would involve downtime. The rebuilds would happen once we upgraded to SQL Server 2019, to take advantage of the ability to rebuild those columnstore indexes online.</p>
+<p>The day we upgraded to SQL Server 2019, there was rapid growth of the transaction logs for PRIZM. The only way to get the growth to stop, was to enable both <a href="https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-traceon-trace-flags-transact-sql?view=sql-server-ver15">trace flags 634 and 661</a>.</p>
 <table>
 <thead>
 <tr>
@@ -364,13 +364,13 @@ if (!doNotTrack) {
 </tr>
 <tr>
 <td>661</td>
-<td>Disables the ghost record removal process. For more information, see this <!-- raw HTML omitted -->Microsoft Support article.<!-- raw HTML omitted --></td>
+<td>Disables the ghost record removal process. For more information, see this <a href="https://support.microsoft.com/kb/920093%22">Microsoft Support article.</a></td>
 </tr>
 </tbody>
 </table>
 <p>After working with support, we were able to remove trace flag 661, but still had 634 in place, so more work needed to be done.</p>
 <h2 id="enabling-another-trace-flag">Enabling Another Trace Flag</h2>
-<p>Removing trace flag 634 from the production server was the next step, but <!-- raw HTML omitted -->every attempt<!-- raw HTML omitted -->, led to the rapid increase in the transaction logs and a spike in query timeouts on the server.</p>
+<p>Removing trace flag 634 from the production server was the next step, but <a href="https://www.tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/#oh-tuple-mover-what-are-you-doing">every attempt</a>, led to the rapid increase in the transaction logs and a spike in query timeouts on the server.</p>
 <p>After passing lots of details to support, they requested we enable an undocumented trace flag - 10257 - to see if we still experienced the transaction log growth. Since this trace flag isn&rsquo;t documented, the description we were given is:</p>
 <blockquote>
 <p>10257 - disables the columnstore tuple mover background merge process. The tuple mover background merge runs a reorganize on a few rowgroups at a time with more conservative thresholds.</p>
@@ -416,8 +416,8 @@ if (!doNotTrack) {
 <li>Check the state of the rowgroups before our initial upgrade. I was hoping to see how many were tombstones, open, closed, compressed?</li>
 <li>Could I recreate the issue by upgrading a server from SQL Server 2017 to SQL Server 2019?</li>
 </ol>
-<p>It had been a month since we upgraded our SQL Servers, which meant our backups were only available offsite. After a <!-- raw HTML omitted -->little fighting<!-- raw HTML omitted -->, I was finally able to pull it from storage.</p>
-<p>I initially restored the database to one of our existing test servers with SQL Server 2019 on it. I wanted to see the state of the rowgroups on the tables that had not been rebuilt. Did we have hundreds of tombstones or not?  Unfortunately, after restoring the database <!-- raw HTML omitted -->it didn&rsquo;t show me what I was looking for<!-- raw HTML omitted -->. Based on a suggestion from Andy Mallon (<!-- raw HTML omitted -->b<!-- raw HTML omitted --> | <!-- raw HTML omitted -->t<!-- raw HTML omitted -->), I tried to <!-- raw HTML omitted -->restore with <code>STANDBY</code><!-- raw HTML omitted --> to see if that made any difference&hellip;it didn&rsquo;t. I was able to get stats, but it didn&rsquo;t have the rowgroups in a tombstone state.</p>
+<p>It had been a month since we upgraded our SQL Servers, which meant our backups were only available offsite. After a <a href="https://twitter.com/tarynpivots/status/1255883993670578176">little fighting</a>, I was finally able to pull it from storage.</p>
+<p>I initially restored the database to one of our existing test servers with SQL Server 2019 on it. I wanted to see the state of the rowgroups on the tables that had not been rebuilt. Did we have hundreds of tombstones or not?  Unfortunately, after restoring the database <a href="https://twitter.com/tarynpivots/status/1256012151447158784">it didn&rsquo;t show me what I was looking for</a>. Based on a suggestion from Andy Mallon (<a href="https://am2.co/">b</a> | <a href="https://twitter.com/AMtwo">t</a>), I tried to <a href="https://twitter.com/AMtwo/status/1256017346449342465">restore with <code>STANDBY</code></a> to see if that made any difference&hellip;it didn&rsquo;t. I was able to get stats, but it didn&rsquo;t have the rowgroups in a tombstone state.</p>
 <p>Next, I decided to restore the database to a server with SQL Server 2017 on it, but since I already upgraded all of our servers to 2019, one wasn&rsquo;t readily available. Thankfully, I have the ability to spin up test servers as needed, so that&rsquo;s what I did.</p>
 <p>After restoring the database to the 2017 SQL Server, it had the following:</p>
 <ul>
@@ -484,7 +484,7 @@ if (!doNotTrack) {
 <h3 id="the-root-cause">The Root Cause</h3>
 <p>The deletions we did in early February were the start of the problem. Without having maintenance windows, we were unable to rebuild the tables, leaving rowgroups in a highly fragmented state with a lot of deleted rows - many of them had 100% deletion. We didn&rsquo;t see an issue in SQL Server 2017, because the tuple mover only triggered when a rowgroup closed and the tuple mover moved it to a compressed state.</p>
 <h3 id="behavior-change">Behavior Change</h3>
-<p>In SQL Server 2019, the tuple mover has a helper called the background merge task. The <!-- raw HTML omitted -->docs have some details about it<!-- raw HTML omitted -->:</p>
+<p>In SQL Server 2019, the tuple mover has a helper called the background merge task. The <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-query-performance?view=sql-server-ver15">docs have some details about it</a>:</p>
 <blockquote>
 <p>Starting with SQL Server 2019 (15.x), the tuple-mover is helped by a background merge task that automatically compresses smaller OPEN delta rowgroups that have existed for some time as determined by an internal threshold, or merges COMPRESSED rowgroups from where a large number of rows has been deleted. This improves the columnstore index quality over time.</p>
 </blockquote>
@@ -515,7 +515,7 @@ if (!doNotTrack) {
 <p>I tested SQL Server 2019 for months before we upgraded, and didn&rsquo;t see this behavior at any point. But, as many of us know, upgrades are always fun. There is always a risk of issues when installing new versions. It doesn&rsquo;t matter how much you test or plan, there&rsquo;s always a possibility of something going wrong.</p>
 <p>I hope this helps someone who is thinking about upgrading, uses clustered columnstore, and doesn&rsquo;t have an easy way to perform maintenance in their production environment. Check those deleted rows, and test, test, and test again, if you&rsquo;re planning on upgrading.</p>
 <p>At some point soon, I&rsquo;ll put pen to paper or fingers to keyboard and start writing about the upgrade to SQL Server 2019, along with what benefits we&rsquo;ve gotten from it so far.</p>
-<p>I also would like to personally thank Pedro Lopes (<!-- raw HTML omitted -->t<!-- raw HTML omitted -->), for helping with this issue and others we encountered after upgrading to SQL Server 2019, as well as reviewing this post.</p>
+<p>I also would like to personally thank Pedro Lopes (<a href="https://twitter.com/SQLPedro">t</a>), for helping with this issue and others we encountered after upgrading to SQL Server 2019, as well as reviewing this post.</p>
 
     </div>
 

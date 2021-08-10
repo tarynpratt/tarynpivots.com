@@ -6,11 +6,11 @@ tags: [sql, sql-server, bug, stack-overflow, availability-group, secondary-serve
 excerpt: "Slow transaction log redo causes incorrect data beiing queried from secondary SQL Server"
 ---
 
-Last week at Stack Overflow we had an internal hack-a-thon, or as we call it, a make-a-thon. I was on the bug-bashing team, which is the team that attempts to fix smallish bugs we haven’t gotten around to fixing, due to other time-constraints. I was <a href="https://meta.stackoverflow.com/q/384675/426671" target="_blank">tagged to investigate a bug</a> about duplicate badges being awarded because it looked to possibly be an easy fix in SQL. At first glance it looked simple enough, but once I started digging in, I figured out very quickly it wouldn’t be.
+Last week at Stack Overflow we had an internal hack-a-thon, or as we call it, a make-a-thon. I was on the bug-bashing team, which is the team that attempts to fix smallish bugs we haven’t gotten around to fixing, due to other time-constraints. I was [tagged to investigate a bug](https://meta.stackoverflow.com/q/384675/426671) about duplicate badges being awarded because it looked to possibly be an easy fix in SQL. At first glance it looked simple enough, but once I started digging in, I figured out very quickly it wouldn’t be.
 
 ## A Little Background
 
-If you're not familiar with <a href="https://stackoverflow.com/help/badges" target="_blank">badges</a> on Stack Overflow, they are awarded for performing actions on the site. For example, the badge in the bug report, <a href="https://stackoverflow.com/help/badges/804/suffrage" target="_blank">Suffrage</a> is awarded for voting 30 times in a day. Some of our badges can be awarded multiple times while others are awarded only once. The Suffrage badge is supposed to be a one time badge, which is why it is odd that someone had it twice.
+If you're not familiar with [badges](https://stackoverflow.com/help/badges) on Stack Overflow, they are awarded for performing actions on the site. For example, the badge in the bug report, [Suffrage](https://stackoverflow.com/help/badges/804/suffrage) is awarded for voting 30 times in a day. Some of our badges can be awarded multiple times while others are awarded only once. The Suffrage badge is supposed to be a one time badge, which is why it is odd that someone had it twice.
 
 ## Initial Investigation
 
@@ -57,7 +57,7 @@ After looking through the chat transcripts, I had a far better understanding of 
 
 ## Digging Deeper
 
-Based on what I saw in the transcripts, my gut was telling me the issue had to do with the massive influx to the transaction logs making the `log_send_queue_size` sky-rocket. This resulted in a much larger amount of data that needed to be written to the secondary, in other words the `redo_queue_size` was also extremely large (both values are available by querying <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-hadr-database-replica-states-transact-sql?view=sql-server-ver15" target="_blank">`sys.dm_hadr_database_replica_states`</a>). As a result, we were reading dirty data when we awarded the badges. We award badges in this manner:
+Based on what I saw in the transcripts, my gut was telling me the issue had to do with the massive influx to the transaction logs making the `log_send_queue_size` sky-rocket. This resulted in a much larger amount of data that needed to be written to the secondary, in other words the `redo_queue_size` was also extremely large (both values are available by querying [`sys.dm_hadr_database_replica_states`](https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-hadr-database-replica-states-transact-sql?view=sql-server-ver15)). As a result, we were reading dirty data when we awarded the badges. We award badges in this manner:
 
 1. Query the readable secondary to verify who should get the badge &mdash; we use the secondary to help spread out our read workload
 2. Award the badge on the primary
@@ -88,7 +88,7 @@ WHERE EXISTS (SELECT 1
 
 Using the results and the exceptions in our chatroom, I was able to confirm that we had other instances where a huge process hit the servers, overloaded the transaction logs, and resulted in duplicate badges. And what do you know I found a bunch of them! 
 
-I didn't need to look very far back in time either. Back in November 2019, we performed a <a href="https://stackoverflow.blog/2019/11/13/were-rewarding-the-question-askers/" target="_blank">massive reputation recalculation</a> which involved awarding reputation to question askers across the entire network. Let's just say we overwhelmed our servers just a little bit during this time and the redo of the transaction logs in our Availability Groups and Distributed Availability Groups was incredibly slow. Since we were hammering the secondaries with a lot of transactions, we unfortunately were reading staler and staler data when we awarded badges which lead to other duplicates. 
+I didn't need to look very far back in time either. Back in November 2019, we performed a [massive reputation recalculation](https://stackoverflow.blog/2019/11/13/were-rewarding-the-question-askers/) which involved awarding reputation to question askers across the entire network. Let's just say we overwhelmed our servers just a little bit during this time and the redo of the transaction logs in our Availability Groups and Distributed Availability Groups was incredibly slow. Since we were hammering the secondaries with a lot of transactions, we unfortunately were reading staler and staler data when we awarded badges which lead to other duplicates. 
 
 ## Fixing the Issue...Or Not
 

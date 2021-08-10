@@ -25,7 +25,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta name="author" content="Taryn" />
-  <meta name="description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience." />
+  <meta name="description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience." />
 
   <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
 
@@ -60,19 +60,19 @@
 
 
 <meta property="og:title" content="SQL Server 2019 Aggressive Clustered Columnstore Cleanup" />
-<meta property="og:description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience." />
+<meta property="og:description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/" /><meta property="article:section" content="post" />
 <meta property="article:published_time" content="2020-04-24T04:00:00+00:00" />
 <meta property="article:modified_time" content="2020-04-24T04:00:00+00:00" />
 
 <meta itemprop="name" content="SQL Server 2019 Aggressive Clustered Columnstore Cleanup">
-<meta itemprop="description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience."><meta itemprop="datePublished" content="2020-04-24T04:00:00+00:00" />
+<meta itemprop="description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience."><meta itemprop="datePublished" content="2020-04-24T04:00:00+00:00" />
 <meta itemprop="dateModified" content="2020-04-24T04:00:00+00:00" />
-<meta itemprop="wordCount" content="2565">
+<meta itemprop="wordCount" content="2572">
 <meta itemprop="keywords" content="sql,sql-server,stack-overflow,sql-server-2019,server-upgrade,maintenance,projects,failover,distributed-availability-group,availability-group," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="SQL Server 2019 Aggressive Clustered Columnstore Cleanup"/>
-<meta name="twitter:description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience."/>
+<meta name="twitter:description" content="In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience."/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -301,7 +301,7 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2020-04-24 </span>
         
-        <span class="more-meta"> 2565 words </span>
+        <span class="more-meta"> 2572 words </span>
           <span class="more-meta"> 13 min read </span>
 
         
@@ -341,7 +341,7 @@ if (!doNotTrack) {
 
     
     <div class="post-content">
-      <p>In late March 2020, we upgraded our production SQL Servers to <!-- raw HTML omitted -->SQL Server 2019<!-- raw HTML omitted --> with CU3. After finishing the upgrade, we hit an issue with <!-- raw HTML omitted -->clustered columnstore<!-- raw HTML omitted --> that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</p>
+      <p>In late March 2020, we upgraded our production SQL Servers to <a href="https://www.microsoft.com/en-us/sql-server/sql-server-2019">SQL Server 2019</a> with CU3. After finishing the upgrade, we hit an issue with <a href="https://docs.microsoft.com/en-us/sql/relational-databases/indexes/columnstore-indexes-described?view=sql-server-2014">clustered columnstore</a> that we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</p>
 <h2 id="background">Background</h2>
 <p>We have one database in production, called PRIZM, which is made up exclusively of tables with clustered columnstore indexes. PRIZM is used for event tracking, and it backs our A/B testing, feature funnels, etc. in hopes of improving most of what we do. Because we use PRIZM everywhere, it&rsquo;s one of our larger databases with lots of tables. At the time of the upgrade, the database was approximately 500GB with about 1000 tables.</p>
 <p>There were various driving forces for it, but in early February we needed to purge data from PRIZM. Some of the reasons for doing so included:</p>
@@ -350,18 +350,18 @@ if (!doNotTrack) {
 <li>general cleanup/removal of old events we no longer needed to maintain</li>
 <li>ease of GDPR compliance processing</li>
 </ul>
-<p>We, or I should say <!-- raw HTML omitted -->Marc Gravell<!-- raw HTML omitted -->, deleted approximately 8 billion rows across 912 tables in the database. By doing this, we gained back drive space and removed data we no longer needed to keep.</p>
+<p>We, or I should say <a href="https://twitter.com/marcgravell">Marc Gravell</a>, deleted approximately 8 billion rows across 912 tables in the database. By doing this, we gained back drive space and removed data we no longer needed to keep.</p>
 <p>After performing the deletions, we did some of the recommended maintenance on columnstore indexes. While many of the smaller tables were rebuilt, a handful of tables (11 total) weren&rsquo;t rebuilt due to their size. Since we don’t have maintenance windows, it would be high-impact to attempt these rebuilds on a very active production environment.</p>
-<p>The plan was to perform these table rebuilds after upgrading to 2019. SQL Server 2019 added the ability <!-- raw HTML omitted -->to rebuild clustered columnstore indexes online<!-- raw HTML omitted --> and that feature was one of the main reasons we wanted to upgrade.</p>
+<p>The plan was to perform these table rebuilds after upgrading to 2019. SQL Server 2019 added the ability <a href="http://www.nikoport.com/2018/06/21/columnstore-indexes-part-123-clustered-columnstore-index-online-rebuild/">to rebuild clustered columnstore indexes online</a> and that feature was one of the main reasons we wanted to upgrade.</p>
 <h2 id="upgrade-day">Upgrade Day</h2>
 <p>I&rsquo;m not going to cover our full upgrade to 2019 - that will hopefully be a later post. At this point, let&rsquo;s just assume everything went as planned and this is picking up after the main failovers of the servers that run Stack Overflow and the rest of the public network.</p>
-<p>After we finished the failovers for our public production servers, there was some behind the scenes work that needed to be done. This included patching and upgrading the former primary servers, and a failover of our reporting servers. The reporting cluster is a member of several <!-- raw HTML omitted -->distributed availability groups<!-- raw HTML omitted -->. When we&rsquo;re doing upgrades, we move the primary server from New York (NY-RPTSQL01) to Colorado (CO-RPTSQL01). Once all the upstream SQL Servers are upgraded, there&rsquo;s one last failover to get the primary back to NY-RPTSQL01. I&rsquo;m specifically mentioning these servers because they receive data from PRIZM, so they are impacted by any activity in that database.</p>
+<p>After we finished the failovers for our public production servers, there was some behind the scenes work that needed to be done. This included patching and upgrading the former primary servers, and a failover of our reporting servers. The reporting cluster is a member of several <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-ver15">distributed availability groups</a>. When we&rsquo;re doing upgrades, we move the primary server from New York (NY-RPTSQL01) to Colorado (CO-RPTSQL01). Once all the upstream SQL Servers are upgraded, there&rsquo;s one last failover to get the primary back to NY-RPTSQL01. I&rsquo;m specifically mentioning these servers because they receive data from PRIZM, so they are impacted by any activity in that database.</p>
 <h2 id="transaction-logs-exponentially-growing">Transaction Logs Exponentially Growing</h2>
 <p>As I was upgrading the former primaries, I noticed the transaction log files for PRIZM were growing. Initially, I just assumed it was normal and I went about finishing my other tasks.</p>
 <p>After about an hour, the log had grown again, and was growing rapidly. Like really rapidly, which was unusual. <strong>The logs were growing about 10GB every 5 minutes.</strong> We have lower traffic on the weekend so the amount of data being inserted into the database should not have been anywhere near this level.</p>
 <p>Normally large transaction logs might raise my eyebrows, but I wouldn&rsquo;t be super concerned. However, I needed to perform the failover of the reporting cluster, and with the logs increasing at the rate they were, it was going to make that more difficult, if not impossible.</p>
 <p>If you&rsquo;re not familiar with availability groups, the transaction logs from the primary server need to be written to the secondary servers. This same thing happens with distributed availability groups, but at a larger scale. In this case the transaction logs for the databases, including PRIZM which is on our primary server for Stack Overflow, needed to be flushed to the reporting cluster.</p>
-<p>As the logs were increasing in PRIZM, they needed to be written to the reporting servers and CO-RPTSQL01 had a huge <code>log send queue</code>, and NY-RPTSQL01 had a huge <code>recovery queue</code>. Both of those are defined in the <!-- raw HTML omitted -->Microsoft docs<!-- raw HTML omitted -->, but I’ve included the definitions below:</p>
+<p>As the logs were increasing in PRIZM, they needed to be written to the reporting servers and CO-RPTSQL01 had a huge <code>log send queue</code>, and NY-RPTSQL01 had a huge <code>recovery queue</code>. Both of those are defined in the <a href="https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2012/ff878356(v=sql.110)">Microsoft docs</a>, but I’ve included the definitions below:</p>
 <ul>
 <li><strong>Log send queue</strong> - Amount of log records in the log files of the primary database, in kilobytes, that has not yet been sent to the secondary replica. This value is sent to the secondary replica from the primary replica. Queue size does not include FILESTREAM files that are sent to a secondary.</li>
 <li><strong>Recovery queue</strong> - Amount of log records in the log files of the secondary replica that has not yet been redone.</li>
@@ -370,8 +370,8 @@ if (!doNotTrack) {
 <h3 id="what-on-earth-is-happening">What on Earth is Happening?</h3>
 <p>When I first noticed the <code>log send queue</code> size, it was about 90GB. Within just a few hours it was at 320GB, and growing.</p>
 <p>We knew normal traffic wasn&rsquo;t causing the increase. We also knew there wasn’t a delete job that would have triggered the massive growth of transaction logs, especially at the rate we were seeing. Now it was time to try and figure out what was causing the rapid growth.</p>
-<p>I looked at our instance of <!-- raw HTML omitted -->OpServer<!-- raw HTML omitted --> to see if it reported any queries running against PRIZM. Nothing.</p>
-<p>I executed <!-- raw HTML omitted --><code>sp_whoisactive</code><!-- raw HTML omitted -->. Nothing.</p>
+<p>I looked at our instance of <a href="https://github.com/opserver/Opserver">OpServer</a> to see if it reported any queries running against PRIZM. Nothing.</p>
+<p>I executed <a href="http://whoisactive.com/"><code>sp_whoisactive</code></a>. Nothing.</p>
 <p>From what I was seeing it appeared &ldquo;something&rdquo; was crawling through our CCI tables and processing &ldquo;something&rdquo;. Like all the hand-wavy &ldquo;something was doing something&rdquo;? Yeah me too. We didn&rsquo;t know what was happening and I was frantically trying to get it to stop.</p>
 <p>I then executed <code>sp_who2</code> and saw some PRIZM related things as background/system tasks, so I quickly wrote a script that would let me filter only for PRIZM:</p>
 <div class="highlight"><div class="chroma">
@@ -418,7 +418,7 @@ if (!doNotTrack) {
 </span><span class="w"></span><span class="k">WHERE</span><span class="w"> </span><span class="n">DBName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;PRIZM&#39;</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>The output of <code>sp_who2</code> was repeatedly showing <code>GHOST CLEANUP</code> and <code>CREATE INDEX</code>. Over and over and over again. To be clear, I’m not a clustered columnstore expert, I know enough to be able to maintain them as needed. I went to <!-- raw HTML omitted -->Twitter<!-- raw HTML omitted --> and mentioned what I was seeing. I was advised by <!-- raw HTML omitted -->@sqL_handLe<!-- raw HTML omitted --> to try trace flag 661 which disables the ghost record removal process, and by Joe Obbish via <!-- raw HTML omitted -->Erik Darling<!-- raw HTML omitted --> to enable trace flag 634 to disable the tuple mover background task.</p>
+<p>The output of <code>sp_who2</code> was repeatedly showing <code>GHOST CLEANUP</code> and <code>CREATE INDEX</code>. Over and over and over again. To be clear, I’m not a clustered columnstore expert, I know enough to be able to maintain them as needed. I went to <a href="https://twitter.com/tarynpivots/status/1243984519314558976">Twitter</a> and mentioned what I was seeing. I was advised by <a href="https://twitter.com/sqL_handLe/status/1243988928484511746">@sqL_handLe</a> to try trace flag 661 which disables the ghost record removal process, and by Joe Obbish via <a href="https://twitter.com/erikdarlingdata/status/1244005847140884480">Erik Darling</a> to enable trace flag 634 to disable the tuple mover background task.</p>
 <p>Initially, we enabled trace flag 634, but the logs continued to grow. We disabled trace flag 634. Then we enabled trace flag 661, and the logs continued to grow, so we disabled it. Finally, we tried enabling both of the trace flags. The big jumps stopped, but we now had about 400GB of logs that needed to be written to the reporting cluster before we could perform the failover.</p>
 <p>While the logs were exploding we wondered if whatever was happening might have been caused by the deletions we did in early February. But why would they be triggered by the upgrade to SQL Server 2019?</p>
 <p>We figured we could just let whatever was running, keep running, and maybe it&rsquo;d eventually stop. However remember I mentioned one of the reasons we deleted a bunch of data from PRIZM was due to disk space being utilized? Well, the t-log growth was rapidly taking that back. The morning of the upgrade we were at 83% being used, as the day went on we were approaching 90%. This became an urgent issue because the growth was not slowing down and honestly we were worried we&rsquo;d run out of disk space if we just let it play out.</p>
@@ -426,8 +426,8 @@ if (!doNotTrack) {
 <p>A brief side note, before we enabled the trace flags we were getting lots of exceptions across the network. Once we enabled them, the exceptions slowed. Coincidence?</p>
 <h2 id="time-to-investigate">Time to Investigate</h2>
 <p>The next morning we still had logs that were being written to the reporting cluster, 195GB to be exact. Yes I know that as ridiculously high still, but we have throughput issues between our two datacenters (that’s a whole different story). Due to the size of the recovery queue that meant no failover until that flushed.</p>
-<p>We heard back from support, so it was time to investigate. They requested that we take a full dump file, which is pretty difficult since we have 1.5TB of memory on the Stack Overflow SQL Server and the C: drive isn&rsquo;t large enough to capture that, so we went with a smaller filtered dump and 3 minidumps. That meant <!-- raw HTML omitted -->another public outage<!-- raw HTML omitted -->, but we needed the files for them.</p>
-<p>When we took the dump files, we disabled both trace flags (634 and 661), during the <!-- raw HTML omitted -->10 minutes the trace flags were off, the transaction logs increased another 25-30GB<!-- raw HTML omitted -->.</p>
+<p>We heard back from support, so it was time to investigate. They requested that we take a full dump file, which is pretty difficult since we have 1.5TB of memory on the Stack Overflow SQL Server and the C: drive isn&rsquo;t large enough to capture that, so we went with a smaller filtered dump and 3 minidumps. That meant <a href="https://twitter.com/tarynpivots/status/1244257820905627653">another public outage</a>, but we needed the files for them.</p>
+<p>When we took the dump files, we disabled both trace flags (634 and 661), during the <a href="https://twitter.com/tarynpivots/status/1244408854768578561">10 minutes the trace flags were off, the transaction logs increased another 25-30GB</a>.</p>
 <h3 id="were-being-haunted-by-ghosts">We’re Being Haunted by Ghosts</h3>
 <p>After providing the dump files, they requested that we check the status of the ghost records in the database using and provide the results:</p>
 <div class="highlight"><div class="chroma">

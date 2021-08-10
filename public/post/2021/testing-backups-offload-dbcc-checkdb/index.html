@@ -75,7 +75,7 @@ Background Early on when I started working on the SQL Servers at Stack Overflow,
 I wanted to restore our backups on a regular basis, so I set up a process to test them automatically, on a nightly basis.
 Background Early on when I started working on the SQL Servers at Stack Overflow, we were taking daily backups."><meta itemprop="datePublished" content="2021-04-19T06:00:00+00:00" />
 <meta itemprop="dateModified" content="2021-04-19T06:00:00+00:00" />
-<meta itemprop="wordCount" content="2673">
+<meta itemprop="wordCount" content="2675">
 <meta itemprop="keywords" content="sql,sql-server,stack-overflow,backup,restore,restore-testing,maintenance,checkdb,availability-group," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Testing Backups and Offloading CheckDB"/>
 <meta name="twitter:description" content="While every DBA knows they need to backup all their databases, not all may realize the importance of testing those backups. Performing backups is pointless, if you&rsquo;re unable to restore them.
@@ -309,7 +309,7 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2021-04-19 </span>
         
-        <span class="more-meta"> 2673 words </span>
+        <span class="more-meta"> 2675 words </span>
           <span class="more-meta"> 13 min read </span>
 
         
@@ -345,7 +345,7 @@ if (!doNotTrack) {
 <h2 id="background">Background</h2>
 <p>Early on when I started working on the SQL Servers at Stack Overflow, we were taking daily backups. We had a handful of databases that were being restored for other processes, but the majority weren&rsquo;t actively tested to ensure the backups were good. Since you never want to be in a situation where you need to restore a database and find it doesn&rsquo;t work, my goal was to create a process to automatically restore our backups to a separate server, and then run <code>DBCC CHECKDB</code> on it.</p>
 <p>Now, you might be wondering why I&rsquo;d run <code>CHECKDB</code> on the backup after I restore it and asking yourself &ldquo;aren&rsquo;t you supposed to run <code>CHECKDB</code> on the SQL Server you take a backup on?&rdquo;</p>
-<p>Yes, technically many people suggest you do that, but we don&rsquo;t,  because while we take full backups on the primary replica in our <!-- raw HTML omitted -->Always On Availability Groups<!-- raw HTML omitted -->, we don&rsquo;t have maintenance windows, and running <code>CHECKDB</code> on a very busy production SQL Server like we have for Stack Overflow can cause issues (ask me how I know). We can&rsquo;t easily run a full <code>CHECKDB</code> in production, so since I was going to be restoring the backups to make sure they worked, I might as well run <code>CHECKDB </code>on it to verify everything.</p>
+<p>Yes, technically many people suggest you do that, but we don&rsquo;t,  because while we take full backups on the primary replica in our <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-ver15">Always On Availability Groups</a>, we don&rsquo;t have maintenance windows, and running <code>CHECKDB</code> on a very busy production SQL Server like we have for Stack Overflow can cause issues (ask me how I know). We can&rsquo;t easily run a full <code>CHECKDB</code> in production, so since I was going to be restoring the backups to make sure they worked, I might as well run <code>CHECKDB </code>on it to verify everything.</p>
 <h2 id="automating-the-testing">Automating the Testing</h2>
 <p>Before I jumped into creating a new process there were some questions I needed to answer for this project:</p>
 <ol>
@@ -360,7 +360,7 @@ if (!doNotTrack) {
 <ol>
 <li>Automatically add or remove databases that need testing</li>
 <li>Restore the our backups on a separate server</li>
-<li>Run <!-- raw HTML omitted --><code>DBCC CHECKDB</code><!-- raw HTML omitted --> on the backup after being restored</li>
+<li>Run <a href="https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?redirectedfrom=MSDN&amp;view=sql-server-ver15"><code>DBCC CHECKDB</code></a> on the backup after being restored</li>
 </ol>
 <h3 id="maintaining-a-list-of-databases-to-test">Maintaining a List of Databases to Test</h3>
 <p>I knew the initial list of databases we wanted to test, but what if that list changed? What would happen if we added new databases, or removed databases, and no longer had backups? I didn&rsquo;t want the nightly process to fail, and even though I typically know when we add or remove databases, I didn&rsquo;t want to hand-hold and edit the list manually, I wanted it to be dynamic.</p>
@@ -595,7 +595,7 @@ if (!doNotTrack) {
 </span><span class="w"></span><span class="k">END</span></code></pre></td></tr></table>
 </div>
 </div>
-<p>This procedure uses <!-- raw HTML omitted -->xp_cmdshell<!-- raw HTML omitted --> to get the list of files in the backup directory, then adds new databases that are missing from the current list, and removes databases that haven&rsquo;t had a new .bak file in the last seven days. Finally, we have a scheduled job that executes this stored procedure nightly to keep the table of <code>DatabasesToRestore</code> up to date.</p>
+<p>This procedure uses <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/xp-cmdshell-transact-sql?view=sql-server-ver15">xp_cmdshell</a> to get the list of files in the backup directory, then adds new databases that are missing from the current list, and removes databases that haven&rsquo;t had a new .bak file in the last seven days. Finally, we have a scheduled job that executes this stored procedure nightly to keep the table of <code>DatabasesToRestore</code> up to date.</p>
 <h3 id="restoring-database-backups">Restoring Database Backups</h3>
 <p>Once I had a list of the databases to restore, and a way to maintain that list on its own, it was time to get the process in place to restore the backups for testing nightly.</p>
 <p>In addition to restoring the backups, I also wanted to keep a record of what was being restored, as a reference, in the event there were issues or failures with the nightly job. To do this, I created another table which I put in the <code>master</code> database.</p>
@@ -1288,7 +1288,7 @@ if (!doNotTrack) {
 </div>
 <p>In this stored procedure I do a couple of things, run <code>CHECKDB</code> and then validate that the <code>CHECKDB</code> was successful. If it wasn&rsquo;t successful, then we don&rsquo;t drop the database, and we send an email alert stating that something needs to be investigated. If everything is ok with the <code>CHECKDB</code>, then we drop the database and it will either move to the next database to restore, or it will exit the job if we have hit the 12 hour time limit.</p>
 <p>To get this entire process done, I have two SQL Agent jobs running - one to update the list of the <code>DatabasesToRestore</code> via <code>spUpdateDatabasesToRestore</code> and one that executes the Backup and Restore Testing procedure (<code>spBackupRestoreTesting</code>).</p>
-<p>I&rsquo;ve added all these scripts to <!-- raw HTML omitted -->GitHub<!-- raw HTML omitted -->, feel free to peruse them that way or tell me how terrible they are.</p>
+<p>I&rsquo;ve added all these scripts to <a href="https://github.com/tarynpratt/misc_sql_scripts/tree/master/BackupRestoreTesting">GitHub</a>, feel free to peruse them that way or tell me how terrible they are.</p>
 <h2 id="final-thoughts">Final Thoughts</h2>
 <p>Currently, we&rsquo;re restoring 398 databases daily and running the <code>DBCC CHECKDB</code> on each one of them. Does that seem like a lot? Probably, but this process has, in fact, caught issues with some of our databases.</p>
 <p>If the <code>CHECKDB</code> finds an issue, it doesn&rsquo;t drop the database (leaving it for investigation), it sends an email alert. This gives me ample time to figure out what has gone wrong and fix the issue on the production database.</p>

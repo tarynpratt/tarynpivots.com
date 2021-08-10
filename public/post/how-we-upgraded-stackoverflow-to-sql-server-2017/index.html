@@ -25,7 +25,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta name="author" content="Taryn" />
-  <meta name="description" content="This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+  <meta name="description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
 A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed." />
 
   <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
@@ -61,7 +61,7 @@ A quick background, when I became the DBA at Stack Overflow, we had various vers
 
 
 <meta property="og:title" content="How we upgraded Stack Overflow to SQL Server 2017" />
-<meta property="og:description" content="This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+<meta property="og:description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
 A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/" /><meta property="article:section" content="post" />
@@ -69,13 +69,13 @@ A quick background, when I became the DBA at Stack Overflow, we had various vers
 <meta property="article:modified_time" content="2018-11-07T19:00:38+00:00" />
 
 <meta itemprop="name" content="How we upgraded Stack Overflow to SQL Server 2017">
-<meta itemprop="description" content="This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+<meta itemprop="description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
 A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed."><meta itemprop="datePublished" content="2018-11-07T19:00:38+00:00" />
 <meta itemprop="dateModified" content="2018-11-07T19:00:38+00:00" />
-<meta itemprop="wordCount" content="2126">
+<meta itemprop="wordCount" content="2132">
 <meta itemprop="keywords" content="sql,sql-server,maintenance,patching,projects,stack-overflow,distributed-availability-group,availability-group,failover," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="How we upgraded Stack Overflow to SQL Server 2017"/>
-<meta name="twitter:description" content="This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+<meta name="twitter:description" content="This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
 A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed."/>
 
 <!--[if lte IE 9]>
@@ -305,8 +305,8 @@ if (!doNotTrack) {
       <div class="post-meta">
         <span class="post-time"> 2018-11-07 </span>
         
-        <span class="more-meta"> 2126 words </span>
-          <span class="more-meta"> 10 min read </span>
+        <span class="more-meta"> 2132 words </span>
+          <span class="more-meta"> 11 min read </span>
 
         
         
@@ -330,7 +330,7 @@ if (!doNotTrack) {
 
     
     <div class="post-content">
-      <p>This post has been rattling around in my head for months, and with <!-- raw HTML omitted -->SQL Server 2019<!-- raw HTML omitted --> on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.</p>
+      <p>This post has been rattling around in my head for months, and with <a href="https://www.microsoft.com/en-us/sql-server/sql-server-2019">SQL Server 2019</a> on the horizon, I figured I&rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.</p>
 <p>A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed. We even had an instance of SQL Server 2012 still running. The bulk of our servers hadn’t been patched for 6-9 months, and we were just as behind in our Windows Updates&hellip;eeek. In a perfect world, all servers run the same version and CU. However, since we don’t have regular maintenance windows, tackling this would mean downtime - which meant it had  to be a project not a one-off type of task.</p>
 <p>When I kicked off this project, back in February 2018 (see I told you this has been rattling around in my head for months), we had ~30 servers, the breakdown of them was:</p>
 <ul>
@@ -340,7 +340,7 @@ if (!doNotTrack) {
 <li>2 servers for Reporting Cluster - these power various reporting applications (1 in NY, 1 in CO)</li>
 <li>the remaining servers have miscellaneous functions like - lab/test environments, development servers, traffic logs, and many others used by various teams (located in both NY and CO)</li>
 </ul>
-<p>We have various <!-- raw HTML omitted -->availability groups<!-- raw HTML omitted --> (AGs) running on the Stack Overflow, Stack Exchange, Internal Development, and Reporting servers. Adding another layer of complexity, we also have availability groups that are a part of <!-- raw HTML omitted -->Distributed Availability Groups<!-- raw HTML omitted --> (DAGs). The main clusters (SO, SE, and Internal) have data that flows from a handful of databases downstream to the reporting servers. It looks a bit like this:</p>
+<p>We have various <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/always-on-availability-groups-sql-server?view=sql-server-2017">availability groups</a> (AGs) running on the Stack Overflow, Stack Exchange, Internal Development, and Reporting servers. Adding another layer of complexity, we also have availability groups that are a part of <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/distributed-availability-groups?view=sql-server-2017">Distributed Availability Groups</a> (DAGs). The main clusters (SO, SE, and Internal) have data that flows from a handful of databases downstream to the reporting servers. It looks a bit like this:</p>
 <p><img src="/image/2018/so-sql-server-layout.png" alt="A very basic overview of our SQL Server layout"></p>
 <h2 id="the-initial-plan">The Initial Plan</h2>
 <p>With so many servers to upgrade, I needed to figure out the best path to get them done in the least amount of time, with the least amount of downtime. I started out by basically creating a spreadsheet of metadata. This spreadsheet included all the server names, the current software version (including CU/SP), the date of the last Windows Update, the team to notify before starting the maintenance, and the date the upgrade was completed. I also added a rudimentary risk level from low to high, and chose the levels based on whether the server was public, internal, dev, etc. Using this risk level, I prioritized the order in which to upgrade each server. Since all the servers hadn&rsquo;t been patched in months, the patching plan for the day of the upgrade was:</p>
@@ -367,15 +367,15 @@ if (!doNotTrack) {
 <li>SO/SE - NY primaries after a failover</li>
 </ol>
 <p>This allowed me to get the majority of the upgrades done during the week, then we&rsquo;d perform a quick failover on a weekend, during lower traffic, and I&rsquo;d knock out upgrading the last two critical servers. Based on this, the CO reporting server was up first.</p>
-<p>All boxes on the patching plan were ticked for this server, and when it came back up after the final reboot, I checked our instance of <!-- raw HTML omitted -->OpServer<!-- raw HTML omitted --> and everything was green and syncing; I thought &lsquo;Woot, everything is great.&rsquo; Since we use readable secondaries, I wanted to perform a touch test on the databases in the AGs and DAGs to make sure everything was working. I logged into SSMS, but when I attempted to query any database in a DAG they weren&rsquo;t accessible. I couldn&rsquo;t read from them. This was a giant &lsquo;oh crap&rsquo; moment.</p>
+<p>All boxes on the patching plan were ticked for this server, and when it came back up after the final reboot, I checked our instance of <a href="https://github.com/opserver/Opserver">OpServer</a> and everything was green and syncing; I thought &lsquo;Woot, everything is great.&rsquo; Since we use readable secondaries, I wanted to perform a touch test on the databases in the AGs and DAGs to make sure everything was working. I logged into SSMS, but when I attempted to query any database in a DAG they weren&rsquo;t accessible. I couldn&rsquo;t read from them. This was a giant &lsquo;oh crap&rsquo; moment.</p>
 <p>I frantically started checking the server to see if there were errors. There was nothing. Nothing in the logs, and no errors from the installation. From what I could tell, everything went as expected. Then why couldn&rsquo;t I read from the databases? After doing a bit of research, I found it was because the secondary was a higher version from the primary. Initially I thought, &lsquo;OK, I&rsquo;ll upgrade the NY reporting server and everything would be fine&rsquo;, but then I remembered these servers are downstream in the DAGs. Uh oh.</p>
 <p>If I upgraded both reporting servers, which receive data from 3 DAGs (SO/SE/Int Dev), and those are all a lower version of SQL Server, both reporting servers would be totally out of commission until the upstream servers were all upgraded. All this would result in major downtime for reporting and wasn&rsquo;t going to work.</p>
-<p>I did research, pinged people on <!-- raw HTML omitted -->Database Administrators Stack Exchange<!-- raw HTML omitted -->, and poked my co-worker <!-- raw HTML omitted -->Nick Craver about it<!-- raw HTML omitted -->. From everything I heard and read, the behavior was expected, but incredibly difficult to deal with if you&rsquo;re not upgrading everything at the same time, or in a short amount of time. I wanted to spread the upgrades out over a month to make them manageable, but when they go out of commission because of a upgrade, that timeframe went out the window.</p>
+<p>I did research, pinged people on <a href="https://dba.stackexchange.com/">Database Administrators Stack Exchange</a>, and poked my co-worker <a href="https://twitter.com/Nick_Craver/status/963443600997736449">Nick Craver about it</a>. From everything I heard and read, the behavior was expected, but incredibly difficult to deal with if you&rsquo;re not upgrading everything at the same time, or in a short amount of time. I wanted to spread the upgrades out over a month to make them manageable, but when they go out of commission because of a upgrade, that timeframe went out the window.</p>
 <p>All this left me in a state of confusion. How the heck am I going to upgrade these with basically zero downtime, and ensure they don&rsquo;t become unreadable for days?</p>
 <p>My plan blew up — I couldn&rsquo;t do the upgrade in the original order and timeframe that I wanted.</p>
 <h2 id="back-to-the-drawing-board">Back to the Drawing Board</h2>
 <p>Since we couldn&rsquo;t be without both reporting servers for days, that meant I needed to come up with a new plan/timeframe to get this done. It would also need buy-in, because at some point we&rsquo;d have more downtime than initially expected.</p>
-<p>Microsoft recommends <!-- raw HTML omitted -->upgrading servers<!-- raw HTML omitted --> in this order:</p>
+<p>Microsoft recommends <a href="https://docs.microsoft.com/en-us/sql/database-engine/availability-groups/windows/upgrading-always-on-availability-group-replica-instances?view=sql-server-2017">upgrading servers</a> in this order:</p>
 <ul>
 <li>Upgrade remote secondaries</li>
 <li>Upgrade local secondaries</li>
@@ -411,9 +411,9 @@ if (!doNotTrack) {
 <li>Perform any failovers to reinstate a primary. For us, this only applies to the reporting cluster. When we failover within NY, we just let the new primary stay primary until we need to failover again - this minimizes downtime for us.</li>
 </ol>
 <p>You can see that this deviates from the recommended order by Microsoft because we did the local NY secondaries first. This was done in the event something catastrophic happened in NY, and we had to fail to CO. We knew CO was still up and running since we could query it. If we had upgraded CO and made it unreadable, we wouldn&rsquo;t be able to query it and confirm things were syncing properly for an extended period of time. The thought of this made us uncomfortable.</p>
-<p>I tested and retested this plan in the lab environment to get it down before attempting this on any of the critical servers. The only real issue was the reporting servers would be out of commission until the rest upgraded. This meant everything would have to be upgraded fast, so we did not have reporting unavailable for too long. Based on this, it was decided we&rsquo;d do the local NY secondaries on a Friday, then perform the rest of the upgrades and failover on a Saturday - this meant downtime, so we had to give <!-- raw HTML omitted -->plenty of notice to the community<!-- raw HTML omitted --> before tackling it.</p>
+<p>I tested and retested this plan in the lab environment to get it down before attempting this on any of the critical servers. The only real issue was the reporting servers would be out of commission until the rest upgraded. This meant everything would have to be upgraded fast, so we did not have reporting unavailable for too long. Based on this, it was decided we&rsquo;d do the local NY secondaries on a Friday, then perform the rest of the upgrades and failover on a Saturday - this meant downtime, so we had to give <a href="https://meta.stackexchange.com/q/307744/164200">plenty of notice to the community</a> before tackling it.</p>
 <p>In the few days before the upgrade, I wrote up the playbook for the weekend. To minimize downtime and to get the remaining 11 servers upgraded quickly, there were 3 of us who were going to be doing the last upgrades, so I wanted everything documented. The playbook had every step outlined, who was doing what to which server, SQL code for each step (if needed), what was to be installed on each server, the order of failover of AGs&hellip;everything. This was my first major upgrade and I was a nervous wreck, I didn&rsquo;t want anything to be missed or to go wrong, so I probably overplanned, but why not, right?</p>
-<p>The weekend came and went, and we had no issues with the upgrades. When we failover our main SO/SE clusters, we typically put the sites in read-only mode, just to be safe that nothing crazy happens when SQL is failing over - for this upgrade our downtime/read-only time was &lt; 10 minutes which was far less than we expected. If you&rsquo;re super curious, you can <!-- raw HTML omitted -->watch a recording of the livestream<!-- raw HTML omitted -->, though I&rsquo;m not sure why you&rsquo;d want to sit through ~3 hours of us talking about upgrades.</p>
+<p>The weekend came and went, and we had no issues with the upgrades. When we failover our main SO/SE clusters, we typically put the sites in read-only mode, just to be safe that nothing crazy happens when SQL is failing over - for this upgrade our downtime/read-only time was &lt; 10 minutes which was far less than we expected. If you&rsquo;re super curious, you can <a href="https://www.youtube.com/watch?v=j5tOodr4ouc">watch a recording of the livestream</a>, though I&rsquo;m not sure why you&rsquo;d want to sit through ~3 hours of us talking about upgrades.</p>
 <p>In the end, I learned a bunch from this. I figured out how best to upgrade to new versions of SQL Server when Distributed Availability Groups are in play without making servers unreadable for too long. I also learned just how darn handy having a lab environment is, and that I super over-prepared/planned for the days of the actual work. I&rsquo;m not sure if this will help anyone else in the future, but now I know to avoid these landmines when upgrading.</p>
 <p>I also know there are probably plenty of other landmines I can hit when we move to SQL Server 2019.</p>
 

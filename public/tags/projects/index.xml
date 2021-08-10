@@ -22,7 +22,7 @@
       <pubDate>Fri, 24 Apr 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/aggressive-clustered-columnstore-cleanup/</guid>
-      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
+      <description>In late March 2020, we upgraded our production SQL Servers to SQL Server 2019 with CU3. After finishing the upgrade, we hit an issue with clustered columnstore that we hadn&amp;rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&amp;rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.</description>
     </item>
     
     <item>
@@ -60,7 +60,7 @@ Last year, when we upgraded to SQL Server 2017 we didn&amp;rsquo;t make any chan
       <pubDate>Wed, 07 Nov 2018 19:00:38 +0000</pubDate>
       
       <guid>https://tarynpivots.com/post/how-we-upgraded-stackoverflow-to-sql-server-2017/</guid>
-      <description>This post has been rattling around in my head for months, and with SQL Server 2019on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
+      <description>This post has been rattling around in my head for months, and with SQL Server 2019 on the horizon, I figured I&amp;rsquo;d finally put my thoughts down, especially since I know we might hit some of the same issues when we upgrade.
 A quick background, when I became the DBA at Stack Overflow, we had various versions of SQL Server in place — the majority were at some level of SQL Server 2016, each with a different CU or SP installed.</description>
     </item>
     
