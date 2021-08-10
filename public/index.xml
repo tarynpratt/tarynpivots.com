@@ -6,10 +6,31 @@
     <description>Recent content on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 10 Aug 2021 06:00:00 +0000</lastBuildDate>
     
         <atom:link href="https://tarynpivots.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>T-SQL Tuesday #141 - Work/Life Balance</title>
+      <link>https://tarynpivots.com/post/2021/t-sql-tuesday-141-work-life-balance/</link>
+      <pubDate>Tue, 10 Aug 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/post/2021/t-sql-tuesday-141-work-life-balance/</guid>
+      
+        <description>&lt;p&gt;&lt;!-- raw HTML omitted --&gt;&lt;!-- raw HTML omitted --&gt;&lt;!-- raw HTML omitted --&gt;&lt;/p&gt;
+&lt;p&gt;This month&amp;rsquo;s T-SQL Tuesday is hosted by &lt;!-- raw HTML omitted --&gt;Jon Shaulis&lt;!-- raw HTML omitted --&gt;, who has asked that we talk about &lt;!-- raw HTML omitted --&gt;impostor syndrome&lt;!-- raw HTML omitted --&gt;. This subject is close to my heart, as I have dealt with it throughout my career.&lt;/p&gt;
+&lt;p&gt;I didn&amp;rsquo;t study computer science or engineering in college. I never even took a computer class. I sort of just fell into working as a web developer because I had &lt;a href=&#34;https://tarynpivots.com/post/ch-ch-ch-changes-are-afoot/&#34;&gt;someone tell me they wouldn’t hire me due to lack of experience&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Early in my career, I was a web developer, an MS Access developer, and a C#/WinForms Software Engineer, and I never knew what I was doing in any of those roles. For all of them, I used books, blogs, and &lt;!-- raw HTML omitted --&gt;Stack Overflow&lt;!-- raw HTML omitted --&gt; to learn what I needed, in order to complete some of my day to day tasks. I did whatever it took to get the job done, and learned everything I could in the process. Each day I hoped people wouldn’t realize I didn’t really know what I was doing.&lt;/p&gt;
+&lt;p&gt;Eventually, I found my niche. I loved working with databases and writing SQL. I worked as a Database Developer/DBA for quite a few years and then took a break from it, but always knew I’d go back. After a two year hiatus, I went back as the DBA at Stack Overflow.&lt;/p&gt;
+&lt;p&gt;Once I returned as a DBA, I struggled daily with impostor syndrome. Imagine, after a two year break from SQL Server, returning to work on the servers that run one of the most visited websites in the world. And on top of that, working with people who know far more about our servers and SQL than I ever did. I completely felt out of my element and struggled significantly with impostor syndrome.&lt;/p&gt;
+&lt;p&gt;To be honest, I still struggle with it. I work with incredibly smart people. Far smarter than I am. I suggest things that are shot down. I propose both good and bad ideas that are sometimes accepted, and sometimes not.&lt;/p&gt;
+&lt;h3 id=&#34;how-do-i-deal-with-it&#34;&gt;How do I deal with it?&lt;/h3&gt;
+&lt;p&gt;I continue to suggest things that should be changed. They may be right or wrong, but I still do it. We discuss the pros and cons of the suggestions, and each time I learn from it.&lt;/p&gt;
+&lt;p&gt;Additionally, I&amp;rsquo;m trying to write more. I know there are things people can learn from me. I&amp;rsquo;m not the most confident in my writing (insert more impostor syndrome), but I&amp;rsquo;m working to overcome that by contributing more to the SQL community where I can. I fully expect I&amp;rsquo;ll make mistakes along the way, but that&amp;rsquo;s the only way I&amp;rsquo;ll be able to learn and get past my impostor syndrome.&lt;/p&gt;
+</description>
+      
+    </item>
     
     <item>
       <title>Testing Backups and Offloading CheckDB</title>
@@ -4452,7 +4473,8 @@ net start MSSQLSERVER /m
       
       <guid>https://tarynpivots.com/post/t-sql-tuesday-122-impostor-syndrome/</guid>
       
-        <description>&lt;p&gt;&lt;!-- raw HTML omitted --&gt;&lt;!-- raw HTML omitted --&gt;&lt;!-- raw HTML omitted --&gt;&lt;/p&gt;
+        <description>&lt;p&gt;&lt;!-- raw HTML omitted --&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/&#34;&gt;&lt;img src=&#34;https://tarynpivots.com/image/2020/T-SQL-Tuesday-Logo.jpg#floatright&#34; alt=&#34;T-SQL Tuesday Logo&#34;&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;This month&amp;rsquo;s T-SQL Tuesday is hosted by &lt;!-- raw HTML omitted --&gt;Jon Shaulis&lt;!-- raw HTML omitted --&gt;, who has asked that we talk about &lt;!-- raw HTML omitted --&gt;impostor syndrome&lt;!-- raw HTML omitted --&gt;. This subject is close to my heart, as I have dealt with it throughout my career.&lt;/p&gt;
 &lt;p&gt;I didn&amp;rsquo;t study computer science or engineering in college. I never even took a computer class. I sort of just fell into working as a web developer because I had &lt;a href=&#34;https://tarynpivots.com/post/ch-ch-ch-changes-are-afoot/&#34;&gt;someone tell me they wouldn’t hire me due to lack of experience&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Early in my career, I was a web developer, an MS Access developer, and a C#/WinForms Software Engineer, and I never knew what I was doing in any of those roles. For all of them, I used books, blogs, and &lt;!-- raw HTML omitted --&gt;Stack Overflow&lt;!-- raw HTML omitted --&gt; to learn what I needed, in order to complete some of my day to day tasks. I did whatever it took to get the job done, and learned everything I could in the process. Each day I hoped people wouldn’t realize I didn’t really know what I was doing.&lt;/p&gt;
@@ -5366,22 +5388,6 @@ net start MSSQLSERVER /m
 &lt;/div&gt;
 &lt;p&gt;This does exactly what I need it to do. I can set it up on our environments to run nightly to shrink the logs so I no longer need to manually &amp;ldquo;fix&amp;rdquo; stuff every day. I&amp;rsquo;ve passed it along to our engineering services group to set this up in all of the development environments when they create them with new production copies.&lt;/p&gt;
 &lt;p&gt;The script is available on &lt;a href=&#34;https://github.com/tarynpratt/posh_stuff/tree/master/Shrinking%20DBs&#34;&gt;GitHub&lt;/a&gt; if anyone is interested in using it, or tweaking it, or criticizing it, etc.&lt;/p&gt;
-</description>
-      
-    </item>
-    
-    <item>
-      <title>SQL Saturday Adventures</title>
-      <link>https://tarynpivots.com/post/sql-saturday-adventures/</link>
-      <pubDate>Sun, 12 Apr 2015 16:50:33 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/post/sql-saturday-adventures/</guid>
-      
-        <description>&lt;p&gt;A few weeks bit over a month ago, I took the plunge and attended my very first SQL Saturday, &lt;a href=&#34;https://www.sqlsaturday.com/370/eventhome.aspx&#34;&gt;SQL Saturday #370 in Phoenix&lt;/a&gt;. I&amp;rsquo;ve never had a chance to go to any of the local user group events or another SQL Saturday due to scheduling issues, etc. but this year I reshuffled things so I could take part. I&amp;rsquo;m really glad that I did, I truly learned a lot of stuff and I also realized I know more than I probably give myself credit for. Here&amp;rsquo;s a few of the highlights from me day:&lt;/p&gt;
-&lt;p&gt;My first session was Understanding Parameter Sniffing by Benjamin Nevarez. We deal with parameter sniffing a lot at work, so it was something I had experience with. I also gave a Lunch &amp;amp; Learn presentation to co-workers on the topic, which made me curious to see what else I should have covered during my session. To my surprise, I knew most of what Benjamin covered - which was great. His session was listed as &amp;ldquo;Beginner&amp;rdquo; but it was nice to know almost everything he discussed.&lt;/p&gt;
-&lt;p&gt;During lunch, I attended the WIT Panel. For those who don&amp;rsquo;t know, WIT is for Women in Technology. I&amp;rsquo;ve rarely worked with female developers, so I went to this session to hear stories from the women in the same field. It was interesting to hear similar stories from the women on the panel, as well as from the audience. I found myself saying &lt;em&gt;yeah, I&amp;rsquo;ve experienced that&lt;/em&gt; repeatedly during the session. Hearing about &amp;ldquo;Mr. Know-It-All&amp;rdquo; from multiple panelists made me laugh because we&amp;rsquo;ve all dealt with that guy. There are so many things I could say about the WIT Panel and being a woman in technology, I&amp;rsquo;ll have to make that a separate post. My takeaway from this was that my experiences are similar to many other women in tech, which I already knew, but it was nice to hear. I&amp;rsquo;d recommend this session to anyone attending a future SQL Saturday.&lt;/p&gt;
-&lt;p&gt;The last session I went to Powershell Tips and Tricks for SQL Server Administration by &lt;a href=&#34;https://twitter.com/Mike_Fal&#34;&gt;Mike Fal&lt;/a&gt;. I had never used Powershell and had limited exposure to it prior to this session, but I know Mike from &lt;a href=&#34;http://dba.stackexchange.com/users/7611/mike-fal&#34;&gt;DBA.SE&lt;/a&gt; and Stack Overflow so I wanted to attend his session and I&amp;rsquo;m glad that I did. I saw a few things that I would be able to use almost immediately at work with Powershell (I&amp;rsquo;ll be posting my lame attempts in another post).&lt;/p&gt;
-&lt;p&gt;I was truly impressed by out SQL Saturday that we had here in Phoenix. I&amp;rsquo;m glad I forced myself to go and I&amp;rsquo;ll definitely go to more events in the future.&lt;/p&gt;
 </description>
       
     </item>

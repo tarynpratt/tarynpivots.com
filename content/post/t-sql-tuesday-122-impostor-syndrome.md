@@ -6,7 +6,12 @@ tags: [career, thoughts, journey, t-sql tuesday, sql-community]
 excerpt: "T-SQL Tuesday #122: Dealing with Impostor Syndrome"
 ---
 
-<a href="https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/" target="_blank"><img src="/image/2020/T-SQL-Tuesday-Logo.jpg" width="300" height="300" style="float:right" /></a>
+
+<img src="/image/2020/T-SQL-Tuesday-Logo.jpg" width="300" height="300" style="float:right" />
+
+
+[![T-SQL Tuesday Logo](/image/2020/T-SQL-Tuesday-Logo.jpg#floatright)](https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/)
+
 
 This month's T-SQL Tuesday is hosted by <a href="https://twitter.com/JonShaulis" target="_blank">Jon Shaulis</a>, who has asked that we talk about <a href="https://jonshaulis.com/index.php/2020/01/07/t-sql-tuesday-122-imposter-syndrome/" target="_blank">impostor syndrome</a>. This subject is close to my heart, as I have dealt with it throughout my career. 
 

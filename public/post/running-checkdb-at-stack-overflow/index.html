@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Taryn Pratt - Pivots and other SQL fun</title>
+  <title> - Taryn Pratt</title>
   
 
 <meta name="renderer" content="webkit" />
@@ -25,7 +25,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta name="author" content="Taryn" />
-  <meta name="description" content="Pivots and other SQL fun" />
+  <meta name="description" content="Notes:
+When I first joined the SRE team as the DBA there were no maintenance jobs in place" />
+
   <meta name="keywords" content="blog, sql, sql server, dba, database administrator, taryn, pivots, bluefeet, onlybluefeet, stack overflow, stackoverflow, code, stack, overflow, github, twitter, pivot" />
 
 
@@ -33,11 +35,10 @@
 
 
 
-<meta name="generator" content="Hugo 0.86.1" />
+<meta name="generator" content="Hugo 0.47" />
 
 
-<link rel="canonical" href="https://tarynpivots.com/" />
-<link href="%7balternate%20%7bRSS%20application/rss&#43;xml%20%20index%20alternate%20%20false%20false%20true%20false%20false%200%7d%20/index.xml%20https://tarynpivots.com/index.xml%7d" rel="alternate" type="application/rss+xml" title="Taryn Pratt - Pivots and other SQL fun" />
+<link rel="canonical" href="https://tarynpivots.com/post/running-checkdb-at-stack-overflow/" />
 
 
 
@@ -59,15 +60,26 @@
 <link rel="stylesheet" href="/css/custom.css">
 
 
-<meta property="og:title" content="Taryn Pratt - Pivots and other SQL fun" />
-<meta property="og:description" content="Pivots and other SQL fun" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://tarynpivots.com/" />
+<meta property="og:title" content="" />
+<meta property="og:description" content="Notes:
+When I first joined the SRE team as the DBA there were no maintenance jobs in place" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://tarynpivots.com/post/running-checkdb-at-stack-overflow/" />
+<meta itemprop="name" content="">
+<meta itemprop="description" content="Notes:
+When I first joined the SRE team as the DBA there were no maintenance jobs in place">
 
-<meta itemprop="name" content="Taryn Pratt - Pivots and other SQL fun">
-<meta itemprop="description" content="Pivots and other SQL fun"><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Taryn Pratt - Pivots and other SQL fun"/>
-<meta name="twitter:description" content="Pivots and other SQL fun"/>
+
+
+<meta itemprop="wordCount" content="18">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="Notes:
+When I first joined the SRE team as the DBA there were no maintenance jobs in place"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -288,197 +300,94 @@ if (!doNotTrack) {
     <main id="main" class="main bg-llight">
       <div class="content-wrapper">
         <div id="content" class="content container">
-          
-<section id="posts" class="posts">
-  
-  
+          <article class="post bg-white">
     
-  
-  
-  
-    <article class="post bg-white">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/2020/my-sql-server-toolbox/">My SQL Server Toolbox</a></h1>
-    
-    <div class="post-meta">
-      <span class="post-time"> 2020-10-15 </span>
+    <header class="post-header">
+      <h1 class="post-title"></h1>
       
-      <span class="more-meta"> 353 words </span>
-      <span class="more-meta"> 2 min read </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
+      <div class="post-meta">
+        <span class="post-time"> 0001-01-01 </span>
+        
+        <span class="more-meta"> 18 words </span>
+          <span class="more-meta"> 1 min read </span>
+
+        
+        
+      </div>
+    </header>
+
     
-    <div class="post-summary">
-      I get asked a lot about the tools I use at Stack Overflow to monitor and work with our SQL Servers. I figured it might be helpful to others to make the list public. I&rsquo;ll also do my best to keep it updated as things change.
-The current list of both free and 3rd party paid tools is below:
-Free Tools   Opserver- Stack Exchange&rsquo;s Monitoring System - I pretty much live in our instances of Opserver because it gives me a one-stop shop to see the health of all of our SQL Servers
-    </div>
-    <div class="read-more">
-      <a href="/post/2020/my-sql-server-toolbox/" class="read-more-link">Read more</a>
-    </div>
+    
+<div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">Table of Contents</h2>
+  <div class="post-toc-content">
     
   </div>
-</article>
+</div>
 
-  
-    <article class="post bg-white">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/migrating-40tb-sql-server-database/">Migrating a 40TB SQL Server Database</a></h1>
     
-    <div class="post-meta">
-      <span class="post-time"> 2020-07-28 </span>
+    <div class="post-content">
+      <p>Notes:</p>
+
+<p>When I first joined the SRE team as the DBA there were no maintenance jobs in place</p>
+
+    </div>
+
+    
+    
+
+    
+    
+
+    <footer class="post-footer">
       
-      <span class="more-meta"> 7407 words </span>
-      <span class="more-meta"> 35 min read </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    
-    <div class="post-summary">
-      Initially, I wasn’t sure whether to write about this migration project, but when I randomly asked if people would be interested, the response was overwhelming. This was a long, kind of boring, very repetitive, and at times incredibly frustrating project, but I learned a lot, and maybe someone else will learn from this too. There may be far better ways to move this amount of data. In the path I went down, there was a huge amount of juggling that had to take place (I’ll explain that later).
-    </div>
-    <div class="read-more">
-      <a href="/post/migrating-40tb-sql-server-database/" class="read-more-link">Read more</a>
-    </div>
-    
-  </div>
-</article>
 
-  
-    <article class="post bg-white">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/sql-server-2019-tuple-mover-behavior-change/">SQL Server 2019 Tuple Mover Behavior Change</a></h1>
-    
-    <div class="post-meta">
-      <span class="post-time"> 2020-07-20 </span>
       
-      <span class="more-meta"> 1912 words </span>
-      <span class="more-meta"> 9 min read </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    
-    <div class="post-summary">
-      This is a follow-up to my post about an issue with clustered columnstore, when upgrading from SQL Server 2017 to SQL Server 2019. After extensive testing and working with support, I wanted to share some information about a change in SQL Server 2019 that might impact others.
-Overview I suggest reading my other post first, it&rsquo;ll only take a few minutes. I&rsquo;ll wait&hellip;
-However, if you really don&rsquo;t want to read it, here&rsquo;s a quick recap on the initial issue.
-    </div>
-    <div class="read-more">
-      <a href="/post/sql-server-2019-tuple-mover-behavior-change/" class="read-more-link">Read more</a>
-    </div>
-    
-  </div>
-</article>
+      <nav class="post-nav">
+        
+          <a class="prev" href="/post/migrating-tons-of-data/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default"></span>
+            <span class="prev-text nav-mobile">Prev</span>
+          </a>
+        
+          <a class="next" href="/post/stack-overflow-sql-server-topology/">
+            <span class="next-text nav-default"></span>
+            <span class="prev-text nav-mobile">Next</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
 
   
-    <article class="post bg-white">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/aggressive-clustered-columnstore-cleanup/">SQL Server 2019 Aggressive Clustered Columnstore Cleanup</a></h1>
-    
-    <div class="post-meta">
-      <span class="post-time"> 2020-04-24 </span>
+  
+
+  
+  
+
+  
+
+  
+
+  <div id="disqus_thread"  class="disqus-comment"></div>
+  <script type="text/javascript">
+    (function() {
       
-      <span class="more-meta"> 2565 words </span>
-      <span class="more-meta"> 13 min read </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    
-    <div class="post-summary">
-      In late March 2020, we upgraded our production SQL Servers to SQL Server 2019with CU3. After finishing the upgrade, we hit an issue with clustered columnstorethat we hadn&rsquo;t experienced in the previous version of SQL, SQL Server 2017. The issue also wasn&rsquo;t something we encountered during our extensive testing on various servers in development, which dated back to September 2019. The problem has been mitigated, but I wanted to share our experience.
-    </div>
-    <div class="read-more">
-      <a href="/post/aggressive-clustered-columnstore-cleanup/" class="read-more-link">Read more</a>
-    </div>
-    
-  </div>
-</article>
-
-  
-    <article class="post bg-white">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/system-view-gotcha-with-sql-server-2019/">A gotcha when upgrading to SQL Server 2019</a></h1>
-    
-    <div class="post-meta">
-      <span class="post-time"> 2020-02-21 </span>
       
-      <span class="more-meta"> 1140 words </span>
-      <span class="more-meta"> 6 min read </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    
-    <div class="post-summary">
-      In my last post, I mentioned that I started the process of upgrading Stack Overflow to SQL Server 2019. This week I tackled our first production servers and after upgrading, we hit a small issue aka a gotcha because we were using an old system view. Below is a recap of what I encountered.
-A Little Background The servers I upgraded were the three SQL Servers that run Stack Overflow for Teams.
-    </div>
-    <div class="read-more">
-      <a href="/post/system-view-gotcha-with-sql-server-2019/" class="read-more-link">Read more</a>
-    </div>
-    
-  </div>
-</article>
+      if (window.location.hostname === 'localhost') return;
 
-  
-</section>
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      var disqus_shortname = 'tarynpivots-com';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
 
-
-
-
-
-
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript>
   
-  
-  
-
-  
-  
-
-  
-  
-
-  
-  
-
-  
-  
-  <nav class="pagination">
-    <ul>
-      
-      <li >
-        <a href="/">1</a>
-      </li>
-      
-      <li  class="active" >
-        <a href="/page/2/">2</a>
-      </li>
-      
-      <li >
-        <a href="/page/3/">3</a>
-      </li>
-      
-      <li >
-        <a href="/page/4/">4</a>
-      </li>
-      
-      <li >
-        <a href="/page/5/">5</a>
-      </li>
-      
-    </ul>
-  </nav>
-
-  
-  
-
-
-
 
         </div>
       </div>
@@ -513,7 +422,7 @@ A Little Background The servers I upgraded were the three SQL Servers that run S
     &copy;
     
       2013 -
-    2021
+    2019
     <span class="heart">
       <i class="iconfont icon-heart"></i>
     </span><span class="author">

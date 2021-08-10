@@ -6,7 +6,52 @@
     <description>Recent content in Tags on Taryn Pratt - Pivots and other SQL fun</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 19 Apr 2021 06:00:00 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 10 Aug 2021 06:00:00 +0000</lastBuildDate><atom:link href="https://tarynpivots.com/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>career</title>
+      <link>https://tarynpivots.com/tags/career/</link>
+      <pubDate>Tue, 10 Aug 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/career/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>journey</title>
+      <link>https://tarynpivots.com/tags/journey/</link>
+      <pubDate>Tue, 10 Aug 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/journey/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>sql-community</title>
+      <link>https://tarynpivots.com/tags/sql-community/</link>
+      <pubDate>Tue, 10 Aug 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/sql-community/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>t-sql tuesday</title>
+      <link>https://tarynpivots.com/tags/t-sql-tuesday/</link>
+      <pubDate>Tue, 10 Aug 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/t-sql-tuesday/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>thoughts</title>
+      <link>https://tarynpivots.com/tags/thoughts/</link>
+      <pubDate>Tue, 10 Aug 2021 06:00:00 +0000</pubDate>
+      
+      <guid>https://tarynpivots.com/tags/thoughts/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>availability-group</title>
       <link>https://tarynpivots.com/tags/availability-group/</link>
@@ -139,51 +184,6 @@
       <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
       
       <guid>https://tarynpivots.com/tags/monitoring/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>performance-tuning</title>
-      <link>https://tarynpivots.com/tags/performance-tuning/</link>
-      <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/performance-tuning/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>powershell</title>
-      <link>https://tarynpivots.com/tags/powershell/</link>
-      <pubDate>Fri, 16 Oct 2020 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/powershell/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>monitoring-tools</title>
-      <link>https://tarynpivots.com/tags/monitoring-tools/</link>
-      <pubDate>Thu, 15 Oct 2020 04:00:00 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/monitoring-tools/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>data-migration</title>
-      <link>https://tarynpivots.com/tags/data-migration/</link>
-      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/data-migration/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>projects</title>
-      <link>https://tarynpivots.com/tags/projects/</link>
-      <pubDate>Tue, 28 Jul 2020 06:00:38 +0000</pubDate>
-      
-      <guid>https://tarynpivots.com/tags/projects/</guid>
       <description></description>
     </item>
     
