@@ -8,7 +8,7 @@ hasCJKLanguage = true     # has chinese/japanese/korean ?
 paginate = 5                                              
 rssLimit = 20             # Limit Entry Count to Rss file 
 disqusShortname = "tarynpivots-com"      # disqus_shortname
-googleAnalytics = "G-VVRBKGZDC8"      # G-********
+googleAnalytics = "G-VHC0WZ0P5E"      # G-********
 copyright = ""            # default: author.name ↓       
 # uglyURLs = true         # more info: https://gohugo.io/content-management/urls/#ugly-urls
 
